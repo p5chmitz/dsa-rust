@@ -102,7 +102,3 @@ pub fn prefix_average_1(a: &Vec<f32>) -> Vec<f32> {
     avg
 }
 
-// Ch 5 - Recursion
-///////////////////
-
-
