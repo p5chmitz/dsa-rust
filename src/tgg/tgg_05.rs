@@ -104,8 +104,86 @@ pub fn disk_usage(root: &Path) -> u64 {
     return dir_size;
 }
 
+// Sum of array of integers to n indexes 
+// Iterative implementation (so easy, so intuitive)
+pub fn array_sum_0(v: Vec<i32>) -> i32 {
+    let mut sum = 0;
+    for e in 0..v.len() {
+        sum += v[e]
+    }
+    sum
+}
+// Recursive implementation (is dumb)
+pub fn array_sum_1(data: &Vec<i32>, n: i32) -> i32 {
+    if n == 0 {
+        return 0;
+    } else {
+        return array_sum_1(&data, n - 1) + &data[n as usize - 1];
+    }
+}
+#[test]
+pub fn array_sum_test() {
+    // Iterative impelmentation test
+    let t = vec![1, 2, 3, 4, 5, 6];
+    assert_eq!(21, array_sum_0(t));
+    // Recursive implementation test
+    // Dumb, error prone implementation
+    let t = vec![1, 2, 3, 4, 5, 6];
+    assert_eq!(21, array_sum_1(&t, 6));
+}
+
+// Iteratively reverses the elements of an array 
+pub fn array_reversal_0(mut v: Vec<i32>) -> Vec<i32> {
+    let mut high = v.len();
+    let mut temp;
+    println!("Original: {:?}", v);
+    for e in 0..v.len() - 1 {
+        if high > e {
+            temp = v[e];
+            v[e] = high as i32;
+            v[high - 1] = temp; 
+            high -= 1;
+        }
+    }
+    return v;
+}
+// Recursively reverses the elements of an array in place with liberal type conversion
+pub fn array_reversal_1(v: &mut Vec<i32>, low: i32, high: i32) {
+    if low < high {
+        let temp = v[low as usize];
+        v[low as usize] = high as i32;
+        v[high as usize - 1] = temp; 
+        array_reversal_1(v, low + 1, high - 1);
+    }
+}
+// Recursive reimplementation using native usize for cleaner presentation
+pub fn array_reversal_2(v: &mut Vec<usize>, low: usize, high: usize) {
+    if low < high {
+        let temp = v[low];
+        v[low] = high;
+        v[high - 1] = temp; 
+        array_reversal_2(v, low + 1, high - 1);
+    }
+}
+#[test]
+pub fn array_reversal_test() {
+    // Tests the iterative approach
+    let v = vec![1, 2, 3, 4, 5, 6, 7, 8];
+    let rev = vec![8, 7, 6, 5, 4, 3, 2, 1];
+    assert_eq!(array_reversal_0(v), rev);
+
+    // Tests the dumb recursive approach
+    let mut v = vec![1, 2, 3, 4, 5, 6, 7, 8];
+    let rev = vec![8, 7, 6, 5, 4, 3, 2, 1];
+    let high = v.len() as i32;
+    array_reversal_1(&mut v, 0, high);
+    assert_eq!(v, rev) 
+}
+
+// EXTRA CREDIT
+///////////////
+
 // Tower of Hanoi problem
-// This is a O(2^n) operation
 pub fn hanoi_0(n: i32) {
     let mut a: Vec<i32> = Vec::new();
     let mut b: Vec<i32> = Vec::new();
@@ -130,6 +208,9 @@ pub fn hanoi_0(n: i32) {
     }
 }
 // The internet's version of the recursive algorithm
+/** A recursive implementation of the Tower of Hanoi problem that
+ * runs in O(2^n) time. This algorithm works by breaking the
+ * problem set into source, auxiliary, and destination pegs. */
 pub fn tower_of_hanoi(n: u32, src: char, dest: char, aux: char) {
     if n == 1 {
         println!("Move disk 1 from peg {} to peg {}", src, dest);
