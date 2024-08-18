@@ -104,49 +104,6 @@ pub fn disk_usage(root: &Path) -> u64 {
     return dir_size;
 }
 
-pub fn test() {
-    // Vector v has 5 elements with indexes 0 - 4
-    let v: Vec<i32> = vec![10, 20, 30, 40, 50];
-    let magic_num: i32 = 50;
-
-
-    // Standard for loop with STANDARD range
-    // Note that using inclusive range ..= results in overflow
-    for i in 0..v.len() {
-        print!("{}, ", v[i]);
-        if v[i] == magic_num {
-            println!("End");
-        }
-    }
-
-    // De-sugared for loop over iterator expression as a range
-    let mut iter: std::ops::Range<usize> = (0..v.len()).into_iter();
-    while let Some(i) = iter.next() {
-        print!("{}, ", v[i]);
-        if v[i] == magic_num {
-            println!("End");
-        }
-    }
-
-    // Requires value de-referencing because iter() yields
-    // index references as &i32
-    for i in v.iter() {
-        print!("{}, ", i);
-        if *i == magic_num {
-            println!("End");
-        }
-    }
-
-    // Alternatively into_iter() takes ownership and 
-    // allows direct access to indexed values
-    for i in v.into_iter() {
-        print!("{}, ", i);
-        if i == magic_num {
-            println!("End");
-        }
-    }
-}
-
 // Sum of array of integers to n indexes 
 // Iterative implementation (so easy, so intuitive)
 pub fn array_sum_0(v: Vec<i32>) -> i32 {
