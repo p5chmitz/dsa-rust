@@ -59,10 +59,6 @@ fn main() {
     // Binary search using recursion
     // Binary search requires a sorted array of unique items.
     let a = vec![1, 3, 4, 5, 6, 7, 8, 9, 10];
-    //let a  = vec![
-//        1, 4, 5, 6, 10, 12, 16, 21, 23, 24, 25, 27, 31, 32, 33, 35, 37, 39, 40, 41, 42, 43, 45, 47,
-//        49, 50, 51, 52, 54, 56, 57, 60, 61, 67, 70, 71, 72, 73, 74,
-//    ];
     let target = 4;
     let i = tgg::tgg_05::bin_search_0(&a, target, 0, (a.len() - 1) as i32);
     if i >= 0 {
@@ -70,6 +66,33 @@ fn main() {
     } else {
         println!("The target {} does not exist within the array.", target)
     }
+
+    // Sums the values of an array
+    let v = vec![1, 2, 4, 8, 16];
+    let sum = tgg::tgg_05::array_sum_0(v);
+    println!("The sum of the values in the array: {sum}");
+
+    // Reverses the elements of an array
+    // Iterative implementation
+    let again = vec![55, 66, 77, 88, 99];
+    tgg_05::array_reversal_0(again);
+    // Recursive impelmentation
+    let mut again = vec![55, 66, 77, 88, 99];
+    println!("Recursive approach\nOriginal: {:?}", again);
+    let high = again.len() as i32 - 1; // Capture the # of indexes, not elements
+    let recursive = tgg_05::array_reversal_1(&mut again, 0, high);
+    println!("Reversed: {:?}", recursive);
+
+    // Ch 5 Extra Credit
+    //------------------
+
+    // Tower of Hanoi problem
+    //tgg::tgg_05::hanoi_0(4);
+    //tgg::tgg_05::tower_of_hanoi(6, 'a', 'b', 'c');
+
+    // Dir printer
+    let path = std::path::Path::new("src");
+    tgg::tgg_05::disk_usage(path);
 }
 
 fn binary_search_driver() {

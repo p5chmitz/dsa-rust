@@ -7,8 +7,7 @@
 // negative values by default and b) has a max return of 
 // 4,294,967,295, or 12! because 13! is 6,227,020,800. 
 // If you bump it up to u128 you can calculate up to 34!.
-
-// My first attempt
+/** Computs a n! up to 12 in O(n) time */ 
 pub fn factorial_0(mut n: u32) -> u32 {
     if n <= 1 {
         return n
@@ -18,7 +17,6 @@ pub fn factorial_0(mut n: u32) -> u32 {
     };
     return n
 }
-
 // Translated from the book's Java example in O(n) time
 // Note that this version uses a signed integer primitive so the function
 // also includes a bounds check for values < 0.
@@ -50,7 +48,7 @@ pub fn factorial_3(mut n: u32) -> u32 {
     }
     fac
 }
-// Refactored iterative function for a more logical evaluation (cheat)
+// Reimplementation as an iterative function for a more logical evaluation (cheat)
 /** Iterative implementation of a factorial calculator up to 12! in O(n) time */
 pub fn factorial_4(n: u32) -> u32 {
     let mut fac = 1;
@@ -80,7 +78,8 @@ pub fn bin_search_0(a: &Vec<i32>, t: i32, left: i32, right: i32)
 
 // Initially it appears this algorithm runs in O(n^2) time, but it actually 
 // runs in O(n) time because it touches (and performs O(1) operations) on
-// n nodes in the tree exactly once.
+// n nodes in the tree exactly once. This algorithm represents multiple recursion
+// because for each invocation there are x number of directory nodes to sum.
 /** Walks a directory tree printing out names and sizes in O(n) time */
 use std::path::Path;
 pub fn disk_usage(root: &Path) -> u64 {
@@ -104,7 +103,7 @@ pub fn disk_usage(root: &Path) -> u64 {
     return dir_size;
 }
 
-// Sum of array of integers to n indexes 
+// Sum of array of integers to n indexes in O(n) time using linear recursion
 // Iterative implementation (so easy, so intuitive)
 pub fn array_sum_0(v: Vec<i32>) -> i32 {
     let mut sum = 0;
@@ -122,22 +121,46 @@ pub fn array_sum_1(v: Vec<i32>) -> i32 {
     sum
 }
 // Recursive implementation (is dumb)
-pub fn array_sum_2(data: &Vec<i32>, n: i32) -> i32 {
+pub fn array_sum_2(data: &Vec<i32>, n: usize) -> i32 {
     if n == 0 {
-        return 0;
+        return data[0];
     } else {
-        return array_sum_2(&data, n - 1) + &data[n as usize - 1];
+        return array_sum_2(&data, n - 1) + &data[n];
     }
 }
+// Sum of an array of integers to n in O(n) time using O(log n) space with binary recursion
+pub fn array_sum_4(data: Vec<i32>) -> i32 {
+    let h = data.clone().len() - 1;
+    fn array_sum_3(data: Vec<i32>, low: usize, high: usize) -> i32 {
+        if low > high {
+            0
+        } else if low == high {
+            return data[low];
+        } else {
+            let mid = (low + high) / 2;
+            return array_sum_3(data.clone(), low, mid) + array_sum_3(data, mid + 1, high);
+        }
+    }
+    return array_sum_3(data, 0, h)
+}
+// Represents a public interface for the unsightly recursive implementation in array_sum_3()
+//pub fn array_sum_4(data: Vec<i32>) -> i32 {
+//    let h = data.clone().len() - 1;
+//    return array_sum_3(data, 0, h)
+//} 
 #[test]
 pub fn array_sum_test() {
     // Iterative impelmentation test
-    let t = vec![1, 2, 3, 4, 5, 6];
-    assert_eq!(21, array_sum_0(t));
+    let t = vec![6, 7, 8, 9];
+    assert_eq!(30, array_sum_0(t));
     // Recursive implementation test
     // Dumb, error prone implementation
-    let t = vec![1, 2, 3, 4, 5, 6];
-    assert_eq!(21, array_sum_2(&t, 6));
+    let t = vec![6, 7, 8, 9];
+    assert_eq!(30, array_sum_2(&t, 3));
+
+    // Binary recursive implementation test
+    let t = vec![6, 7, 8, 9];
+    assert_eq!(30, array_sum_4(t));
 }
 
 // Iteratively reverses the elements of an array 
@@ -157,7 +180,8 @@ pub fn array_reversal_0(mut v: Vec<i32>) -> Vec<i32> {
     println!("Reversed: {:?}", v);
     return v;
 }
-// Recursively reverses the elements of an array in place with liberal type conversion
+// Linear recursion to reverse the elements of an array in place 
+// (with liberal type conversion)
 pub fn array_reversal_1(v: &mut Vec<i32>, low: i32, high: i32) -> &mut Vec<i32> {
     if low < high {
         let temp = v[low as usize];
@@ -190,6 +214,60 @@ pub fn array_reversal_test() {
     let high = v.len() as i32 - 1;
     array_reversal_1(&mut v, 0, high);
     assert_eq!(v, rev) 
+}
+
+// Computing powers
+// First attempt uses iteration
+pub fn powers_0(x: u32, n: u32) -> u32 {
+    let mut product = 1;
+    for _ in 1..=n {
+        product *= x;
+    } 
+    product
+}
+// My attempt at linear recursion used to compute powers 
+pub fn powers_1(x: u32, mut product: u32, n: u32) -> u32 {
+    if n > 1 {
+        product *= x;
+        return powers_1(x, product, n - 1);
+    } 
+    return product;
+}
+// Transling the book's Java example that runs in O(n) time
+pub fn powers_2(x: u32, n: u32) -> u32 {
+    if n > 1 {
+        return x * powers_2(x, n - 1);
+    } 
+    return x;
+}
+// Reimplementation using binary recursion that computes powers in O(log n) time
+// Relies on truncation in integer division; if n is even the result is x^n, and
+// if n is even the result is x^(n-1) * x
+pub fn powers_3(x: u32, n: u32) -> u32 {
+    if n == 0 {
+        1
+    } else {
+        let partial = powers_3(x, n / 2); // Relies on truncation
+        let mut result = partial * partial;
+        if n % 2 == 1 { 
+            result *= x
+        }
+        result
+    }
+}
+#[test]
+pub fn powers_test() {
+    assert_eq!(128, powers_0(2, 7));
+    assert_eq!(0, powers_0(0, 7));
+    assert_eq!(1, powers_0(1, 7));
+    assert_eq!(128, powers_1(2, 2, 7));
+    assert_eq!(0, powers_1(0, 0, 7));
+    assert_eq!(1, powers_1(1, 1, 7));
+    assert_eq!(256, powers_3(2, 8));
+    assert_eq!(128, powers_3(2, 7));
+    assert_eq!(0, powers_3(0, 7));
+    assert_eq!(1, powers_3(1, 7));
+    assert_eq!(19683, powers_3(3, 9));
 }
 
 // EXTRA CREDIT
