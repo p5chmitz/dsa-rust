@@ -58,7 +58,9 @@ pub fn factorial_4(n: u32) -> u32 {
     fac
 }
 
-/** Recursive implementation of a binary search in O(log n) time */
+/** Recursive implementation of a binary search in O(log n) time.
+ * Returns the index of the target within a given array, if present. 
+ * Otherwise the function returns -1. */
 pub fn bin_search_0(a: &Vec<i32>, t: i32, left: i32, right: i32) 
     -> i32 {
     // Recursive base case
@@ -74,6 +76,37 @@ pub fn bin_search_0(a: &Vec<i32>, t: i32, left: i32, right: i32)
             return bin_search_0(&a, t, mid + 1, right)
         }
     }
+}
+pub fn bin_search_0_wrapper(a: &Vec<i32>, target: i32) -> i32 {
+    let right = a.clone().len() as i32 - 1;
+    return bin_search_0(a, target, 0, right);
+}
+// The recursive binary search algorithm represents tail recursion.
+// Even though Rust (likely) reimplements this automatically this is done
+// manually as a fun exercise.
+/** Iterative reimplementation of a recursive binary search algorithm in O(log n) time.
+ * This algorithm takes a referenced vec and returns the index of the target, if it exists.
+ * Otherwise it returns -1 to indicate that the target is not in the vec. */
+pub fn bin_search_1(data: &Vec<i32>, target: i32) -> i32 {
+    let mut low = 0;
+    let mut high = data.clone().len() - 1;
+    while low <= high {
+        let mid: usize = (low + high) / 2;
+        if target == data[mid] {
+            return mid as i32;
+        } else if target < data[mid] {
+            high = mid - 1
+        } else {
+            low = mid + 1
+        }
+    }
+    return -1
+}
+#[test]
+pub fn bin_search_test() {
+    let v = vec![12, 26, 31, 48, 52, 61, 75, 80, 93];
+    assert_eq!(2, bin_search_0_wrapper(&v, 31));
+    assert_eq!(6, bin_search_1(&v, 75));
 }
 
 // Initially it appears this algorithm runs in O(n^2) time, but it actually 
@@ -268,6 +301,23 @@ pub fn powers_test() {
     assert_eq!(0, powers_3(0, 7));
     assert_eq!(1, powers_3(1, 7));
     assert_eq!(19683, powers_3(3, 9));
+}
+
+// Another stab at Fibonacci sequence
+pub fn fib_0(n: i32) -> Vec<i32> {
+    let mut seq = Vec::new();
+    let mut first = 0;
+    let mut next = 1;
+    let mut this: i32;
+    seq.push(first);
+    seq.push(next);
+    for _ in 2..n {
+        this = first + next;
+        seq.push(this);
+        first = next;
+        next = this;
+    }
+    seq
 }
 
 // EXTRA CREDIT

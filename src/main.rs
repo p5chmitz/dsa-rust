@@ -83,6 +83,10 @@ fn main() {
     let recursive = tgg_05::array_reversal_1(&mut again, 0, high);
     println!("Reversed: {:?}", recursive);
 
+    let n = 47;
+    let seq = tgg::tgg_05::fib_0(n);
+    println!("Fib attempt: Sequence of {} elements: {:?}", n, seq);
+
     // Ch 5 Extra Credit
     //------------------
 
