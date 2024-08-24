@@ -26,7 +26,7 @@ pub fn unique_1(a: &Vec<i32>) -> bool {
     for (j, val) in a.iter().enumerate() {
         let start = (j + 1) as usize;
         if start <= a.len() {
-            for k in &a[start ..] {
+            for k in &a[start..] {
                 if val == k {
                     println!("{val} appears more than once");
                     return false;
@@ -101,4 +101,3 @@ pub fn prefix_average_1(a: &Vec<f32>) -> Vec<f32> {
     }
     avg
 }
-

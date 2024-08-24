@@ -1,10 +1,10 @@
 mod maw;
+mod sandbox;
 mod tgg;
 
 pub use tgg::{tgg_04, tgg_05};
 
 fn main() {
-
     // Weiss
     ////////
 
@@ -30,10 +30,10 @@ fn main() {
     let u = vec![4, 3, 9, 34, 1, 45, 23, 23];
     if tgg::tgg_04::unique_1(&u) {
         println!("This array comprises all unique values")
-    } 
+    }
     if tgg::tgg_04::unique_3(&u) {
         println!("This array comprises all unique values")
-    } 
+    }
 
     // Calculates prefix averages on an array of floats
     let c = vec![1.0, 3.0, 5.0, 7.0];
@@ -54,7 +54,11 @@ fn main() {
 
     // Iterative approach to factorials
     println!("Iterative: {}! = {}", n, tgg::tgg_05::factorial_3(n));
-    println!("Iterative refactor: {}! = {}", n, tgg::tgg_05::factorial_4(n));
+    println!(
+        "Iterative refactor: {}! = {}",
+        n,
+        tgg::tgg_05::factorial_4(n)
+    );
 
     // Binary search using recursion
     // Binary search requires a sorted array of unique items.
@@ -97,6 +101,17 @@ fn main() {
     // Dir printer
     let path = std::path::Path::new("src");
     tgg::tgg_05::disk_usage(path);
+
+    // Ch 6
+    ///////
+
+    tgg::tgg_06::stack_0();
+
+    // Sandbox runner
+    /////////////////
+
+    //sandbox::lists::list_adt_driver_0();
+    sandbox::lists::list_adt_driver_1();
 }
 
 fn binary_search_driver() {
