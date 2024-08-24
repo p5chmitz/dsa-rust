@@ -4,18 +4,18 @@
 //////////////////
 
 // This factorial function is defined with u32 which a) cannot take
-// negative values by default and b) has a max return of 
-// 4,294,967,295, or 12! because 13! is 6,227,020,800. 
+// negative values by default and b) has a max return of
+// 4,294,967,295, or 12! because 13! is 6,227,020,800.
 // If you bump it up to u128 you can calculate up to 34!.
-/** Computs a n! up to 12 in O(n) time */ 
+/** Computs a n! up to 12 in O(n) time */
 pub fn factorial_0(mut n: u32) -> u32 {
     if n <= 1 {
-        return n
+        return n;
     } else {
         let nex = factorial_0(n - 1);
         n *= nex;
     };
-    return n
+    return n;
 }
 // Translated from the book's Java example in O(n) time
 // Note that this version uses a signed integer primitive so the function
@@ -23,28 +23,28 @@ pub fn factorial_0(mut n: u32) -> u32 {
 pub fn factorial_1(n: i32) -> i32 {
     if n < 0 {
         println!("Error: Cannot compute factorials for n < 0");
-        return n
+        return n;
     } else if n == 0 {
-        return 1
+        return 1;
     } else {
-        return n * factorial_1(n - 1)
+        return n * factorial_1(n - 1);
     }
 }
 // After analyzing the book's example (cheating)
 /** Recursive implementation of a factorial calculator up to 12! in O(n) time */
 pub fn factorial_2(n: u32) -> u32 {
     if n <= 1 {
-        return n
-    } 
-    return n * factorial_2(n - 1)
+        return n;
+    }
+    return n * factorial_2(n - 1);
 }
 // Refactoring the recursive function for an iterative one
 /** Iterative implementation of a factorial calculator up to 12! in O(n) time */
 pub fn factorial_3(mut n: u32) -> u32 {
-    let mut fac = n; 
-    while n > 1 { 
-        fac *= n - 1; 
-        n -= 1; 
+    let mut fac = n;
+    while n > 1 {
+        fac *= n - 1;
+        n -= 1;
     }
     fac
 }
@@ -59,21 +59,20 @@ pub fn factorial_4(n: u32) -> u32 {
 }
 
 /** Recursive implementation of a binary search in O(log n) time.
- * Returns the index of the target within a given array, if present. 
+ * Returns the index of the target within a given array, if present.
  * Otherwise the function returns -1. */
-pub fn bin_search_0(a: &Vec<i32>, t: i32, left: i32, right: i32) 
-    -> i32 {
+pub fn bin_search_0(a: &Vec<i32>, t: i32, left: i32, right: i32) -> i32 {
     // Recursive base case
     if left > right {
-        return -1
+        return -1;
     } else {
         let mid = (left + right) / 2;
         if t == a[mid as usize] {
-            return mid as i32
+            return mid as i32;
         } else if t < a[mid as usize] {
-            return bin_search_0(&a, t, left, mid - 1)
+            return bin_search_0(&a, t, left, mid - 1);
         } else {
-            return bin_search_0(&a, t, mid + 1, right)
+            return bin_search_0(&a, t, mid + 1, right);
         }
     }
 }
@@ -100,7 +99,7 @@ pub fn bin_search_1(data: &Vec<i32>, target: i32) -> i32 {
             low = mid + 1
         }
     }
-    return -1
+    return -1;
 }
 #[test]
 pub fn bin_search_test() {
@@ -109,7 +108,7 @@ pub fn bin_search_test() {
     assert_eq!(6, bin_search_1(&v, 75));
 }
 
-// Initially it appears this algorithm runs in O(n^2) time, but it actually 
+// Initially it appears this algorithm runs in O(n^2) time, but it actually
 // runs in O(n) time because it touches (and performs O(1) operations) on
 // n nodes in the tree exactly once. This algorithm represents multiple recursion
 // because for each invocation there are x number of directory nodes to sum.
@@ -125,11 +124,15 @@ pub fn disk_usage(root: &Path) -> u64 {
             //    dir_size += disk_usage(&entry.path());
             //}
         }
-        let this_dir = std::fs::metadata(root).expect("metadata call failed [0]").len();
+        let this_dir = std::fs::metadata(root)
+            .expect("metadata call failed [0]")
+            .len();
         //dir_size += this_dir;
         println!("d {:>7}B  {}", dir_size + this_dir, root.display());
-    } else if root.is_file() { 
-        let size = std::fs::metadata(root).expect("metadata call failed [1]").len();
+    } else if root.is_file() {
+        let size = std::fs::metadata(root)
+            .expect("metadata call failed [1]")
+            .len();
         println!("  {:>7}B  {}", size, root.display());
         return size;
     }
@@ -174,13 +177,13 @@ pub fn array_sum_4(data: Vec<i32>) -> i32 {
             return array_sum_3(data.clone(), low, mid) + array_sum_3(data, mid + 1, high);
         }
     }
-    return array_sum_3(data, 0, h)
+    return array_sum_3(data, 0, h);
 }
 // Represents a public interface for the unsightly recursive implementation in array_sum_3()
 //pub fn array_sum_4(data: Vec<i32>) -> i32 {
 //    let h = data.clone().len() - 1;
 //    return array_sum_3(data, 0, h)
-//} 
+//}
 #[test]
 pub fn array_sum_test() {
     // Iterative impelmentation test
@@ -196,11 +199,11 @@ pub fn array_sum_test() {
     assert_eq!(30, array_sum_4(t));
 }
 
-// Iteratively reverses the elements of an array 
+// Iteratively reverses the elements of an array
 /** Iteratively reverses the elements of an array in O(n) time */
 pub fn array_reversal_0(mut v: Vec<i32>) -> Vec<i32> {
     let mut high = v.len() - 1; // Match the index values, not # of elements
-    let mut low  = 0;
+    let mut low = 0;
     let mut temp;
     println!("Iterative approach\nOriginal: {:?}", v);
     while high > low {
@@ -213,13 +216,13 @@ pub fn array_reversal_0(mut v: Vec<i32>) -> Vec<i32> {
     println!("Reversed: {:?}", v);
     return v;
 }
-// Linear recursion to reverse the elements of an array in place 
+// Linear recursion to reverse the elements of an array in place
 // (with liberal type conversion)
 pub fn array_reversal_1(v: &mut Vec<i32>, low: i32, high: i32) -> &mut Vec<i32> {
     if low < high {
         let temp = v[low as usize];
         v[low as usize] = v[high as usize];
-        v[high as usize] = temp; 
+        v[high as usize] = temp;
         array_reversal_1(v, low + 1, high - 1);
     }
     v
@@ -229,7 +232,7 @@ pub fn array_reversal_2(v: &mut Vec<usize>, low: usize, high: usize) -> &mut Vec
     if low < high {
         let temp = v[low];
         v[low] = v[high];
-        v[high] = temp; 
+        v[high] = temp;
         array_reversal_2(v, low + 1, high - 1);
     }
     v
@@ -246,7 +249,7 @@ pub fn array_reversal_test() {
     let rev = vec![88, 77, 66, 55, 44, 33, 22, 11];
     let high = v.len() as i32 - 1;
     array_reversal_1(&mut v, 0, high);
-    assert_eq!(v, rev) 
+    assert_eq!(v, rev)
 }
 
 // Computing powers
@@ -255,22 +258,22 @@ pub fn powers_0(x: u32, n: u32) -> u32 {
     let mut product = 1;
     for _ in 1..=n {
         product *= x;
-    } 
+    }
     product
 }
-// My attempt at linear recursion used to compute powers 
+// My attempt at linear recursion used to compute powers
 pub fn powers_1(x: u32, mut product: u32, n: u32) -> u32 {
     if n > 1 {
         product *= x;
         return powers_1(x, product, n - 1);
-    } 
+    }
     return product;
 }
 // Transling the book's Java example that runs in O(n) time
 pub fn powers_2(x: u32, n: u32) -> u32 {
     if n > 1 {
         return x * powers_2(x, n - 1);
-    } 
+    }
     return x;
 }
 // Reimplementation using binary recursion that computes powers in O(log n) time
@@ -282,7 +285,7 @@ pub fn powers_3(x: u32, n: u32) -> u32 {
     } else {
         let partial = powers_3(x, n / 2); // Relies on truncation
         let mut result = partial * partial;
-        if n % 2 == 1 { 
+        if n % 2 == 1 {
             result *= x
         }
         result
@@ -336,4 +339,3 @@ pub fn tower_of_hanoi(n: u32, src: char, dest: char, aux: char) {
     println!("Move disk {} from peg {} to peg {}", n, src, dest); // Trace
     tower_of_hanoi(n - 1, aux, dest, src);
 }
-
