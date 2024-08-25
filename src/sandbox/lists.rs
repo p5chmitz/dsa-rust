@@ -51,16 +51,22 @@ pub mod array_list {
         pub fn format(&self) -> (String, String) {
             let name = self.name.to_owned();
             // Required mapping for entries without scores yet
-            let score = self.score.map_or("".to_string(), |s| s.to_string());
+            let score = match self.score {
+                Some(s) => s.to_string(),
+                None => "".to_string(),
+            };
+            // More elegant mapping with closure
+            //let score = self.score.map_or("".to_string(), |s| s.to_string());
             (name, score)
         }
-        /** Prints the first three entires of the list; set print_type to 0 for whole list or 1 for
+        /** Prints the first three entires of the list; set `print_all` to `true` for whole list or `false` for
          * just the top three entries */
         pub fn print(print_all: bool, podium: &[PodiumEntry; Self::PODIUM_SIZE]) {
             let length: usize;
             if print_all == true {
                 length = Self::PODIUM_SIZE
             } else {
+                // Magic podium ranking
                 length = 3
             }
             for (i, entry) in podium.iter().enumerate() {
