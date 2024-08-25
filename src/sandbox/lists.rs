@@ -74,7 +74,7 @@ pub mod array_list {
             println!("")
         }
         /** Adds entry to list by score to maintain order */
-        pub fn add_entry(
+        pub fn add(
             mut podium: [PodiumEntry; PodiumEntry::PODIUM_SIZE],
             new_entry: PodiumEntry,
         ) -> [PodiumEntry; PodiumEntry::PODIUM_SIZE] {
@@ -129,7 +129,7 @@ pub fn list_adt_driver_0() {
 
     // Adds all known sample values to the list and prints the result
     for i in 0..names_array.len() {
-        podium = PodiumEntry::add_entry(
+        podium = PodiumEntry::add(
             podium,
             PodiumEntry::build(names_array[i].to_string(), scores_array[i as usize]),
         );
@@ -139,7 +139,7 @@ pub fn list_adt_driver_0() {
 
     // Adds an entry to the middle
     println!("Add Dave\n");
-    podium = PodiumEntry::add_entry(podium, PodiumEntry::build("Dave".to_string(), 334));
+    podium = PodiumEntry::add(podium, PodiumEntry::build("Dave".to_string(), 334));
 
     // Removes the score at the ith index (Bobson)
     println!("Remove Bobson\n");
@@ -147,7 +147,7 @@ pub fn list_adt_driver_0() {
 
     // 6) Adds an entry to the middle
     println!("Add Dangus\n");
-    podium = PodiumEntry::add_entry(podium, PodiumEntry::build("Dangus".to_string(), 420));
+    podium = PodiumEntry::add(podium, PodiumEntry::build("Dangus".to_string(), 420));
 
     // 7) Prints the final list and podium results
     println!("Final List:");
@@ -211,7 +211,7 @@ pub mod vec_list {
             println!("")
         }
         /** Adds entry to list by score to maintain order */
-        pub fn add_entry(mut podium: Vec<PodiumEntry>, new_entry: PodiumEntry) -> Vec<PodiumEntry> {
+        pub fn add(mut podium: Vec<PodiumEntry>, new_entry: PodiumEntry) -> Vec<PodiumEntry> {
             // Evaluates the existing vector and finds appropriate insertion index
             let mut insert_index: i32 = -1;
             for i in 0..podium.len() {
@@ -254,7 +254,7 @@ pub fn list_adt_driver_1() {
 
     // Adds all known sample values to the list and prints the result
     for i in 0..names_vec.len() {
-        podium = PodiumEntry::add_entry(
+        podium = PodiumEntry::add(
             podium,
             PodiumEntry::build(names_vec[i].to_string(), scores_vec[i as usize]),
         );
@@ -264,7 +264,7 @@ pub fn list_adt_driver_1() {
 
     // Adds an entry to the middle
     println!("Add Dave\n");
-    podium = PodiumEntry::add_entry(podium, PodiumEntry::build("Dave".to_string(), 334));
+    podium = PodiumEntry::add(podium, PodiumEntry::build("Dave".to_string(), 334));
 
     // Removes the score at the ith index (Bobson)
     println!("Remove Bobson\n");
@@ -272,7 +272,7 @@ pub fn list_adt_driver_1() {
 
     // 6) Adds an entry to the middle
     println!("Add Dangus\n");
-    podium = PodiumEntry::add_entry(podium, PodiumEntry::build("Dangus".to_string(), 420));
+    podium = PodiumEntry::add(podium, PodiumEntry::build("Dangus".to_string(), 420));
 
     // 7) Prints the final list and podium results
     println!("Final List:");
