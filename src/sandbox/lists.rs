@@ -59,14 +59,13 @@ pub mod array_list {
             //let score = self.score.map_or("".to_string(), |s| s.to_string());
             (name, score)
         }
-        /** Prints the first three entires of the list; set `print_all` to `true` for whole list or `false` for
-         * just the top three entries */
+        /** Der listen printen; Set bool to `true` for whole list or `false` for top three */
         pub fn print(print_all: bool, podium: &[PodiumEntry; Self::PODIUM_SIZE]) {
             let length: usize;
             if print_all == true {
                 length = Self::PODIUM_SIZE
             } else {
-                // Magic podium ranking
+                // Magic podium number
                 length = 3
             }
             for (i, entry) in podium.iter().enumerate() {
