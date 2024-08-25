@@ -78,12 +78,15 @@ pub mod array_list {
             }
             println!("")
         }
-        /** Adds entry to list by score to maintain order */
+        /** Adds entry to list by score to maintain order;
+        Evaluates the existing array values to find the first appropriate index;
+        Does not overflow with attempts that exceed base structure size, 
+        but additional entries without sufficient score are not logged */
         pub fn add(
             mut podium: [PodiumEntry; PodiumEntry::PODIUM_SIZE],
             new_entry: PodiumEntry,
         ) -> [PodiumEntry; PodiumEntry::PODIUM_SIZE] {
-            // Evaluates the existing array and finds appropriate insertion index
+            // Evaluates the existing array values to find the first appropriate index
             let mut insert_index = None;
             for i in 0..podium.len() {
                 if podium[i].score.is_none() || podium[i].score < new_entry.score {
@@ -144,6 +147,10 @@ pub fn list_adt_driver_0() {
 
     // Adds an entry to the middle
     println!("Add Dave\n");
+    podium = PodiumEntry::add(podium, PodiumEntry::build("Dave".to_string(), 334));
+
+    // TEST
+    println!("Add Dave1\n");
     podium = PodiumEntry::add(podium, PodiumEntry::build("Dave".to_string(), 334));
 
     // Removes the score at the ith index (Bobson)
