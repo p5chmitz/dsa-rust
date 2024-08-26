@@ -26,8 +26,8 @@ pub mod array_list {
         }
     }
     impl PodiumEntry {
-        // Gross magic number used to initialize an empty list of
-        // elements with indexes from 0 to (PODIUM_SIZE - 1)
+        // Gross magic number used to initialize an empty list 
+        // with indexes from 0 to (PODIUM_SIZE - 1)
         const PODIUM_SIZE: usize = 10;
         /** Creates a list that contains `const PODIUM_SIZE` number of elements with indexes from 0 to (PODIUM_SIZE - 1) */
         // Rust requires constants for array size initialization so the following array-based
@@ -149,10 +149,6 @@ pub fn list_adt_driver_0() {
     println!("Add Dave\n");
     podium = PodiumEntry::add(podium, PodiumEntry::build("Dave".to_string(), 334));
 
-    // TEST
-    println!("Add Dave1\n");
-    podium = PodiumEntry::add(podium, PodiumEntry::build("Dave".to_string(), 334));
-
     // Removes the score at the ith index (Bobson)
     println!("Remove Bobson\n");
     podium = PodiumEntry::remove(podium, 0);
@@ -187,7 +183,7 @@ pub mod vec_list {
     impl PodiumEntry {
         /** Builds new default list containing at least three elements */
         pub fn new() -> Vec<PodiumEntry> {
-            vec![PodiumEntry::default(); 3]
+            vec![PodiumEntry::default(); 1]
         }
         /** Constructs a new PodiumEntry object */
         pub fn build(name: String, score: usize) -> PodiumEntry {
@@ -293,3 +289,81 @@ pub fn list_adt_driver_1() {
     PodiumEntry::print(false, &podium);
 }
 
+pub mod linked_list {
+    use std::cell::RefCell;
+
+    #[derive(Default)] // Required for generic array initialization
+    pub struct ListNode {
+        pub name: String,
+        score: Option<usize>,
+        prev: Option<Box<RefCell<ListNode>>>,
+        next: Option<Box<RefCell<ListNode>>>
+    }
+//    impl ListNode {
+//        pub fn new(name: String) -> ListNode {
+//            ListNode {
+//                name, 
+//                score: None,
+//                prev: None,
+//                next: None 
+//            }
+//        }
+//        pub fn add_node(name: String, prev: &Option<Box<RefCell<ListNode>>>) -> ListNode {
+//            ListNode {
+//                name, 
+//                score: None,
+//                prev,
+//                next: None 
+//            }
+//        }
+//        /** Constructs a new PodiumEntry object */
+//        pub fn build() -> ListNode {
+//            ListNode {
+//                name,
+//                score: Some(score),
+//            }
+//        }
+//        /** Formats PodiumEntry objects for output */
+//        pub fn format() -> (String, String) {
+//        }
+//        /** Der listen printen; Set bool to `true` for whole list or `false` for top three */
+//        pub fn print(print_all: bool, podium: list) {
+//        }
+//        /** Adds entry to list by score to maintain order;
+//        Evaluates the existing array values to find the first appropriate index;
+//        Does not overflow with attempts that exceed base structure size, 
+//        but additional entries without sufficient score are not logged */
+//        pub fn add(
+//            mut podium: [PodiumEntry; PodiumEntry::PODIUM_SIZE],
+//            new_entry: PodiumEntry,
+//        ) -> [PodiumEntry; PodiumEntry::PODIUM_SIZE] {
+//            // Evaluates the existing array values to find the first appropriate index
+//            let mut insert_index = None;
+//            for i in 0..podium.len() {
+//                if podium[i].score.is_none() || podium[i].score < new_entry.score {
+//                    insert_index = Some(i);
+//                    break;
+//                }
+//            }
+//            // Shift elements to the right of the insertion index to make room
+//            // for the new entry; Requires Clone implementation on PodiumEntry struct
+//            if let Some(index) = insert_index {
+//                for j in (index..podium.len() - 1).rev() {
+//                    podium[j + 1] = podium[j].clone();
+//                }
+//                podium[index] = new_entry;
+//            }
+//            podium
+//        }
+//        // Takes a podium array and an index, removes the entry at the index
+//        // and shifts all remaining elements up by one index
+//        /** Removes an entry from the list */
+//        pub fn remove() -> list {
+//            for i in cheater..podium.len() - 1 {
+//                podium[i] = podium[i + 1].clone();
+//            }
+//            podium[podium.len() - 1] = Default::default();
+//            podium
+//        }
+//    }
+}
