@@ -29,7 +29,7 @@ pub mod singly_linked_list {
                 length: 0
             }
         }
-        // Inserts a node, sorted by its score
+        /** Inserts a node, sorted by its score */
         pub fn insert(&mut self, node: Node) {
             // Handle the special case of inserting at the head
             if self.head.is_none() || self.head.as_ref().unwrap().score <= node.score {
@@ -54,7 +54,7 @@ pub mod singly_linked_list {
                 iter_node = &mut peek.next;
             }
         }
-        // Removes a node
+        /** Removes a node at a provided index */
         pub fn remove(&mut self, index: u32) {
             // Basic logic checks
             if index == 0 && self.head.is_none() {
@@ -66,8 +66,7 @@ pub mod singly_linked_list {
                 return
             }
 
-            // Handle the special case of removing at the head
-            // Ignores empty lists
+            // Handle the special case of removing at the head, ignores empty lists
             if index == 0 && self.head.is_some() {
                 let next = self.head.as_mut().unwrap().next.take();
                 self.head = next;
@@ -79,21 +78,25 @@ pub mod singly_linked_list {
             let mut iter_node = &mut self.head;
             let mut counter = 0;
             while let Some(ref mut peek) = iter_node {
+                // Stops at the node before the intended removal;
+                // Without a previous pointer this prevents traversing the list twice
                 if counter == index as usize - 1 {
-                    // Check if the next node exists (the one to be removed)
+                    // Check if the node intended for removal exists;
+                    // If so, assigns the current node's next to the removal node's next
+                    // and decreases the list's node counter
                     if let Some(mut node_to_remove) = peek.next.take() {
-                        // Reassign the next pointer of the current node to skip the node to be removed
                         peek.next = node_to_remove.next.take();
                         self.length -= 1;
                     }
                     return
                 }
                 counter += 1;
+                // Advances the iterator node
                 iter_node = &mut peek.next;
             }
 
         }
-        // Prints the list
+        /** Prints the whole list and nothing but the list */
         pub fn print_list(&mut self) {
             println!("Singly inked list contains {} elements:", self.length);
             let mut current = &self.head;
