@@ -1,8 +1,11 @@
+mod lists;
 mod maw;
 mod sandbox;
 mod tgg;
 
-pub use tgg::{tgg_04, tgg_05};
+use crate::lists::linked_lists;
+use crate::lists::array_lists;
+use crate::tgg::{tgg_04, tgg_05};
 
 fn main() {
     // Weiss
@@ -110,8 +113,17 @@ fn main() {
     // Sandbox runner
     /////////////////
 
-    //sandbox::lists::list_adt_driver_0();
-    sandbox::lists::list_adt_driver_1();
+    // Static array list implementation
+    println!("Static array list:");
+    //array_lists::list_adt_driver_0();
+
+    // Dynamic array list implementation
+    println!("Dynamic array list:");
+    //array_lists::list_adt_driver_1();
+
+    // Singly linked list
+    println!("Singly-linked list:");
+    linked_lists::list_adt_driver_0();
 }
 
 fn binary_search_driver() {
