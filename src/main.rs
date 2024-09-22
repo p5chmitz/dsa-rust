@@ -3,8 +3,8 @@ mod maw;
 mod sandbox;
 mod tgg;
 
-use crate::lists::linked_lists;
 use crate::lists::array_lists;
+use crate::lists::linked_lists;
 use crate::tgg::{tgg_04, tgg_05};
 
 fn main() {
@@ -115,15 +115,37 @@ fn main() {
 
     // Static array list implementation
     println!("Static array list:");
-    //array_lists::list_adt_driver_0();
+    array_lists::list_adt_driver_0();
 
     // Dynamic array list implementation
     println!("Dynamic array list:");
-    //array_lists::list_adt_driver_1();
+    array_lists::list_adt_driver_1();
 
     // Singly linked list
     println!("Singly-linked list:");
     linked_lists::list_adt_driver_0();
+
+    // Doubly linked list
+    linked_lists::doubly_linked_list_driver();
+
+    // Unsafe tests, I think???
+    let mut value = 42;
+
+    // Create a mutable raw pointer to the value
+    let p1: *mut i32 = &mut value;
+    unsafe {
+        // Dereference the raw pointer and modify the value
+        *p1 = 100;
+
+        // Create another mutable raw pointer to the same value
+        let p2: *mut i32 = p1;
+
+        // Dereference the second raw pointer
+        *p2 += 50;
+
+        // Print the updated value
+        println!("Value: {}", *p1); // This will print "Value: 150"
+    }
 }
 
 fn binary_search_driver() {
