@@ -195,7 +195,6 @@ pub mod doubly_linked_list {
             }
         }
         /** Inserts a node, sorted by its score */
-        //TODO: Make prev pointers work
         pub fn insert(&mut self, node: Node) {
             // Gets a raw, mutable pointer to the (new) unique heap object
             let new_node_ptr = Box::into_raw(Box::new(node));
