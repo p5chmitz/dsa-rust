@@ -155,11 +155,13 @@ pub fn list_adt_driver_0() {
     println!("")
 }
 
+/** A horribly unsafe doubly-linked list */
 pub mod doubly_linked_list {
 
     // Creates a raw pointer to some Node
     type Link = Option<*mut Node>;
 
+    #[derive(Debug)]
     pub struct Node {
         name: String,
         score: i32,
@@ -168,15 +170,16 @@ pub mod doubly_linked_list {
     }
     impl Node {
         // Creates a new node with a unique, heap-allocated address via Box
-        pub fn new(name: String, score: i32) -> Box<Node> {
-            Box::new(Node {
+        pub fn new(name: String, score: i32) -> Node {
+            Node {
                 name,
                 score,
                 prev: None,
                 next: None,
-            })
+            }
         }
     }
+    //TODO: Implement a way to store a tail reference
     pub struct List {
         head: Link,
         tail: Link,
@@ -193,34 +196,76 @@ pub mod doubly_linked_list {
         }
         /** Inserts a node, sorted by its score */
         //TODO: Make prev pointers work
-        pub fn insert(&mut self, node: Box<Node>) {
-            // Gets a raw, mutable pointer to the unique heap object
-            let new_node_ptr = Box::into_raw(node);
-        
+        pub fn insert(&mut self, node: Node) {
+            // Gets a raw, mutable pointer to the (new) unique heap object
+            let new_node_ptr = Box::into_raw(Box::new(node));
+
             unsafe {
-                // Special case for empty list or inserting new head node
-                if self.head.is_none() || (*new_node_ptr).score > (*self.head.unwrap()).score {
+                // Special case for empty list
+                if self.head.is_none() {
                     // Sets the new node's next pointer to the current head
                     (*new_node_ptr).next = self.head;
-                    // Resets the list's head
+
+                    // Checks that the first Node was inserted properly
+                    println!(
+                        "The list begins with\n\t{:?}",
+                        &(*new_node_ptr),
+                    );
+
+                    // Resets the list's head and increments the list size
                     self.head = Some(new_node_ptr);
                     self.length += 1;
                     return;
                 }
-        
-                // Traverse the list to find the correct insertion point
+                // Special case for inserting new head node
+                if (*new_node_ptr).score > (*self.head.unwrap()).score {
+                    // Sets the new node's next pointer to the current head
+                    (*new_node_ptr).next = self.head;
+                    // Sets the original head's prev pointer to the new node
+                    (*self.head.unwrap()).prev = Some(new_node_ptr);
+
+                    // Checks that the new node was inserted properly
+                    println!(
+                        "Inserted new head\n\t{:?}\nbetween\n\t{:?}\nand\n\t{:?}",
+                        &(*new_node_ptr),
+                        &(*new_node_ptr).prev,
+                        &(*new_node_ptr).next,
+                    );
+
+                    // Resets the list's head and increments the list size
+                    self.head = Some(new_node_ptr);
+                    self.length += 1;
+                    return;
+                }
+
+                // Traverse the list to find the correct insertion point, inserts the new node
+                // AFTER the "current" (iterator) node
                 let mut current = self.head;
                 while let Some(current_ptr) = current {
                     let current_node = &mut *current_ptr;
-                    // Insert the new node if the next node's score is None 
+                    // Insert the new node if the next node's score is None
                     // or if the next node's score is less than the new node's score
                     if current_node.next.is_none()
                         || (*current_node.next.unwrap()).score <= (*new_node_ptr).score
                     {
-                        // Sets the new node's next pointer
+                        // b.next = a.next
                         (*new_node_ptr).next = current_node.next;
-                        // Resets the current node's next pointer to the new node
+                        // a.next = b
                         current_node.next = Some(new_node_ptr);
+                        // c.prev = b
+                        current_node.prev = Some(new_node_ptr);
+                        // b.prev = a
+                        (*new_node_ptr).prev = Some(current_node);
+
+                        // Checks that the new node was inserted properly
+                        println!(
+                            "Inserted\n\t{:?}\nbetween\n\t{:?}\nand\n\t{:?}",
+                            &(*new_node_ptr),
+                            &current_node,
+                            &(*new_node_ptr).next
+                        );
+
+                        // Increments the list size
                         self.length += 1;
                         return;
                     }
@@ -294,4 +339,34 @@ pub fn replacing() {
     assert_eq!(v, vec![23, 2]);
     // The returned value is the old 0th value
     assert_eq!(replaced, 1);
+}
+#[test]
+pub fn mapping() {
+    // Illustrates Iterator map
+    let numbers = vec![1, 2, 3];
+    let doubled: Vec<i32> = numbers.iter().map(|x| x * 2).collect();
+    assert_eq!(doubled, vec![2, 4, 6]);
+
+    // Illustrates Option map
+    let greeting_option = Some("Hello, World!".to_string());
+    assert_eq!(Some("Hello, World!".to_string()), greeting_option);
+    // `Option::map` takes self *by value*, consuming `maybe_some_string`
+    let len = greeting_option.map(|s| s.len());
+    assert_eq!(len, Some(13));
+
+    // Illustrates Result map
+    let line = "1\n2\n3\n4\n";
+    for (i, val) in line.lines().enumerate() {
+        // Attempts to parse the String into a usize to match the
+        // default type of the enumerate tuple
+        match val.parse::<usize>().map(|i| i * 3) {
+            Ok(n) => {
+                // i is 0-indexed so add one to ensure accuracy
+                assert_eq!(n, (i + 1) * 3);
+                // Might as well set match arms to return a unit type
+                println!("Ok({n})")
+            }
+            Err(_) => {}
+        }
+    }
 }
