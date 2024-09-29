@@ -247,14 +247,20 @@ pub mod doubly_linked_list {
                     if current_node.next.is_none()
                         || (*current_node.next.unwrap()).score <= (*new_node_ptr).score
                     {
+                        // Suppose a is the current node, 
+                        // Some(c) is the next (existing) node, 
+                        // and b is the new node
+
                         // b.next = a.next
                         (*new_node_ptr).next = current_node.next;
                         // a.next = b
                         current_node.next = Some(new_node_ptr);
-                        // c.prev = b
-                        current_node.prev = Some(new_node_ptr);
                         // b.prev = a
                         (*new_node_ptr).prev = Some(current_node);
+                        // c.prev = b
+                        if let Some(next_node_ptr) = current_node.next {
+                            (*next_node_ptr).prev = Some(new_node_ptr);
+                        }
 
                         // Checks that the new node was inserted properly
                         println!(
