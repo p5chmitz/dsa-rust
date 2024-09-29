@@ -237,27 +237,26 @@ pub mod doubly_linked_list {
                     return;
                 }
 
-                // Traverse the list to find the correct insertion point, inserts the new node
-                // AFTER the "current" (iterator) node
+                // Traverse the list to find the correct insertion point by peeking at the next node
                 let mut current = self.head;
                 while let Some(current_ptr) = current {
                     let current_node = &mut *current_ptr;
-                    // Insert the new node if the next node's score is None
-                    // or if the next node's score is less than the new node's score
+                    // If the next node's score is None or if the next node's score is less than
+                    // the new node's score; insert the new node between current and current.next
                     if current_node.next.is_none()
                         || (*current_node.next.unwrap()).score <= (*new_node_ptr).score
                     {
-                        // Suppose a is the current node, 
-                        // Some(c) is the next (existing) node, 
-                        // and b is the new node
-
-                        // b.next = a.next
                         (*new_node_ptr).next = current_node.next;
-                        // a.next = b
                         current_node.next = Some(new_node_ptr);
-                        // b.prev = a
                         (*new_node_ptr).prev = Some(current_node);
-                        // c.prev = b
+
+                        // The simple (naive) way;
+                        // potentially problematic if you try to unwrap() a None value
+                        //let next_node: *mut Node = (*current_node).next.unwrap();
+                        //(*next_node).prev = Some(new_node_ptr);
+
+                        // Avoids the potential for a panic if current_node.next is None
+                        // This is only really relevant if you want to swap operational precedence
                         if let Some(next_node_ptr) = current_node.next {
                             (*next_node_ptr).prev = Some(new_node_ptr);
                         }
