@@ -197,7 +197,7 @@ pub mod doubly_linked_list {
         /** Inserts a node, sorted by its score */
         pub fn insert(&mut self, node: Node) {
             // Gets a raw, mutable pointer to the (new) unique heap object
-            let new_node_ptr = Box::into_raw(Box::new(node));
+            let new_node_ptr: *mut Node = Box::into_raw(Box::new(node));
 
             unsafe {
                 // Special case for empty list
@@ -278,8 +278,50 @@ pub mod doubly_linked_list {
             }
         }
         /** Removes a node at a provided index */
-        //TODO: Implement remove
-        pub fn remove(&mut self) {}
+        pub fn remove(&mut self, name: String) {
+            // Traverses the list looking for the Node to remove
+            let mut current = self.head;
+            unsafe {
+                while let Some(current_ptr) = current {
+                    let current_node = &mut *current_ptr;
+                    // Handles edge case in case the removal node is tail
+                    if let Some(next) = current_node.next {
+                        if (*next).name == name && (*next).next.is_none() {
+                            current_node.next = None;  // Update current node's next pointer
+                            println!("Removed tail");
+                            self.length -= 1;
+                            return;
+                        }
+                    }
+                    // Handles the edge case if the removal node is head
+                    if (*current_node).name == name && (*current_node).prev.is_none(){
+                        if let Some(peek) = current_node.next {
+                            (*peek).prev = None;
+                            self.head = Some(peek);
+                        } else {
+                            self.head = None // In case there is only one list element
+                        }
+                        println!("Removed head");
+                        // Decrements the list size
+                        self.length -= 1;
+                        return;
+                    }
+                    // Handles removals mid-list
+                    else if (*current_node.next.unwrap()).name == name {
+                        // a.next = c
+                        let next: *mut Node = current_node.next.unwrap();
+                        (*current_node).next = (*next).next; 
+                        // c.prev = a
+                        (*next).prev = Some(current_node);
+                        println!("Removed mid-list");
+                        // Decrements the list size
+                        self.length -= 1;
+                        return;
+                    }
+                    current = current_node.next;
+                }
+            }
+        }
         /** Prints the list */
         pub fn print(&self) {
             let mut current = self.head;
@@ -315,6 +357,26 @@ pub fn doubly_linked_list_driver() {
 
     node = Node::new("Bobson".to_string(), 69);
     list.insert(node);
+    list.print();
+
+    node = Node::new("Dorkus".to_string(), 412);
+    list.insert(node);
+    list.print();
+
+    node = Node::new("Dongus".to_string(), 873);
+    list.insert(node);
+    list.print();
+
+    // Removes tail
+    list.remove("Bobson".to_string());
+    list.print();
+
+    // Removes head
+    list.remove("Remus".to_string());
+    list.print();
+
+    // Removes mid-list
+    list.remove("Dongus".to_string());
     list.print();
 }
 
