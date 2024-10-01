@@ -163,10 +163,10 @@ pub mod doubly_linked_list {
 
     #[derive(Debug)]
     pub struct Node {
-        name: String,
-        score: i32,
-        prev: Link,
-        next: Link,
+        pub name: String,
+        pub score: i32,
+        pub prev: Link,
+        pub next: Link,
     }
     impl Node {
         // Creates a new node with a unique, heap-allocated address via Box
@@ -181,7 +181,7 @@ pub mod doubly_linked_list {
     }
     //TODO: Implement a way to store a tail reference
     pub struct List {
-        head: Link,
+        pub head: Link,
         tail: Link,
         length: usize,
     }
@@ -205,12 +205,7 @@ pub mod doubly_linked_list {
                     // Sets the new node's next pointer to the current head
                     (*new_node_ptr).next = self.head;
 
-                    // Checks that the first Node was inserted properly
-                    println!(
-                        "The list begins with\n\t{:?}",
-                        &(*new_node_ptr),
-                    );
-
+                    println!("Inserts head");
                     // Resets the list's head and increments the list size
                     self.head = Some(new_node_ptr);
                     self.length += 1;
@@ -223,14 +218,7 @@ pub mod doubly_linked_list {
                     // Sets the original head's prev pointer to the new node
                     (*self.head.unwrap()).prev = Some(new_node_ptr);
 
-                    // Checks that the new node was inserted properly
-                    println!(
-                        "Inserted new head\n\t{:?}\nbetween\n\t{:?}\nand\n\t{:?}",
-                        &(*new_node_ptr),
-                        &(*new_node_ptr).prev,
-                        &(*new_node_ptr).next,
-                    );
-
+                    println!("Inserts new head");
                     // Resets the list's head and increments the list size
                     self.head = Some(new_node_ptr);
                     self.length += 1;
@@ -246,29 +234,18 @@ pub mod doubly_linked_list {
                     if current_node.next.is_none()
                         || (*current_node.next.unwrap()).score <= (*new_node_ptr).score
                     {
+                        // b.prev -> a
+                        (*new_node_ptr).prev = Some(current_ptr);
+                        // b.next -> c
                         (*new_node_ptr).next = current_node.next;
-                        current_node.next = Some(new_node_ptr);
-                        (*new_node_ptr).prev = Some(current_node);
-
-                        // The simple (naive) way;
-                        // potentially problematic if you try to unwrap() a None value
-                        //let next_node: *mut Node = (*current_node).next.unwrap();
-                        //(*next_node).prev = Some(new_node_ptr);
-
-                        // Avoids the potential for a panic if current_node.next is None
-                        // This is only really relevant if you want to swap operational precedence
+                        // If c exists, c.prev -> b
                         if let Some(next_node_ptr) = current_node.next {
                             (*next_node_ptr).prev = Some(new_node_ptr);
                         }
+                        // a.next -> b 
+                        current_node.next = Some(new_node_ptr);
 
-                        // Checks that the new node was inserted properly
-                        println!(
-                            "Inserted\n\t{:?}\nbetween\n\t{:?}\nand\n\t{:?}",
-                            &(*new_node_ptr),
-                            &current_node,
-                            &(*new_node_ptr).next
-                        );
-
+                        println!("Inserts mid-list or new tail");
                         // Increments the list size
                         self.length += 1;
                         return;
@@ -287,7 +264,10 @@ pub mod doubly_linked_list {
                     // Handles edge case in case the removal node is tail
                     if let Some(next) = current_node.next {
                         if (*next).name == name && (*next).next.is_none() {
-                            current_node.next = None;  // Update current node's next pointer
+                            // Update the current node's next pointer
+                            current_node.next = None;
+                            // Take ownership of the removed head to deallocate it properly
+                            let _dealloc_node = Box::from_raw(next);
                             println!("Removed tail");
                             self.length -= 1;
                             return;
@@ -298,8 +278,13 @@ pub mod doubly_linked_list {
                         if let Some(peek) = current_node.next {
                             (*peek).prev = None;
                             self.head = Some(peek);
+                            // Take ownership of the removed head to deallocate it properly
+                            let _dealloc_node = Box::from_raw(current_ptr);
                         } else {
-                            self.head = None // In case there is only one list element
+                            // In case there is only one list element
+                            self.head = None; 
+                            // Take ownership of the removed head to deallocate it properly
+                            let _dealloc_node = Box::from_raw(current_ptr);
                         }
                         println!("Removed head");
                         // Decrements the list size
@@ -313,6 +298,8 @@ pub mod doubly_linked_list {
                         (*current_node).next = (*next).next; 
                         // c.prev = a
                         (*next).prev = Some(current_node);
+                        // Take ownership of the removed head to deallocate it properly
+                        let _dealloc_node = Box::from_raw(next);
                         println!("Removed mid-list");
                         // Decrements the list size
                         self.length -= 1;
@@ -326,7 +313,6 @@ pub mod doubly_linked_list {
         pub fn print(&self) {
             let mut current = self.head;
             let mut counter = 1;
-            println!("Teh double list");
             unsafe {
                 while let Some(node_ptr) = current {
                     let node = &*node_ptr;
@@ -339,44 +325,89 @@ pub mod doubly_linked_list {
         }
     }
 }
+
+
+#[test]
+fn test_insert_between_nodes() {
+    // Creates a new doubly-linked list
+    let mut list = doubly_linked_list::List::new();
+
+    // Creates and insert nodes with scores 1000 and 600
+    let a = doubly_linked_list::Node::new("a".to_string(), 1000);
+    let c = doubly_linked_list::Node::new("c".to_string(), 600);
+    list.insert(a);
+    list.insert(c);
+
+    // Creates and insert node b with a score between a and c
+    let b = doubly_linked_list::Node::new("b".to_string(), 800);
+    list.insert(b);
+
+    // Verify that pointers are set correctly
+    unsafe {
+        // Gets pointer to head/a
+        let head_ptr: *mut doubly_linked_list::Node = list.head.unwrap();
+        let head = &mut *head_ptr; // Unsafe de-ref
+        assert_eq!(head.name, "a");
+        assert_eq!(head.score, 1000);
+
+        // Gets pointer to b, checks that a.next -> b
+        let b_ptr: *mut doubly_linked_list::Node = head.next.unwrap();
+        let b = &mut *b_ptr; // Unsafe de-ref
+        assert_eq!(b.name, "b");
+        assert_eq!(b.score, 800);
+
+        // Check that b.prev -> a
+        assert_eq!(b.prev.unwrap(), head_ptr);
+
+        // Check that b.next -> c
+        let c_ptr: *mut doubly_linked_list::Node = b.next.unwrap();
+        let c = &mut *c_ptr; // Unsafe de-ref
+        assert_eq!(c.name, "c");
+        assert_eq!(c.score, 600);
+
+        // Checks that c.prev -> b
+        assert_eq!(c.prev.unwrap(), b_ptr);
+
+        // Checks that c == tail || c.next -> None
+        assert!(c.next.is_none());
+    }
+}
+
 pub fn doubly_linked_list_driver() {
+    println!("The infamous double!!");
+
     use doubly_linked_list::{List, Node};
 
     let mut list = List::new();
     let mut node = Node::new("Peter".to_string(), 1223);
     list.insert(node);
-    list.print();
 
     node = Node::new("Brain".to_string(), 616);
     list.insert(node);
-    list.print();
 
     node = Node::new("Remus".to_string(), 1225);
     list.insert(node);
-    list.print();
 
     node = Node::new("Bobson".to_string(), 69);
     list.insert(node);
-    list.print();
 
     node = Node::new("Dorkus".to_string(), 412);
     list.insert(node);
-    list.print();
 
     node = Node::new("Dongus".to_string(), 873);
     list.insert(node);
-    list.print();
 
     // Removes tail
     list.remove("Bobson".to_string());
-    list.print();
 
     // Removes head
     list.remove("Remus".to_string());
-    list.print();
 
     // Removes mid-list
     list.remove("Dongus".to_string());
+
+    // Print this bih
+    println!("The final result:");
     list.print();
 }
 
