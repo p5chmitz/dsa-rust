@@ -326,9 +326,8 @@ pub mod doubly_linked_list {
     }
 }
 
-
 #[test]
-fn test_insert_between_nodes() {
+fn doubly_linked_list_test() {
     // Creates a new doubly-linked list
     let mut list = doubly_linked_list::List::new();
 
@@ -342,24 +341,23 @@ fn test_insert_between_nodes() {
     let b = doubly_linked_list::Node::new("b".to_string(), 800);
     list.insert(b);
 
-    // Verify that pointers are set correctly
     unsafe {
         // Gets pointer to head/a
         let head_ptr: *mut doubly_linked_list::Node = list.head.unwrap();
-        let head = &mut *head_ptr; // Unsafe de-ref
-        assert_eq!(head.name, "a");
-        assert_eq!(head.score, 1000);
+        let a = &mut *head_ptr; // Unsafe de-ref
+        assert_eq!(a.name, "a");
+        assert_eq!(a.score, 1000);
 
-        // Gets pointer to b, checks that a.next -> b
-        let b_ptr: *mut doubly_linked_list::Node = head.next.unwrap();
+        // Follows a.next to b, verifies a.next by checking b's data
+        let b_ptr: *mut doubly_linked_list::Node = a.next.unwrap();
         let b = &mut *b_ptr; // Unsafe de-ref
         assert_eq!(b.name, "b");
         assert_eq!(b.score, 800);
 
-        // Check that b.prev -> a
+        // Checks that b.prev -> a
         assert_eq!(b.prev.unwrap(), head_ptr);
 
-        // Check that b.next -> c
+        // Follows b.next to c, verifies b.next by checking c's data
         let c_ptr: *mut doubly_linked_list::Node = b.next.unwrap();
         let c = &mut *c_ptr; // Unsafe de-ref
         assert_eq!(c.name, "c");
@@ -368,13 +366,13 @@ fn test_insert_between_nodes() {
         // Checks that c.prev -> b
         assert_eq!(c.prev.unwrap(), b_ptr);
 
-        // Checks that c == tail || c.next -> None
+        // Verifies that c == tail || c.next -> None
         assert!(c.next.is_none());
     }
 }
 
-pub fn doubly_linked_list_driver() {
-    println!("The infamous double!!");
+pub fn doubly_linked_list_example() {
+    println!("The infamous (and unsafe) double!!");
 
     use doubly_linked_list::{List, Node};
 
