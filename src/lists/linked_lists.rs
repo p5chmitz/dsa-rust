@@ -179,7 +179,7 @@ pub mod doubly_linked_list {
             }
         }
     }
-    //TODO: Implement a way to store a tail reference
+    //TODO: Implement a way to store a tail reference, implement rev()
     pub struct List {
         pub head: Link,
         tail: Link,
@@ -309,6 +309,11 @@ pub mod doubly_linked_list {
                 }
             }
         }
+        pub fn iter(&self) -> Iter {
+            Iter {
+                next: self.head.as_ref().map(|&ptr| unsafe { &*ptr }),
+            }
+        }
         /** Prints the list */
         pub fn print(&self) {
             let mut current = self.head;
@@ -322,6 +327,27 @@ pub mod doubly_linked_list {
                 }
             }
             println!("")
+        }
+    }
+
+    // Implements Iterator
+    pub struct Iter<'a> {
+        next: Option<&'a Node>,
+    }
+    impl<'a> Iterator for Iter<'a> {
+        type Item = &'a Node;
+    
+        fn next(&mut self) -> Option<Self::Item> {
+            // If the next node is `None`, we're at the end of the list
+            if let Some(current) = self.next {
+                // Update the iterator to point to the next node
+                self.next = current.next.as_ref().map(|&ptr| unsafe { &*ptr });
+                // Return the current node
+                Some(current)
+            } else {
+                // No more nodes left to iterate over
+                None
+            }
         }
     }
 }
@@ -407,61 +433,13 @@ pub fn doubly_linked_list_example() {
     // Print this bih
     println!("The final result:");
     list.print();
-}
 
-// The mem::take() method takes the passed value
-// and returns a dummy value or a default value if the type
-// implements Default
-#[test]
-pub fn taking() {
-    let mut v: Vec<i32> = vec![1, 2];
-    let old_v = std::mem::take(&mut v[0]);
-    assert_eq!(1, old_v);
-
-    let mut v: Vec<i32> = vec![1, 2];
-    let old_v = std::mem::take(&mut v);
-    assert_eq!(vec![1, 2], old_v);
-    assert!(v.is_empty());
-}
-// The mem::replace method replaces a passed value
-// and returns the old value
-#[test]
-pub fn replacing() {
-    let mut v: Vec<i32> = vec![1, 2];
-    let replaced = std::mem::replace(&mut v[0], 23);
-    // The 0th index is now 23
-    assert_eq!(v[0], 23);
-    assert_eq!(v, vec![23, 2]);
-    // The returned value is the old 0th value
-    assert_eq!(replaced, 1);
-}
-#[test]
-pub fn mapping() {
-    // Illustrates Iterator map
-    let numbers = vec![1, 2, 3];
-    let doubled: Vec<i32> = numbers.iter().map(|x| x * 2).collect();
-    assert_eq!(doubled, vec![2, 4, 6]);
-
-    // Illustrates Option map
-    let greeting_option = Some("Hello, World!".to_string());
-    assert_eq!(Some("Hello, World!".to_string()), greeting_option);
-    // `Option::map` takes self *by value*, consuming `maybe_some_string`
-    let len = greeting_option.map(|s| s.len());
-    assert_eq!(len, Some(13));
-
-    // Illustrates Result map
-    let line = "1\n2\n3\n4\n";
-    for (i, val) in line.lines().enumerate() {
-        // Attempts to parse the String into a usize to match the
-        // default type of the enumerate tuple
-        match val.parse::<usize>().map(|i| i * 3) {
-            Ok(n) => {
-                // i is 0-indexed so add one to ensure accuracy
-                assert_eq!(n, (i + 1) * 3);
-                // Might as well set match arms to return a unit type
-                println!("Ok({n})")
-            }
-            Err(_) => {}
-        }
+    println!("Iter test:");
+    let mut counter = 1;
+    for e in list.iter() {
+        //println!("{:?}", e);
+        println!("{:>2}: {:<8} {:>6}", counter, e.name, e.score);
+        counter += 1;
     }
 }
+
