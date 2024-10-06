@@ -165,8 +165,8 @@ pub mod doubly_linked_list {
     pub struct Node {
         pub name: String,
         pub score: i32,
-        pub prev: Link,
-        pub next: Link,
+        prev: Link,
+        next: Link,
     }
     impl Node {
         // Creates a new node with a unique, heap-allocated address via Box
@@ -181,7 +181,7 @@ pub mod doubly_linked_list {
     }
     //TODO: Implement a way to store a tail reference, implement rev()
     pub struct List {
-        pub head: Link,
+        head: Link,
         tail: Link,
         length: usize,
     }
@@ -266,8 +266,6 @@ pub mod doubly_linked_list {
                         if (*next).name == name && (*next).next.is_none() {
                             // Update the current node's next pointer
                             current_node.next = None;
-                            // Take ownership of the removed head to deallocate it properly
-                            let _dealloc_node = Box::from_raw(next);
                             println!("Removed tail");
                             self.length -= 1;
                             return;
@@ -278,13 +276,9 @@ pub mod doubly_linked_list {
                         if let Some(peek) = current_node.next {
                             (*peek).prev = None;
                             self.head = Some(peek);
-                            // Take ownership of the removed head to deallocate it properly
-                            let _dealloc_node = Box::from_raw(current_ptr);
                         } else {
                             // In case there is only one list element
                             self.head = None; 
-                            // Take ownership of the removed head to deallocate it properly
-                            let _dealloc_node = Box::from_raw(current_ptr);
                         }
                         println!("Removed head");
                         // Decrements the list size
@@ -298,8 +292,6 @@ pub mod doubly_linked_list {
                         (*current_node).next = (*next).next; 
                         // c.prev = a
                         (*next).prev = Some(current_node);
-                        // Take ownership of the removed head to deallocate it properly
-                        let _dealloc_node = Box::from_raw(next);
                         println!("Removed mid-list");
                         // Decrements the list size
                         self.length -= 1;
@@ -329,71 +321,85 @@ pub mod doubly_linked_list {
             println!("")
         }
     }
-
-    // Implements Iterator
     pub struct Iter<'a> {
         next: Option<&'a Node>,
     }
     impl<'a> Iterator for Iter<'a> {
         type Item = &'a Node;
-    
+        /** Returns each Node in the list until there are None */
         fn next(&mut self) -> Option<Self::Item> {
-            // If the next node is `None`, we're at the end of the list
+            // Update the iterator to point to the next node, return the current one,
+            // and if there aren't any left, its done
             if let Some(current) = self.next {
-                // Update the iterator to point to the next node
                 self.next = current.next.as_ref().map(|&ptr| unsafe { &*ptr });
-                // Return the current node
                 Some(current)
             } else {
-                // No more nodes left to iterate over
                 None
             }
         }
     }
-}
+    impl Drop for List {
+        /** List destructor */
+        fn drop(&mut self) {
+            unsafe {
+                let mut current_node_ptr = self.head;
+                while let Some(ptr) = current_node_ptr {
+                    // Store a pointer to the next Node before deallocating the current one
+                    let next_node_ptr = (*ptr).next;
+    
+                    // Deallocate the current node
+                    let _ = Box::from_raw(ptr);
+    
+                    // Advance the Node pointer
+                    current_node_ptr = next_node_ptr;
+                }
+            }
+        }
+    }
 
-#[test]
-fn doubly_linked_list_test() {
-    // Creates a new doubly-linked list
-    let mut list = doubly_linked_list::List::new();
-
-    // Creates and insert nodes with scores 1000 and 600
-    let a = doubly_linked_list::Node::new("a".to_string(), 1000);
-    let c = doubly_linked_list::Node::new("c".to_string(), 600);
-    list.insert(a);
-    list.insert(c);
-
-    // Creates and insert node b with a score between a and c
-    let b = doubly_linked_list::Node::new("b".to_string(), 800);
-    list.insert(b);
-
-    unsafe {
-        // Gets pointer to head/a
-        let head_ptr: *mut doubly_linked_list::Node = list.head.unwrap();
-        let a = &mut *head_ptr; // Unsafe de-ref
-        assert_eq!(a.name, "a");
-        assert_eq!(a.score, 1000);
-
-        // Follows a.next to b, verifies a.next by checking b's data
-        let b_ptr: *mut doubly_linked_list::Node = a.next.unwrap();
-        let b = &mut *b_ptr; // Unsafe de-ref
-        assert_eq!(b.name, "b");
-        assert_eq!(b.score, 800);
-
-        // Checks that b.prev -> a
-        assert_eq!(b.prev.unwrap(), head_ptr);
-
-        // Follows b.next to c, verifies b.next by checking c's data
-        let c_ptr: *mut doubly_linked_list::Node = b.next.unwrap();
-        let c = &mut *c_ptr; // Unsafe de-ref
-        assert_eq!(c.name, "c");
-        assert_eq!(c.score, 600);
-
-        // Checks that c.prev -> b
-        assert_eq!(c.prev.unwrap(), b_ptr);
-
-        // Verifies that c == tail || c.next -> None
-        assert!(c.next.is_none());
+    #[test]
+    fn test() {
+        // Creates a new doubly-linked list
+        let mut list = List::new();
+    
+        // Creates and insert nodes with scores 1000 and 600
+        let a = Node::new("a".to_string(), 1000);
+        let c = Node::new("c".to_string(), 600);
+        list.insert(a);
+        list.insert(c);
+    
+        // Creates and insert node b with a score between a and c
+        let b = Node::new("b".to_string(), 800);
+        list.insert(b);
+    
+        unsafe {
+            // Gets pointer to head/a
+            let head_ptr: *mut Node = list.head.unwrap();
+            let a = &mut *head_ptr; // Unsafe de-ref
+            assert_eq!(a.name, "a");
+            assert_eq!(a.score, 1000);
+    
+            // Follows a.next to b, verifies a.next by checking b's data
+            let b_ptr: *mut Node = a.next.unwrap();
+            let b = &mut *b_ptr; // Unsafe de-ref
+            assert_eq!(b.name, "b");
+            assert_eq!(b.score, 800);
+    
+            // Checks that b.prev -> a
+            assert_eq!(b.prev.unwrap(), head_ptr);
+    
+            // Follows b.next to c, verifies b.next by checking c's data
+            let c_ptr: *mut Node = b.next.unwrap();
+            let c = &mut *c_ptr; // Unsafe de-ref
+            assert_eq!(c.name, "c");
+            assert_eq!(c.score, 600);
+    
+            // Checks that c.prev -> b
+            assert_eq!(c.prev.unwrap(), b_ptr);
+    
+            // Verifies that c == tail || c.next -> None
+            assert!(c.next.is_none());
+        }
     }
 }
 
@@ -437,7 +443,6 @@ pub fn doubly_linked_list_example() {
     println!("Iter test:");
     let mut counter = 1;
     for e in list.iter() {
-        //println!("{:?}", e);
         println!("{:>2}: {:<8} {:>6}", counter, e.name, e.score);
         counter += 1;
     }
