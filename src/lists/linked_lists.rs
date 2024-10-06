@@ -110,7 +110,7 @@ pub mod singly_linked_list {
         }
     }
 }
-pub fn list_adt_driver_0() {
+pub fn singly_linked_list_example() {
     use singly_linked_list::{List, Node};
 
     // Creates a new (empty list)
