@@ -2,7 +2,7 @@
 /** A horribly unsafe doubly-linked list */
 ///////////////////////////////////////////
 
-// Creates a raw pointer to some Node
+// A raw pointer to some Node
 type Link = Option<*mut Node>;
 
 #[derive(Debug)]
@@ -227,10 +227,10 @@ impl Drop for List {
         unsafe {
             let mut current_node_ptr = self.head;
             while let Some(ptr) = current_node_ptr {
-                // Store a pointer to the next Node before deallocating the current one
+                // Store a pointer to the next Node before dropping the current one
                 let next_node_ptr = (*ptr).next;
 
-                // Deallocate the current node
+                // Boxes the current Node for automatic collection
                 let _ = Box::from_raw(ptr);
 
                 // Advance the Node pointer
