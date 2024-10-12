@@ -12,7 +12,9 @@ So much information has gone into making these implementations work, but these a
 For detailed explanations and analysis of the structures and algorithms presented here check out the (eratta-filled) ramblings I publish on the [headyimage](https://www.headyimage.com/cs/dsa/dsa-intro/).
 
 <details> 
+
 <summary> Lists </summary>
+
 The lists section centers around solutions to create a simple podium of sorted entries consisting of names and associated scores.
 
 
@@ -23,7 +25,9 @@ The lists section centers around solutions to create a simple podium of sorted e
 </details>
 
 <details> 
+
 <summary> Stacks </summary>
+
 This section builds on the structures and approaches established in the Lists section.
 
 
@@ -33,6 +37,7 @@ This section builds on the structures and approaches established in the Lists se
 </details>
 
 <details> 
+
 <summary> Algorithms </summary>
 
 - Simple binary search
@@ -40,7 +45,9 @@ This section builds on the structures and approaches established in the Lists se
 </details>
 
 <details> 
+
 <summary> Funsies </summary>
+
 This section contains all the solutions to remedial problems and examples I collected along the way and liked enough to want to remember.
 
 
