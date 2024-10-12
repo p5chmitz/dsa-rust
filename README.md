@@ -1,5 +1,5 @@
 ## Data Structures & Algorithms
-This is probably a terrible idea that Im going to regret, but what is life without a little spice?
+This is probably a terrible idea that Im going to regret, but with a bit of luck I hope to learn a thing or two _and_ retain my capacity for basic function in the process.
 
 ### Sources
 So much information has gone into making these implementations work, but these are the primary drivers of the content here:
@@ -12,22 +12,27 @@ So much information has gone into making these implementations work, but these a
 For detailed explanations and analysis of the structures and algorithms presented here check out the (eratta-filled) ramblings I publish on the [headyimage](https://www.headyimage.com/cs/dsa/dsa-intro/).
 
 <details> 
-
 <summary> Lists </summary>
+The lists section centers around solutions to create a simple podium of sorted entries consisting of names and associated scores.
 
-### Array list
-This section contains a dirt-simple array and Vector-based list implementation
+#### Array list
+A two-fer of dirt-simple array and Vector-based lists
 
-### Singly-linked list
+#### Singly-linked list
 Simple and safe
 
-### Doubly-linked list
+#### Doubly-linked list
 A horribly unsafe linked list with just enough Miri testing to not immediately set the computer on fire
-
-### Stack
-An unsafe stack based on the doubly-linked list implementation
-
 </details>
 
-With any luck I'll learn a thing or two _and_ retain my capacity for basic function in the process.
+<details> 
+<summary> Stacks & Queues </summary>
+This section builds on the structures established in the Lists section by implementing a stack with Vectors and as a singly-linked list design.
+
+#### Stack
+A Vector stack and an unsafe stack based on the doubly-linked list implementation
+
+#### Queue
+
+</details>
 
