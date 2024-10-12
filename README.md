@@ -18,9 +18,11 @@ For detailed explanations and analysis of the structures and algorithms presente
 The lists section centers around solutions to create a simple podium of sorted entries consisting of names and associated scores.
 
 
-- Array list: A two-fer of dirt-simple array and Vector-based lists
-- Singly-linked list: A simple, singly-owned, and safe linked list
-- Doubly-linked list: A horribly unsafe linked list with just enough Miri testing to not immediately set the computer on fire
+- Array-based list: A basic introduction to lists (and arrays) 
+- Vector-based list: Safe, easy, convenient
+- Singly-linked list: A safe, singly-owned, singly-linked list
+- Doubly-linked list: A horribly unsafe linked list with raw, mutable pointers and just enough Miri testing to not immediately set the computer on fire
+- Doubly-linked list: An incremental improvement over the first iteration with NonNull (coming soon)
 
 </details>
 
@@ -32,7 +34,7 @@ This section builds on the structures and approaches established in the Lists se
 
 
 - Vector-based: Simple and effective, likely the preferred approach
-- Singly-owned linked list: Just because a implementing a stack with a safe, linked-list is possible
+- Singly-owned linked list: Just because a implementing a stack with a safe, simple linked-list is possible
 
 </details>
 

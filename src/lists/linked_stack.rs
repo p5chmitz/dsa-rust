@@ -9,7 +9,6 @@ type Link = Option<*mut Frame>;
 pub struct Frame {
     pub name: String,
     pub score: i32,
-    prev: Link,
     next: Link,
 }
 impl Frame {
@@ -18,7 +17,6 @@ impl Frame {
         Box::new(Frame {
             name,
             score,
-            prev: None,
             next: None,
         })
     }
@@ -44,7 +42,7 @@ impl Stack {
             // Special case for empty list
             if self.head.is_none() {
 
-                println!("Inserts first node");
+                println!("Pushed first node {}", (*new_node_ptr).name);
                 // Sets initial head and tail pointers, increments the list size
                 self.head = Some(new_node_ptr);
                 self.length += 1;
@@ -55,7 +53,7 @@ impl Stack {
                 // Sets the new node's next pointer to the current head
                 (*new_node_ptr).next = self.head;
 
-                println!("Inserts new head");
+                println!("Pushed new head {}", (*new_node_ptr).name);
                 // Resets the list's head and increments the list size
                 self.head = Some(new_node_ptr);
                 self.length += 1;
@@ -194,12 +192,14 @@ pub fn example() {
     node = Frame::new("Dongus".to_string(), 873);
     list.push(node);
 
-    list.pop();
-    list.pop();
-    list.pop();
+    let mut popped: Frame = list.pop();
+    println!("Popped {}", popped.name);
+    popped = list.pop();
+    println!("Popped {}", popped.name);
+    popped = list.pop();
+    println!("Popped {}", popped.name);
 
     // Print this bih
     println!("The final list contains {} results:", list.length);
     list.print();
 }
-

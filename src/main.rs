@@ -1,10 +1,19 @@
+#![allow(dead_code, unused_imports)]
+
 mod lists;
 mod maw;
 mod sandbox;
 mod tgg;
 
-use crate::lists::array_lists;
-use crate::lists::linked_lists;
+use crate::lists::{
+    array_lists,
+    //linked_lists,
+    doubly_linked_list_1,
+    doubly_linked_list_2,
+    singly_linked_list,
+    stack,
+};
+
 use crate::tgg::{tgg_04, tgg_05};
 
 fn main() {
@@ -115,18 +124,25 @@ fn main() {
 
     // Static array list implementation
     println!("Static array list:");
-    array_lists::list_adt_driver_0();
+    //array_lists::list_adt_driver_0();
 
     // Dynamic array list implementation
     println!("Dynamic array list:");
-    array_lists::list_adt_driver_1();
+    //array_lists::list_adt_driver_1();
 
     // Singly linked list
     println!("Singly-linked list:");
-    linked_lists::list_adt_driver_0();
+    //linked_lists::singly_linked_list_example();
+    //singly_linked_list::example();
 
     // Doubly linked list
-    linked_lists::doubly_linked_list_driver();
+    println!("Doubly-linked list:");
+    //doubly_linked_list_1::example();
+    println!("\nDoubly-linked list (with NonNull):");
+    doubly_linked_list_2::example();
+
+    println!("\nStack:");
+    stack::example();
 
     // Unsafe tests, I think???
     let mut value = 42;
