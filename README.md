@@ -14,7 +14,8 @@ For detailed explanations and analysis of the structures and algorithms presente
 <details> 
 <summary> Lists </summary>
 The lists section centers around solutions to create a simple podium of sorted entries consisting of names and associated scores.
-<br>
+
+
 - Array list: A two-fer of dirt-simple array and Vector-based lists
 - Singly-linked list: A simple, singly-owned, and safe linked list
 - Doubly-linked list: A horribly unsafe linked list with just enough Miri testing to not immediately set the computer on fire
@@ -24,7 +25,8 @@ The lists section centers around solutions to create a simple podium of sorted e
 <details> 
 <summary> Stacks </summary>
 This section builds on the structures and approaches established in the Lists section.
-<br>
+
+
 - Vector-based: Simple and effective, likely the preferred approach
 - Singly-owned linked list: Just because a implementing a stack with a safe, linked-list is possible
 
@@ -32,7 +34,7 @@ This section builds on the structures and approaches established in the Lists se
 
 <details> 
 <summary> Algorithms </summary>
-<br>
+
 - Simple binary search
 
 </details>
@@ -40,6 +42,7 @@ This section builds on the structures and approaches established in the Lists se
 <details> 
 <summary> Funsies </summary>
 This section contains all the solutions to remedial problems and examples I collected along the way and liked enough to want to remember.
+
 
 - Disk usage calculator
 - Identifying unique elements in a Vector
