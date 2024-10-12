@@ -1,5 +1,5 @@
 ## Data Structures & Algorithms
-This is probably a terrible idea that Im going to regret, but with a bit of luck I hope to learn a thing or two _and_ retain my capacity for basic function in the process.
+This is probably a terrible idea that Im going to regret. Im here learn a thing or two, and with a bit of luck I'll retain my capacity for basic function in the process.
 
 ### Sources
 So much information has gone into making these implementations work, but these are the primary drivers of the content here:
@@ -15,9 +15,9 @@ For detailed explanations and analysis of the structures and algorithms presente
 <summary> Lists </summary>
 The lists section centers around solutions to create a simple podium of sorted entries consisting of names and associated scores.
 
-- Array list: A two-fer of dirt-simple array and Vector-based lists
-- Singly-linked list: A simple, singly-owned, and safe linked list
-- Doubly-linked list: A horribly unsafe linked list with just enough Miri testing to not immediately set the computer on fire
+    - Array list: A two-fer of dirt-simple array and Vector-based lists
+    - Singly-linked list: A simple, singly-owned, and safe linked list
+    - Doubly-linked list: A horribly unsafe linked list with just enough Miri testing to not immediately set the computer on fire
 
 </details>
 
@@ -25,15 +25,15 @@ The lists section centers around solutions to create a simple podium of sorted e
 <summary> Stacks </summary>
 This section builds on the structures and approaches established in the Lists section.
 
-- Vector-based: Simple and effective, likely the preferred approach
-- Singly-owned linked list: Just because a implementing a stack with a safe, linked-list is possible
+    - Vector-based: Simple and effective, likely the preferred approach
+    - Singly-owned linked list: Just because a implementing a stack with a safe, linked-list is possible
 
 </details>
 
 <details> 
 <summary> Algorithms </summary>
 
-- Simple binary search
+    - Simple binary search
 
 </details>
 
