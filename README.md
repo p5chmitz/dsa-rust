@@ -15,22 +15,18 @@ For detailed explanations and analysis of the structures and algorithms presente
 <summary> Lists </summary>
 The lists section centers around solutions to create a simple podium of sorted entries consisting of names and associated scores.
 
-- Array list
-A two-fer of dirt-simple array and Vector-based lists
+- Array list: A two-fer of dirt-simple array and Vector-based lists
 
-- Singly-linked list
-Simple and safe
+- Singly-linked list: Simple and safe
 
-- Doubly-linked list
-A horribly unsafe linked list with just enough Miri testing to not immediately set the computer on fire
+- Doubly-linked list: A horribly unsafe linked list with just enough Miri testing to not immediately set the computer on fire
 </details>
 
 <details> 
 <summary> Stacks & Queues </summary>
 This section builds on the structures established in the Lists section by implementing a stack with Vectors and as a singly-linked list design.
 
-- Stack
-A Vector stack and an unsafe stack based on the doubly-linked list implementation
+- Stack: A Vector stack and an unsafe stack based on the doubly-linked list implementation
 
 - Queue
 
