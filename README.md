@@ -18,10 +18,10 @@ For detailed explanations and analysis of the structures and algorithms presente
 The lists section centers around solutions to create a simple podium of sorted entries consisting of names and associated scores.
 
 
-- Array-based list: A basic introduction to lists (and arrays) 
-- Vector-based list: Safe, easy, convenient
-- Singly-linked list: A safe, singly-owned, singly-linked list
-- Doubly-linked list: A horribly unsafe linked list with raw, mutable pointers and just enough Miri testing to not immediately set the computer on fire
+- [Array-based list](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/array_list.rs): A basic introduction to lists (and arrays) 
+- [Vector-based list](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/vector_list.rs): Safe, easy, convenient
+- [Singly-linked list](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/singly_linked_list.rs): A safe, singly-owned, singly-linked list
+- [Doubly-linked list](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/doubly_linked_list_2.rs): A horribly unsafe linked list with raw, mutable pointers and just enough Miri testing to not immediately set the computer on fire
 - Doubly-linked list: An incremental improvement over the first iteration with NonNull (coming soon)
 
 </details>
@@ -33,8 +33,8 @@ The lists section centers around solutions to create a simple podium of sorted e
 This section builds on the structures and approaches established in the Lists section.
 
 
-- Vector-based: Simple and effective, likely the preferred approach
-- Singly-owned linked list: Just because a implementing a stack with a safe, simple linked-list is possible
+- [Vector-based stack](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/vector_stack.rs): Simple and effective, likely the preferred approach
+- [Singly-owned linked list stack](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/linked_stack.rs): Just because a implementing a stack with a safe, simple linked-list is possible
 
 </details>
 
