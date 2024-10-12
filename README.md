@@ -16,19 +16,38 @@ For detailed explanations and analysis of the structures and algorithms presente
 The lists section centers around solutions to create a simple podium of sorted entries consisting of names and associated scores.
 
 - Array list: A two-fer of dirt-simple array and Vector-based lists
-
-- Singly-linked list: Simple and safe
-
+- Singly-linked list: A simple, singly-owned, and safe linked list
 - Doubly-linked list: A horribly unsafe linked list with just enough Miri testing to not immediately set the computer on fire
+
 </details>
 
 <details> 
-<summary> Stacks & Queues </summary>
-This section builds on the structures established in the Lists section by implementing a stack with Vectors and as a singly-linked list design.
+<summary> Stacks </summary>
+This section builds on the structures and approaches established in the Lists section.
 
-- Stack: A Vector stack and an unsafe stack based on the doubly-linked list implementation
+- Vector-based: Simple and effective, likely the preferred approach
+- Singly-owned linked list: Just because a implementing a stack with a safe, linked-list is possible
 
-- Queue
+</details>
+
+<details> 
+<summary> Algorithms </summary>
+
+- Simple binary search
+
+</details>
+
+<details> 
+<summary> Funsies </summary>
+This section contains all the solutions to remedial problems and examples I collected along the way and liked enough to want to remember.
+
+- Disk usage calculator
+- Identifying unique elements in a Vector
+- Calculate pre-fix averages of a Vector
+- Simple factorial calculator
+- Array reversal
+- Fibonacci sequence calculator
+- Tower of Hanoi solution
 
 </details>
 
