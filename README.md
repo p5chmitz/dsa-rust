@@ -13,7 +13,6 @@ This section contains implementations for a select set of classical data structu
 
 The lists section centers around solutions to create a simple podium of sorted entries consisting of names and associated scores.
 
-
 - [Array-based list](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/array_list.rs): A basic introduction to lists (and arrays) 
 - [Vector-based list](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/vector_list.rs): Safe, easy, convenient
 - [Singly-linked list](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/singly_linked_list.rs): A safe, singly-owned, singly-linked list
@@ -28,7 +27,6 @@ The lists section centers around solutions to create a simple podium of sorted e
 
 This section builds on the structures and approaches established in the Lists section.
 
-
 - [Vector-based stack](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/vector_stack.rs): Simple and effective, likely the preferred approach
 - [Singly-owned linked list stack](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/linked_stack.rs): Just because a implementing a stack with a safe, simple linked-list is possible
 
@@ -36,10 +34,9 @@ This section builds on the structures and approaches established in the Lists se
 
 <details> 
 
-### Algorithms
-An exploration on some searching, sorting, and graph algorithms.
-
 <summary> Algorithms </summary>
+
+An exploration on some searching, sorting, and graph algorithms.
 
 - Simple binary search
 
@@ -47,13 +44,9 @@ An exploration on some searching, sorting, and graph algorithms.
 
 <details> 
 
-### Extra credit
-This section contains elements collected along the way. The material here represents mostly inexpensive explorations into application of the materials covered or as curios intended to maintain engagement. All work and no play makes Peter yadda yadda.
-
 <summary> Funsies </summary>
 
 This section contains all the solutions to remedial problems and examples I collected along the way and liked enough to want to remember.
-
 
 - Disk usage calculator
 - Identifying unique elements in a Vector
