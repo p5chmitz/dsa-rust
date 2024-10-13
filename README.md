@@ -4,9 +4,6 @@ This is probably a terrible idea, but with a bit of luck hopefully I'll learn a 
 ## Contents
 For detailed explanations and analysis of the structures and algorithms presented here check out the (eratta-filled) ramblings I publish on the [headyimage](https://www.headyimage.com/cs/dsa/dsa-intro/).
 
-### Data Structures
-This section contains implementations for a select set of classical data structures.
-
 <details> 
 
 <summary> Lists </summary>
