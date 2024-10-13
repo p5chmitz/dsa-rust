@@ -1,15 +1,11 @@
 ## Data Structures & Algorithms
-This is probably a terrible idea that Im going to regret. Im here learn a thing or two, and with a bit of luck I'll retain my capacity for basic function in the process.
+This is probably a terrible idea, but with a bit of luck hopefully I'll learn a thing or two and retain my capacity for basic function in the process.
 
-### Sources
-So much information has gone into making these implementations work, but these are the primary drivers of the content here:
-- [_Data Structures & Algorithms in Java_](https://www.wiley.com/en-au/Data+Structures+and+Algorithms+in+Java%2C+6th+Edition-p-9781118771334) by Goodrich, Tamassia, and Goldwasser
-- [_Data Structures and Algorithm Analysis in Java_](https://www.pearson.com/en-us/subject-catalog/p/data-structures-and-algorithm-analysis-in-java/P200000003475/9780137518821) (and an older edition in C) by Weiss
-- [_The Algorithm Design Manual_](https://www.algorist.com/) by Skiena
-- [_Learn Rust With Entirely Too Many Linked Lists_](https://rust-unofficial.github.io/too-many-lists/index.html) by Aria Desires (with additional contributions by the Rust community)
-
-### Contents
+## Contents
 For detailed explanations and analysis of the structures and algorithms presented here check out the (eratta-filled) ramblings I publish on the [headyimage](https://www.headyimage.com/cs/dsa/dsa-intro/).
+
+### Data Structures
+This section contains implementations for a select set of classical data structures.
 
 <details> 
 
@@ -40,6 +36,9 @@ This section builds on the structures and approaches established in the Lists se
 
 <details> 
 
+### Algorithms
+An exploration on some searching, sorting, and graph algorithms.
+
 <summary> Algorithms </summary>
 
 - Simple binary search
@@ -47,6 +46,9 @@ This section builds on the structures and approaches established in the Lists se
 </details>
 
 <details> 
+
+### Extra credit
+This section contains elements collected along the way. The material here represents mostly inexpensive explorations into application of the materials covered or as curios intended to maintain engagement. All work and no play makes Peter yadda yadda.
 
 <summary> Funsies </summary>
 
@@ -62,4 +64,11 @@ This section contains all the solutions to remedial problems and examples I coll
 - Tower of Hanoi solution
 
 </details>
+
+## Sources
+So much information has gone into making these implementations work, but these are the primary drivers of the content here:
+- [_Data Structures & Algorithms in Java_](https://www.wiley.com/en-au/Data+Structures+and+Algorithms+in+Java%2C+6th+Edition-p-9781118771334) by Goodrich, Tamassia, and Goldwasser
+- [_Data Structures and Algorithm Analysis in Java_](https://www.pearson.com/en-us/subject-catalog/p/data-structures-and-algorithm-analysis-in-java/P200000003475/9780137518821) (and an older edition in C) by Weiss
+- [_The Algorithm Design Manual_](https://www.algorist.com/) by Skiena
+- [_Learn Rust With Entirely Too Many Linked Lists_](https://rust-unofficial.github.io/too-many-lists/index.html) by Aria Desires (with additional contributions by the Rust community)
 
