@@ -2,16 +2,11 @@
 
 mod lists;
 mod maw;
-mod sandbox;
 mod tgg;
 
 use crate::lists::{
-    array_lists,
-    //linked_lists,
-    doubly_linked_list_1,
-    doubly_linked_list_2,
-    singly_linked_list,
-    stack,
+    array_list, doubly_linked_list_1, doubly_linked_list_2, linked_stack, singly_linked_list,
+    vector_list,
 };
 
 use crate::tgg::{tgg_04, tgg_05};
@@ -141,8 +136,8 @@ fn main() {
     println!("\nDoubly-linked list (with NonNull):");
     doubly_linked_list_2::example();
 
-    println!("\nStack:");
-    stack::example();
+    println!("\nLinked-list-based stack:");
+    linked_stack::example();
 
     // Unsafe tests, I think???
     let mut value = 42;

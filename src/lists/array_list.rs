@@ -1,6 +1,6 @@
-//#[allow(dead_code)]
-
-// This implementation represents a sorted version of the list ADT and uses only arrays
+///////////////////////////////////////
+/** A simple, owned array-based list */
+///////////////////////////////////////
 
 #[derive(Default)] // Required for generic array initialization
 pub struct PodiumEntry {
@@ -112,7 +112,8 @@ impl PodiumEntry {
 /** This driver illustrates an array implementation for the list ADT... using no vectors */
 pub fn example() {
     // Imports the list implementation and creates default list
-    use array_list::PodiumEntry;
+    //use crate::lists::array_list::PodiumEntry;
+    use super::array_list::PodiumEntry;
     let mut podium = PodiumEntry::new();
 
     // Sample data to build a basic set of PodiumEntry instances

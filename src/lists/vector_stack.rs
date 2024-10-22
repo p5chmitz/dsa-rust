@@ -1,19 +1,158 @@
-///////////////////////////
-/** A vector-based stack */
-///////////////////////////
+/////////////////////////////////////
+/** A vector-based stack (wrapper) */
+/////////////////////////////////////
 
-// Requires a lifetime specifier on the reference type because the reference 
-// doesn't own the data it points to, meaning the data could be mutated, moved, 
-// or dropped, potentially invalidating the reference;
-// The lifetime guarantees that the referenced data lives at least as long as 
-// the `Frame` instance, ensuring the reference remains valid for its lifetime
-pub struct Frame<'a> {
-    pub term: f64,
-    pub operator: &'a str, // Lifetime specifier required for references
+/** Vec itself can be used as a stack with push, pop, and last;
+ * This exercise reimplements these operations as add, remove, and peek respectively 
+ * as well as adding an instance variable size that cannot be negative */
+mod wrapper {
+    pub struct Stack {
+        data: Vec<char>,
+        size: usize,
+    }
+    impl Stack {
+        fn new() -> Stack {
+            Stack {
+                data: Vec::new(),
+                size: 0,
+            }
+        }
+        /** Adds an element to the stack */
+        fn add(&mut self, s: char) {
+            self.size += 1;
+            self.data.push(s) // Uses push() from Vec
+        }
+        /** Peeks at the top of the list without deleting the element */
+        fn peek(&self) -> Option<&char> {
+            self.data.last()
+        }
+        /** Returns and deletes the top of the stack */
+        fn remove(&mut self) -> Option<char> {
+            self.size -= 1;
+            self.data.pop()
+        }
+    }
+
+    /** Example of a nested symbol balancer using a stack;
+     *  Reads each character from the input string and matches it;
+     *   - if the char is an opening symbol its pushed to the stack
+     *   - if the char is a closing symbol and the stack size is zero: error
+     *   - if the char is a closing symbol and it matches an opening char on the stac, its popped */
+    pub fn balance(s: String) -> bool {
+        let mut symbols = Stack::new();
+
+        for e in s.chars() {
+            match e {
+                '[' | '{' | '(' => {
+                    symbols.add(e);
+                }
+                ']' | '}' | ')' => {
+                    // Checks that all closing symbols have a matching opener,
+                    // if it does, the opener is popped
+                    if symbols.size == 0 {
+                        panic!("Error: Unexpected closing symbol");
+                    } else {
+                        let check = *symbols.peek().expect("Error: No symbols on stack");
+                        if (check == '[' && e == ']')
+                            || (check == '{' && e == '}')
+                            || (check == '(' && e == ')')
+                        {
+                            symbols.remove();
+                        }
+                    }
+                }
+                _ => {}
+            }
+        }
+        // Checks that all opening symbols have a matching closer
+        if symbols.size > 0 {
+            panic!("Error: Missing closing symbol")
+        }
+        true
+    }
+
+    #[test]
+    fn success() {
+        let input = "{[({[]}[(())]){{{}}{[()()()[{}]]}}]}".to_string();
+        assert!(balance(input));
+    }
+    #[test]
+    #[should_panic(expected = "Error: Unexpected closing symbol")]
+    fn mismatched_symbols_fail() {
+        let input = "{{{}}{{}}}{{}{}{{{}{}}}}}{{{}{}".to_string(); // Fails somewhere mid-string
+        assert!(!balance(input), "");
+    }
+    #[test]
+    #[should_panic(expected = "Error: Unexpected closing symbol")]
+    fn illegal_opening_brace_fail() {
+        let input = "}{[]}{}".to_string(); // Fails with leading closing symbol
+        assert!(!balance(input), "");
+    }
+    #[test]
+    #[should_panic(expected = "Error: Missing closing symbol")]
+    fn open_block_fail() {
+        let input = "{[]}{".to_string();
+        assert!(!balance(input), "");
+    }
 }
-impl<'a> Frame<'a> {}
-pub struct Stack<Frame> {
-    data: Vec<Frame>,
-    length: usize
+
+// Illustrates that the previous wrapper was completely unnecessary because the good people
+// at Rust already made the Vec type compatible with stack operations
+mod raw {
+    pub fn balance(s: String) -> bool {
+        let mut symbols = Vec::new();
+
+        for e in s.chars() {
+            match e {
+                '[' | '{' | '(' => {
+                    symbols.push(e);
+                }
+                ']' | '}' | ')' => {
+                    // Checks that all closing symbols have a matching opener,
+                    // if it does, the opener is popped
+                    if symbols.len() == 0 {
+                        panic!("Error: Unexpected closing symbol");
+                    } else {
+                        let check = *symbols.last().expect("Error: No symbols on stack");
+                        if (check == '[' && e == ']')
+                            || (check == '{' && e == '}')
+                            || (check == '(' && e == ')')
+                        {
+                            symbols.pop();
+                        }
+                    }
+                }
+                _ => {}
+            }
+        }
+        // Checks that all opening symbols have a matching closer
+        if symbols.len() > 0 {
+            panic!("Error: Missing closing symbol")
+        }
+        true
+    }
+
+    #[test]
+    fn success() {
+        let input = "{[({[]}[(())]){{{}}{[()()()[{}]]}}]}".to_string();
+        assert!(balance(input));
+    }
+    #[test]
+    #[should_panic(expected = "Error: Unexpected closing symbol")]
+    fn mismatched_symbols_fail() {
+        let input = "{{{}}{{}}}{{}{}{{{}{}}}}}{{{}{}".to_string(); // Fails somewhere mid-string
+        assert!(!balance(input), "");
+    }
+    #[test]
+    #[should_panic(expected = "Error: Unexpected closing symbol")]
+    fn illegal_opening_brace_fail() {
+        let input = "}{[]}{}".to_string(); // Fails with leading closing symbol
+        assert!(!balance(input), "");
+    }
+    #[test]
+    #[should_panic(expected = "Error: Missing closing symbol")]
+    fn open_block_fail() {
+        let input = "{[]}{".to_string();
+        assert!(!balance(input), "");
+    }
 }
-impl<Frame> Stack<Frame> {}

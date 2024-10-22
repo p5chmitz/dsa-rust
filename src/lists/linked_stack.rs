@@ -41,7 +41,6 @@ impl Stack {
         unsafe {
             // Special case for empty list
             if self.head.is_none() {
-
                 println!("Pushed first node {}", (*new_node_ptr).name);
                 // Sets initial head and tail pointers, increments the list size
                 self.head = Some(new_node_ptr);
@@ -91,16 +90,6 @@ pub struct Iter<'a> {
 impl<'a> Iterator for Iter<'a> {
     type Item = &'a Frame;
     /** Returns each Frame in the list until there are None */
-    //fn next(&mut self) -> Option<Self::Item> {
-    //    // Update the iterator to point to the next node, return the current one,
-    //    // and if there aren't any left, its done
-    //    if let Some(current) = self.next {
-    //        self.next = current.next.as_ref().map(|&ptr| unsafe { &*ptr });
-    //        Some(current)
-    //    } else {
-    //        None
-    //    }
-    //}    
     fn next(&mut self) -> Option<Self::Item> {
         self.next.take().map(|current| {
             self.next = current.next.as_ref().map(|&ptr| unsafe { &*ptr });
@@ -132,15 +121,15 @@ fn test() {
     // Creates a new doubly-linked list
     let mut list = Stack::new();
 
-    // Creates initial head and tail nodes 
+    // Creates initial head and tail nodes
     let a = Frame::new("a".to_string(), 101);
     let b = Frame::new("b".to_string(), 91);
     let c = Frame::new("c".to_string(), 73);
 
     unsafe {
         // Test case: Inserts first Frame (push)
-        list.push(c); // the list has a head, and its c 
-        let c_ptr: *mut Frame = list.head.unwrap(); 
+        list.push(c); // the list has a head, and its c
+        let c_ptr: *mut Frame = list.head.unwrap();
         let c_ref: &mut Frame = &mut *c_ptr;
         assert_eq!(c_ref.name, "c");
         assert_eq!(c_ref.score, 73);
@@ -148,14 +137,14 @@ fn test() {
 
         // Test case: Replace head (push)
         list.push(b); // head is now b
-        let b_ptr: *mut Frame = list.head.unwrap(); 
+        let b_ptr: *mut Frame = list.head.unwrap();
         let b_ref: &mut Frame = &mut *b_ptr;
         assert_eq!(b_ref.name, "b");
         assert_eq!(b_ref.score, 91);
         assert_eq!(b_ref.next, Some(c_ptr));
 
         list.push(a); // head is now a
-        let a_ptr: *mut Frame = list.head.unwrap(); 
+        let a_ptr: *mut Frame = list.head.unwrap();
         let a_ref: &mut Frame = &mut *a_ptr;
         assert_eq!(a_ref.name, "a");
         assert_eq!(a_ref.score, 101);
@@ -166,7 +155,6 @@ fn test() {
         assert_eq!(p.name, "a");
         assert_eq!(p.score, 101);
         assert_eq!(p.next, Some(b_ptr));
-
     }
 }
 

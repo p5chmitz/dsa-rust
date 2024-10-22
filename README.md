@@ -2,7 +2,7 @@
 This is probably a terrible idea, but with a bit of luck hopefully I'll learn a thing or two and retain my capacity for basic function in the process.
 
 ## Contents
-For detailed explanations and analysis of the structures and algorithms presented here check out the (eratta-filled) ramblings I publish on the [headyimage](https://www.headyimage.com/cs/dsa/dsa-intro/).
+For detailed explanations and analysis of the structures and algorithms presented here check out the (error-filled) ramblings I publish on the [headyimage](https://www.headyimage.com/cs/dsa/dsa-intro/).
 
 <details> 
 

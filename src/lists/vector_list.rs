@@ -1,7 +1,6 @@
-//#[allow(dead_code)]
-
-// A reimplementation of the podium structure in array_list.rs with vectors instead
-// This implementation represents a sorted version of the list ADT using vectors for sanity
+////////////////////////////////////////
+/** A simple, owned vector-based list */
+////////////////////////////////////////
 
 #[derive(Default)] // Required for generic array initialization
 pub struct PodiumEntry {
@@ -83,7 +82,8 @@ impl PodiumEntry {
 /** This driver illustrates an array implementation for the list ADT... using no vectors */
 pub fn example() {
     // Imports the list implementation and creates default list
-    use vec_list::PodiumEntry;
+    //use crate::lists::vector_list::PodiumEntry;
+    use super::vector_list::PodiumEntry;
     let mut podium = PodiumEntry::new();
 
     // Sample data to build a basic set of PodiumEntry instances
@@ -123,4 +123,3 @@ pub fn example() {
     println!("Final podium:");
     PodiumEntry::print(false, &podium);
 }
-

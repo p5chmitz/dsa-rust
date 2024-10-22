@@ -110,7 +110,6 @@ impl List {
 }
 
 pub fn example() {
-
     // Creates a new (empty list)
     let mut podium: List = List::new();
     println!("Created a new list!");
