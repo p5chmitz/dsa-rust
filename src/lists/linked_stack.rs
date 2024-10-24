@@ -22,7 +22,7 @@ impl Frame {
 // - new() -> Stack
 // - push(&mut self, node: Box<Frame>)
 // - peek(&self) -> Option<char>
-// - pop(&mut self) -> Frame
+// - pop(&mut self) -> Option<Frame>
 // - iter(&self) -> Iter
 // - print(&self)
 pub struct Stack {
