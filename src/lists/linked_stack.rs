@@ -58,14 +58,15 @@ impl Stack {
         self.length += 1;
         return
     }
-    /** Removes the head frame */
-    pub fn pop(&mut self) -> Frame {
+    /** Removes and returns the head frame */
+    pub fn pop(&mut self) -> Option<Frame> {
         unsafe {
-            let head: *mut Frame = self.head.unwrap();
-            self.head = (*head).next;
-            let popped: Frame = *Box::from_raw(head);
-            self.length -= 1;
-            popped
+            if let Some(head) = self.head {
+                self.head = (*head).next;
+                let popped: Frame = *Box::from_raw(head);
+                self.length -= 1;
+                Some(popped)
+            } else { None }
         }
     }
     // NOTE: There is no need to iterate over the stack
@@ -116,40 +117,7 @@ impl Drop for Stack {
     }
 }
 
-#[test]
-fn mem_test() {
-    // Creates a new doubly-linked list
-    let mut list = Stack::new();
-
-    // Creates initial head and tail nodes
-    let a = Box::new(Frame::new('{'));
-    let b = Box::new(Frame::new('}'));
-    let c = Box::new(Frame::new('{'));
-
-    unsafe {
-        list.push(a); // the list has a head, and its c
-        let a_ptr: *mut Frame = list.head.unwrap();
-        let a_ref: &mut Frame = &mut *a_ptr;
-        assert_eq!(a_ref.symbol, '{');
-        assert_eq!(a_ref.next, None);
-
-        // Test case: Replace head (push)
-        list.push(b); // head is now b
-        let b_ptr: *mut Frame = list.head.unwrap();
-        let b_ref: &mut Frame = &mut *b_ptr;
-        assert_eq!(b_ref.symbol, '}');
-        assert_eq!(b_ref.next, Some(a_ptr));
-
-        list.push(c); // head is now a
-        let c_ptr: *mut Frame = list.head.unwrap();
-        let c_ref: &mut Frame = &mut *c_ptr;
-        assert_eq!(c_ref.symbol, '{');
-        assert_eq!(c_ref.next, Some(b_ptr));
-
-    }
-}
-
-/** Requires an unsafe operation */
+/** Example funciton that uses the stack to check if a String contains balanced sets of braces */
 pub fn balance(s: String) -> bool {
     let mut symbols = Stack::new();
 
@@ -187,9 +155,45 @@ pub fn balance(s: String) -> bool {
 }
 
 #[test]
+fn basic_mem_test() {
+    // Creates a new doubly-linked list
+    let mut list = Stack::new();
+
+    // Creates initial head and tail nodes
+    let a = Box::new(Frame::new('{'));
+    let b = Box::new(Frame::new('}'));
+    let c = Box::new(Frame::new('{'));
+
+    unsafe {
+        list.push(a); // the list has a head, and its c
+        let a_ptr: *mut Frame = list.head.unwrap();
+        let a_ref: &mut Frame = &mut *a_ptr;
+        assert_eq!(a_ref.symbol, '{');
+        assert_eq!(a_ref.next, None);
+
+        // Test case: Replace head (push)
+        list.push(b); // head is now b
+        let b_ptr: *mut Frame = list.head.unwrap();
+        let b_ref: &mut Frame = &mut *b_ptr;
+        assert_eq!(b_ref.symbol, '}');
+        assert_eq!(b_ref.next, Some(a_ptr));
+
+        list.push(c); // head is now a
+        let c_ptr: *mut Frame = list.head.unwrap();
+        let c_ref: &mut Frame = &mut *c_ptr;
+        assert_eq!(c_ref.symbol, '{');
+        assert_eq!(c_ref.next, Some(b_ptr));
+
+    }
+}
+#[test]
 fn success() {
     let input = "{[({[]}[(())]){{}{}{([{{}}])}{{}}{[()()()[{}]]}}]}".to_string();
     assert!(balance(input));
+
+    let input = "{\"name\":\"Peter\",\"age\":40,\"birthplace\":{\"city\":\"Iowa City\",\"state\":\"Iowa\"}}".to_string();
+    assert!(balance(input));
+
 }
 #[test]
 #[should_panic(expected = "Error: Missing closing symbol")]
