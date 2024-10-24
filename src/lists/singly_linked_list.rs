@@ -1,6 +1,8 @@
 //#![allow(dead_code)]
 
-/** This implementation is singly owned */
+/////////////////////////////////
+/** A safe, singly-linked list */
+/////////////////////////////////
 
 pub struct Node {
     name: String,

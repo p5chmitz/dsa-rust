@@ -136,9 +136,6 @@ fn main() {
     println!("\nDoubly-linked list (with NonNull):");
     doubly_linked_list_2::example();
 
-    println!("\nLinked-list-based stack:");
-    linked_stack::example();
-
     // Unsafe tests, I think???
     let mut value = 42;
 
