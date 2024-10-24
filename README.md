@@ -25,8 +25,10 @@ The lists section centers around solutions to create a simple podium of sorted e
 This section builds on the structures and approaches established in the Lists section.
 
 - [Vector-based stack](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/vector_stack.rs): Simple and effective, likely the preferred approach if Vec couldn't already serve as a fully-featured stack implementation
-- [Safe, singly-owned list stack](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/linked_stack.rs): The easiest of the difficult options; Seriously, just use `Vec`
-- [Unsafe, singly-linked list stack](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/linked_stack.rs): Just because its possible and we somehow thrive on making things more difficult than they have to be
+- [Safe, singly-owned stack](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/linked_stack.rs): The easiest of the difficult options; Seriously, just use `Vec`
+- [Unsafe, singly-linked stack](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/linked_stack.rs): Just because its possible and we somehow thrive on making things more difficult than they have to be
+
+
 - [Vector-based queue](): Its a queue, why aren't you using `Vec`?
 - [Unsafe, doubly-linked queue](): Something something both ends
 
