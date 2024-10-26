@@ -5,7 +5,7 @@ mod maw;
 mod tgg;
 
 use crate::lists::{
-    array_list, doubly_linked_list_1, doubly_linked_list_2, linked_stack, singly_linked_list,
+    array_list, doubly_linked_list_1, doubly_linked_list_2, unsafe_linked_stack, singly_linked_list,
     vector_list,
 };
 

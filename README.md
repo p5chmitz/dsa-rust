@@ -22,11 +22,11 @@ The lists section centers around solutions to create a simple podium of sorted e
 
 <summary> Stacks & Queues </summary>
 
-This section builds on the structures and approaches established in the Lists section.
+This section builds on the structures and approaches established in the Lists section. Instead of featuring solutions to implement a podium, this section features slightly more pragmatic solutions including a symbol balancer for the stack implementation. As it turns out, Rust's `Vec` type can serve as a fully-funcitonal stack implementation right out of the box with `push`, `pop`, and `last` included methods. This module is all about learning though, so it starts with a wrapper to illustrate concepts.
 
-- [Vector-based stack](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/vector_stack.rs): Simple and effective, likely the preferred approach if Vec couldn't already serve as a fully-featured stack implementation
-- [Safe, singly-owned stack](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/linked_stack.rs): The easiest of the difficult options; Seriously, just use `Vec`
-- [Unsafe, singly-linked stack](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/linked_stack.rs): Just because its possible and we somehow thrive on making things more difficult than they have to be
+- [Vector-based stack](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/vector_stack.rs): Simple and effective, likely the preferred approach; This crate includes two modules that implement a symbol-balancer; One uses a raw `Vec` implementation and the other implements a `Vec` wrapper for funsies
+- [Safe, singly-owned, singly-linked stack](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/linked_stack.rs): The easiest of the custom options; Seriously, just use `Vec`
+- [Unsafe singly-linked stack](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/linked_stack.rs): Just because its possible and we somehow thrive on making things more difficult than they have to be
 - [Vector-based queue](): Its a queue, why aren't you using `Vec`?
 - [Unsafe, doubly-linked queue](): Something something both ends
 
