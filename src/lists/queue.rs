@@ -81,10 +81,8 @@ pub mod circular_queue {
     impl<T> CircularQueue<T> {
         /** Creates a queue that contains `capacity` number of elements */
         pub fn new(capacity: usize) -> CircularQueue<T> {
-            // Use `with_capacity` and then populate with `None`
             let mut data = Vec::with_capacity(capacity);
             data.resize_with(capacity, || None); // Fills `data` with `None`
-
             CircularQueue {
                 data,
                 front: 0,
@@ -93,9 +91,9 @@ pub mod circular_queue {
                 capacity,
             }
         }
-        /** Adds an element to the queue */
+        /** Adds an element to the back of the queue */
         pub fn enqueue(&mut self, item: T) -> Result<(), &str> {
-            // Ensures that the queue cannot take more elements than its designated capacity
+            // Ensures that the queue cannot take more elements than its capacity
             if self.size == self.capacity {
                 return Err("Queue is full");
             }
