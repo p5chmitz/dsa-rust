@@ -12,10 +12,7 @@ pub struct Frame {
 }
 impl Frame {
     pub fn new(symbol: char) -> Frame {
-        Frame {
-            symbol,
-            next: None,
-        }
+        Frame { symbol, next: None }
     }
 }
 // The Stack API includes
@@ -39,11 +36,11 @@ impl Stack {
     }
     /** Returns the head Frame, if it exists */
     pub fn peek(&self) -> Option<char> {
-        if let Some(v) = self.head { 
-            unsafe { 
-                Some((*v).symbol) 
-            } 
-        } else { None }
+        if let Some(v) = self.head {
+            unsafe { Some((*v).symbol) }
+        } else {
+            None
+        }
     }
     /** Inserts a frame */
     pub fn push(&mut self, frame: Box<Frame>) {
@@ -51,12 +48,14 @@ impl Stack {
         let new_frame_ptr: *mut Frame = Box::into_raw(frame);
 
         // Sets the new frame's next pointer to the current head
-        unsafe { (*new_frame_ptr).next = self.head; }
+        unsafe {
+            (*new_frame_ptr).next = self.head;
+        }
 
         // Resets the stack's head and increments its size
         self.head = Some(new_frame_ptr);
         self.length += 1;
-        return
+        return;
     }
     /** Removes and returns the head frame */
     pub fn pop(&mut self) -> Option<Frame> {
@@ -66,7 +65,9 @@ impl Stack {
                 let popped: Frame = *Box::from_raw(head);
                 self.length -= 1;
                 Some(popped)
-            } else { None }
+            } else {
+                None
+            }
         }
     }
     // NOTE: There is no need to iterate over the stack
@@ -131,7 +132,7 @@ pub fn balance(s: String) -> bool {
                 // Error if there is a closer with an empty list
                 if symbols.length == 0 {
                     panic!("Error: Unexpected closing symbol");
-                } 
+                }
                 // Else check for and pop the matching opener
                 else {
                     if let Some(check) = symbols.peek() {
@@ -183,7 +184,6 @@ fn basic_mem_test() {
         let c_ref: &mut Frame = &mut *c_ptr;
         assert_eq!(c_ref.symbol, '{');
         assert_eq!(c_ref.next, Some(b_ptr));
-
     }
 }
 #[test]
@@ -193,7 +193,6 @@ fn success() {
 
     let input = "{\"name\":\"Peter\",\"age\":40,\"birthplace\":{\"city\":\"Iowa City\",\"state\":\"Iowa\"}}".to_string();
     assert!(balance(input));
-
 }
 #[test]
 #[should_panic(expected = "Error: Missing closing symbol")]
@@ -219,4 +218,3 @@ fn open_block_fail() {
     let input = "{[]}{".to_string(); // Fails with missing trailing closing symbol
     assert!(!balance(input), "");
 }
-

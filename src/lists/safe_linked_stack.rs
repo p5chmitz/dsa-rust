@@ -7,12 +7,9 @@ pub struct Frame {
     next: Option<Box<Frame>>,
 }
 impl Frame {
-    // Creates a new node
+    // Creates a new frame
     pub fn new(symbol: char) -> Frame {
-        Frame {
-            symbol,
-            next: None,
-        }
+        Frame { symbol, next: None }
     }
 }
 // The Stack API includes
@@ -33,17 +30,19 @@ impl Stack {
         }
     }
     pub fn push(&mut self, frame: Box<Frame>) {
-            let mut new_head = frame;
-            println!("Pushed {} to the stack", &new_head.symbol);
-            new_head.next = self.head.take();
-            self.head = Some(new_head);
-            self.length += 1;
-            return;
+        let mut new_head = frame;
+        println!("Pushed {} to the stack", &new_head.symbol);
+        new_head.next = self.head.take();
+        self.head = Some(new_head);
+        self.length += 1;
+        return;
     }
     pub fn peek(&self) -> Option<char> {
         if let Some(s) = &(*self).head {
             Some(s.symbol)
-        } else { None }
+        } else {
+            None
+        }
     }
     pub fn pop(&mut self) -> Option<Frame> {
         if let Some(mut boxed_frame) = self.head.take() {
@@ -62,7 +61,7 @@ pub mod safe_stack {
     /** Example funciton that uses the stack to check if a String contains balanced sets of braces */
     pub fn balance(s: String) -> bool {
         let mut symbols = Stack::new();
-    
+
         for e in s.chars() {
             let f: Box<Frame> = Box::new(Frame::new(e));
             match e {
@@ -73,7 +72,7 @@ pub mod safe_stack {
                     // Error if there is a closer with an empty list
                     if symbols.length == 0 {
                         panic!("Error: Unexpected closing symbol");
-                    } 
+                    }
                     // Else check for and pop the matching opener
                     else {
                         if let Some(check) = symbols.peek() {

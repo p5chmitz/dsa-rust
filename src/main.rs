@@ -5,8 +5,7 @@ mod maw;
 mod tgg;
 
 use crate::lists::{
-    array_list, doubly_linked_list_1, doubly_linked_list_2, unsafe_linked_stack, singly_linked_list,
-    vector_list,
+    array_list, doubly_linked_list_1, doubly_linked_list_2, queue, singly_linked_list, vector_list,
 };
 
 use crate::tgg::{tgg_04, tgg_05};
@@ -135,6 +134,9 @@ fn main() {
     //doubly_linked_list_1::example();
     println!("\nDoubly-linked list (with NonNull):");
     doubly_linked_list_2::example();
+
+    // Queues
+    println!("\nQueues:");
 
     // Unsafe tests, I think???
     let mut value = 42;

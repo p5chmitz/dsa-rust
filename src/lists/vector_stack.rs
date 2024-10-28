@@ -3,7 +3,7 @@
 /////////////////////////////////////
 
 /** Vec itself can be used as a stack with push, pop, and last;
- * This exercise reimplements these operations as add, remove, and peek respectively 
+ * This exercise reimplements these operations as add, remove, and peek respectively
  * as well as adding an instance variable size that cannot be negative */
 mod wrapper {
     pub struct Stack {
