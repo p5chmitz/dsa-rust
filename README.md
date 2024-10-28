@@ -27,8 +27,10 @@ This section builds on the structures and approaches established in the Lists se
 - [Vector-based stack](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/vector_stack.rs): Simple and effective, likely the preferred approach; This crate includes two modules that implement a symbol-balancer; One uses a raw `Vec` implementation and the other implements a `Vec` wrapper for funsies
 - [Safe, singly-owned, singly-linked stack](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/safe_linked_stack.rs): The easiest of the custom options; Seriously, just use `Vec`
 - [Unsafe singly-linked stack](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/unsafe_linked_stack.rs): Just because its possible and we somehow thrive on making things more difficult than they have to be
-- [Vector-based queue](): Its a queue, why aren't you using `Vec`?
-- [Unsafe, doubly-linked queue](): Something something both ends
+- [Vector-based queue (wrapper)](https://github.com/p5chmitz/dsa-rust/blob/c138db3976c3dbbf616ca9f42a12bbd9565ae80b/src/lists/queue.rs#L5): Its a queue, why aren't you using `Vec` or `VecDeque`?
+- [Vector-based circular queue](https://github.com/p5chmitz/dsa-rust/blob/c138db3976c3dbbf616ca9f42a12bbd9565ae80b/src/lists/queue.rs#L71): Its a Vec with capacity and wrapping logic
+- [A simple linked-list queue](https://github.com/p5chmitz/dsa-rust/blob/c138db3976c3dbbf616ca9f42a12bbd9565ae80b/src/lists/queue.rs#L165): Might be good for something? IDK
+- [A VecDeque-based queue](https://github.com/p5chmitz/dsa-rust/blob/c138db3976c3dbbf616ca9f42a12bbd9565ae80b/src/lists/queue.rs#L257): Something something both ends, but also the proper tool for the job
 
 </details>
 
