@@ -36,6 +36,14 @@ This section builds on the structures and approaches established in the Lists se
 
 <details> 
 
+<summary> Trees </summary>
+
+This section explores tree structures.
+
+</details>
+
+<details> 
+
 <summary> Algorithms </summary>
 
 An exploration on some searching, sorting, and graph algorithms.
