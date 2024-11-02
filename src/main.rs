@@ -7,6 +7,12 @@ mod tgg;
 use crate::lists::{
     array_list, doubly_linked_list_1, doubly_linked_list_2
 };
+use crate::lists::stacks::{
+    safe_linked_stack, unsafe_linked_stack, vector_stack
+};
+use crate::lists::queues::{
+    singly_linked_queue, vec_circ_queue, vec_queue, vecdeque_queue
+};
 
 use crate::tgg::{tgg_04, tgg_05};
 
@@ -137,8 +143,16 @@ fn main() {
 
     // Queues
     println!("\nQueues:");
+    //lists::queues::vec_circ_queue::empirical_test();
 
-    // Unsafe tests, I think???
+    // Generic List ADT 
+    println!("\nGeneric List ADT:");
+    lists::dynamic_array_list::visualize();
+
+}
+
+#[test]
+fn unsafe_test() {
     let mut value = 42;
 
     // Create a mutable raw pointer to the value
@@ -153,9 +167,9 @@ fn main() {
         // Dereference the second raw pointer
         *p2 += 50;
 
-        // Print the updated value
-        println!("Value: {}", *p1); // This will print "Value: 150"
+        assert_eq!(150, *p1)
     }
+
 }
 
 fn binary_search_driver() {
