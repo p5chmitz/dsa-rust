@@ -11,7 +11,8 @@ For detailed explanations and analysis of the structures and algorithms presente
 The lists section centers around solutions to create a simple podium of sorted entries consisting of names and associated scores.
 
 - [Array-based list](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/array_list.rs): A basic introduction to lists (and arrays) 
-- [Vector-based list](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/vector_list.rs): Safe, easy, convenient
+- [Vector-based list](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/vector_list.rs): Safe, easy, convenient... but SUPER naive and gross
+- [Dynamic array list](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/dynamic_array_list.rs): Safe, a little harder, a little less convenient, but addresses the multiple mutability issue skirted by the simple vec-based list... and also represents a half-assed lie
 - [Singly-linked list](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/singly_linked_list.rs): A safe, singly-owned, singly-linked list
 - [Doubly-linked list](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/doubly_linked_list_2.rs): A horribly unsafe linked list with raw, mutable pointers and just enough Miri testing to not immediately set the computer on fire
 - Doubly-linked list: An incremental improvement over the first iteration with NonNull (coming soon)

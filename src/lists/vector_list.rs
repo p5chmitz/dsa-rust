@@ -15,6 +15,16 @@ impl Clone for PodiumEntry {
         }
     }
 }
+/** The Podium's public API contains the following functions: 
+ * - new() -> Vec<PodiumEntry>
+ * - build(name: String, score: usize) -> PodiumEntry
+ * - add(mut podium: Vec<PodiumEntry>, new_entry: PodiumEntry) -> Vec<PodiumEntry>
+ * - remove(mut podium: Vec<PodiumEntry>, index: usize) -> Vec<PodiumEntry>
+ * - format(&self) -> (String, String)
+ * - print(print_all: bool, podium: &Vec<PodiumEntry>)
+* NOTE: This list is a little wonky as the PodiumEntry struct doesn't give any real indication
+* that the data structure is actually build on a Vec. Additionally, each major method returns
+* a new, owned Vec which skirts the multiple mutability issue */
 impl PodiumEntry {
     /** Builds new default list containing at least three elements */
     pub fn new() -> Vec<PodiumEntry> {
@@ -26,6 +36,30 @@ impl PodiumEntry {
             name,
             score: Some(score),
         }
+    }
+    /** Adds entry to list by score to maintain order */
+    pub fn add(mut podium: Vec<PodiumEntry>, new_entry: PodiumEntry) -> Vec<PodiumEntry> {
+        // Evaluates the existing vector and finds appropriate insertion index
+        let mut insert_index: i32 = -1;
+        for i in 0..podium.len() {
+            if podium[i].score.is_none() || podium[i].score < new_entry.score {
+                insert_index = i as i32;
+                break;
+            }
+        }
+        // Inserts the entry at the appropriate index
+        podium.insert(insert_index as usize, new_entry);
+        podium
+    }
+    // Takes a podium vec and an index, removes the entry at the index
+    // and shifts all remaining elements up by one index
+    /** Removes an entry from the list */
+    pub fn remove(mut podium: Vec<PodiumEntry>, index: usize) -> Vec<PodiumEntry> {
+        for e in index..podium.len() - 1 {
+            podium[e] = podium[e + 1].clone();
+        }
+        //podium[podium.len() - 1] = Default::default();
+        podium
     }
     /** Formats PodiumEntry instances for output */
     pub fn format(&self) -> (String, String) {
@@ -53,34 +87,10 @@ impl PodiumEntry {
         }
         println!("")
     }
-    /** Adds entry to list by score to maintain order */
-    pub fn add(mut podium: Vec<PodiumEntry>, new_entry: PodiumEntry) -> Vec<PodiumEntry> {
-        // Evaluates the existing vector and finds appropriate insertion index
-        let mut insert_index: i32 = -1;
-        for i in 0..podium.len() {
-            if podium[i].score.is_none() || podium[i].score < new_entry.score {
-                insert_index = i as i32;
-                break;
-            }
-        }
-        // Inserts the entry at the appropriate index
-        podium.insert(insert_index as usize, new_entry);
-        podium
-    }
-    // Takes a podium vec and an index, removes the entry at the index
-    // and shifts all remaining elements up by one index
-    /** Removes an entry from the list */
-    pub fn remove(mut podium: Vec<PodiumEntry>, index: usize) -> Vec<PodiumEntry> {
-        for e in index..podium.len() - 1 {
-            podium[e] = podium[e + 1].clone();
-        }
-        //podium[podium.len() - 1] = Default::default();
-        podium
-    }
 }
 
-/** This driver illustrates an array implementation for the list ADT... using no vectors */
-pub fn example() {
+/** This example illustrates an array implementation for the list ADT... using no vectors */
+pub fn naive_example() {
     // Imports the list implementation and creates default list
     //use crate::lists::vector_list::PodiumEntry;
     use super::vector_list::PodiumEntry;
