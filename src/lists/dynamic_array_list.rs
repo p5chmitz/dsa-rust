@@ -81,12 +81,10 @@ impl<T: Clone> List<T> {
         }
         None
     }
-    /** Halves the list's capacity if the size is <= 25% of capacity */
+    /** Halves the list's capacity if the size is <= 25% of capacity with a min resize of 1 */
     fn trim(&mut self) {
-        let c = self.data.len();
-        // Checks that size is below 25% capacity and greater than zero,
-        // Re-sizes to half capacity with a min of 1
-        if self.size <= c / 4 && c > 1 {
+        let capacity = self.data.len();
+        if self.size <= capacity / 4 && capacity > 1 {
             self.data.resize(c.max(1)/2, None);
         }
     }
