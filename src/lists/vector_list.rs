@@ -15,7 +15,7 @@ impl Clone for PodiumEntry {
         }
     }
 }
-/** The Podium's public API contains the following functions: 
+/** The Podium's public API contains the following functions:
  * - new() -> Vec<PodiumEntry>
  * - build(name: String, score: usize) -> PodiumEntry
  * - add(mut podium: Vec<PodiumEntry>, new_entry: PodiumEntry) -> Vec<PodiumEntry>

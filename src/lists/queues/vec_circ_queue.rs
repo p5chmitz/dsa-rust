@@ -10,7 +10,7 @@ pub struct CircularQueue<T> {
     size: usize,
     capacity: usize,
 }
-/** The CircularQueue's public API contains the following functions: 
+/** The CircularQueue's public API contains the following functions:
  * - new(capacity: usize) -> CircularQueue<T>
  * - enqueue(&mut self, item: T) -> Result<(), &str>
  * - dequeue(&mut self) -> Option<T>
@@ -22,7 +22,8 @@ impl<T> CircularQueue<T> {
         // Fills the vec with None
         //data.resize_with(capacity, Default::default); // Clean and generic
         //data.resize_with(capacity, || None); // More explicit and slightly more efficient
-        for _ in 0..capacity { // Somehow the fastest 
+        for _ in 0..capacity {
+            // Somehow the fastest
             data.push(None)
         }
         CircularQueue {
@@ -60,7 +61,7 @@ impl<T> CircularQueue<T> {
     }
 }
 
-/** Illustrates that the for loop is the most efficient way to initialize an array with None values 
+/** Illustrates that the for loop is the most efficient way to initialize an array with None values
 100x
 Default: 2.803µs
 None: 2.505µs
@@ -85,12 +86,15 @@ pub fn empirical_test() {
         // Requires separate new2/3 implementations
         //("Default", CircularQueue::new2 as fn(usize) -> CircularQueue<char>),
         //("None", CircularQueue::new3 as fn(usize) -> CircularQueue<char>),
-        ("For", CircularQueue::new as fn(usize) -> CircularQueue<char>),
+        (
+            "For",
+            CircularQueue::new as fn(usize) -> CircularQueue<char>,
+        ),
     ];
 
     for &n in &allocations {
         println!("\n{}x", n);
-        
+
         for &(method_name, method) in &methods {
             let mut avg = Duration::new(0, 0);
             for _ in 0..runs {
@@ -108,13 +112,13 @@ pub fn empirical_test() {
 fn circular_queue_test() {
     let mut q: CircularQueue<char> = CircularQueue::new(3);
     // All these shits panic because pushing and popping a full/empty queue is an error
-    q.enqueue('a').unwrap(); 
-    q.enqueue('b').unwrap(); 
-    q.enqueue('c').unwrap(); 
+    q.enqueue('a').unwrap();
+    q.enqueue('b').unwrap();
+    q.enqueue('c').unwrap();
 
     assert_eq!(0, q.capacity - q.size); // The number of empty indexes
     assert_eq!(q.size, q.capacity); // That the queue is now at capacity
-    assert_eq!(q.front, 0); // The front is still zero                                
+    assert_eq!(q.front, 0); // The front is still zero
     assert_eq!(q.back, 2); // The last operation wrote to the last available position
 
     assert!(q.enqueue('d').is_err()); // That the queue cant take additional elements
@@ -123,13 +127,13 @@ fn circular_queue_test() {
     assert_eq!(a, 'a'); // Tests that the dequeue pulls from the front of the queue
     assert_eq!(q.size, 2); // Test that the size is being appropriately decremented too
     assert_eq!(1, q.capacity - q.size); // Tests that dequeue is "freeing" indexes
-    assert_eq!(q.front, 1); // The front advanced by one with dequeue                               
+    assert_eq!(q.front, 1); // The front advanced by one with dequeue
     assert_eq!(q.back, 2); // The back is still 2
 
     // Test that the dequeue is indeed pulling from the front
     // and that the size remains accurate
-    q.dequeue().unwrap(); 
-    q.dequeue().unwrap(); 
+    q.dequeue().unwrap();
+    q.dequeue().unwrap();
     q.enqueue('d').unwrap(); // That the queue can take additional elements again
     let d = q.dequeue().unwrap();
     assert_eq!(d, 'd'); // And that they're correct
@@ -141,7 +145,4 @@ fn circular_queue_test() {
 }
 
 /** Illustrates a Josephus Problem solution */
-pub fn circular_queue_example() {
-
-}
-
+pub fn circular_queue_example() {}

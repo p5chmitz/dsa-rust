@@ -4,15 +4,9 @@ mod lists;
 mod maw;
 mod tgg;
 
-use crate::lists::{
-    array_list, doubly_linked_list_1, doubly_linked_list_2
-};
-use crate::lists::stacks::{
-    safe_linked_stack, unsafe_linked_stack, vector_stack
-};
-use crate::lists::queues::{
-    singly_linked_queue, vec_circ_queue, vec_queue, vecdeque_queue
-};
+use crate::lists::queues::{singly_linked_queue, vec_circ_queue, vec_queue, vecdeque_queue};
+use crate::lists::stacks::{safe_linked_stack, unsafe_linked_stack, vector_stack};
+use crate::lists::{array_list, doubly_linked_list_2, generic_doubly_linked_list};
 
 use crate::tgg::{tgg_04, tgg_05};
 
@@ -145,10 +139,9 @@ fn main() {
     println!("\nQueues:");
     //lists::queues::vec_circ_queue::empirical_test();
 
-    // Generic List ADT 
+    // Generic List ADT
     println!("\nGeneric List ADT:");
     lists::dynamic_array_list::visualize();
-
 }
 
 #[test]
@@ -169,7 +162,6 @@ fn unsafe_test() {
 
         assert_eq!(150, *p1)
     }
-
 }
 
 fn binary_search_driver() {

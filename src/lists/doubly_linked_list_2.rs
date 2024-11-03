@@ -23,13 +23,14 @@ impl Node {
         })
     }
 }
-// The List API includes
-// - new() -> List
-// - insert(&mut self, node: Box<Node>)
-// - remove(&mut self, name: String)
-// - iter(&self) -> Iter
-// - print(&self)
-// - print_rev(&self)
+/** The List API includes the following functions:
+ - new() -> List
+ - insert(&mut self, node: Box<Node>)
+ - remove(&mut self, name: String)
+ - iter(&self) -> Iter
+ - print(&self)
+ - print_rev(&self)
+*/
 pub struct List {
     head: Link,
     tail: Link,

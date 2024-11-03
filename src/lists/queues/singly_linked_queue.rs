@@ -19,7 +19,7 @@ pub mod linked_queue {
     // - peek(&self) -> Option<char>
     // - dequeue(&mut self) -> Option<Frame>
     pub struct Queue<T> {
-        front: Option<Box<Frame<T>>>, 
+        front: Option<Box<Frame<T>>>,
         length: usize,
     }
     impl<T> Queue<T> {
@@ -30,11 +30,11 @@ pub mod linked_queue {
                 length: 0,
             }
         }
-        /** Runs in O(n) because I cant (or dont want to try to) safely 
+        /** Runs in O(n) because I cant (or dont want to try to) safely
          * store a reference to the last node in the list */
         pub fn enqueue(&mut self, frame: Frame<T>) {
             let new_node = Box::new(frame);
-        
+
             // If the queue is empty, set `self.front` to the new node;
             // Otherwise, traverse to the end of the queue and add the new node
             if self.front.is_none() {
@@ -91,6 +91,4 @@ pub mod linked_queue {
         let d = q.dequeue().unwrap();
         assert_eq!(d.data, 'd');
     }
-
 }
-

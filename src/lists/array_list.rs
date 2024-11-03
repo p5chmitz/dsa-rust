@@ -15,14 +15,14 @@ impl Clone for Podium {
         }
     }
 }
-/** The Podium's public API contains the following functions: 
+/** The Podium's public API contains the following functions:
  * - new() -> [Podium; Self::PODIUM_SIZE]
  * - build(name: String, score: usize) -> Podium
  * - print(print_all: bool, podium: &[Podium; Self::PODIUM_SIZE])
  * - remove(mut podium: [Podium; Self::PODIUM_SIZE], cheater: usize,) -> [Podium; Self::PODIUM_SIZE]
  * - add(mut podium: [Podium; Podium::PODIUM_SIZE], new_entry: Podium,) -> [Podium; Podium::PODIUM_SIZE]
  *
-* NOTE: Rust requires array initializations to happen at compile time; For implementations where the 
+* NOTE: Rust requires array initializations to happen at compile time; For implementations where the
 * same value is used across several functions in a module you need to use a constant */
 impl Podium {
     // Sets list size with indexes from 0 to (PODIUM_SIZE - 1)
