@@ -10,6 +10,8 @@ use std::cell::RefCell;
  - add(&mut self, e: T, i: usize) -> Result<(), &'static str>
  - get(&self, i: usize) -> Option<T>
  - remove(&mut self, i: usize) -> Option<T>
+ - trim(&mut self)
+ - clear(&mut self)
 * NOTE: Rust only allows arrays to be instantiated with constants, which are immutable. Even the
 * Vec type in the standard library uses an internal module called RawVec to circumvent this
 * constraint. In order to avoid reimplementing that module, this module uses Vec as its base heap
@@ -65,16 +67,26 @@ impl<T: Clone> List<T> {
         // Using map removes the need to declare/initialize intermediate variables
         self.data[i]
             .as_ref()
-            .map(|ref_cell| ref_cell.borrow().clone())
+            .map(|cell_ref| cell_ref.borrow().clone())
     }
     /** Removes and returns the data at index i */
     pub fn remove(&mut self, i: usize) -> Option<T> {
         // Attempt to take the value out of the RefCell and decrement the list
         if let Some(ref_cell) = self.data[i].take() {
             self.size -= 1;
+            //self.trim();
             return Some(ref_cell.into_inner());
         }
         None
+    }
+    /** Halves the list's capacity if the size is <= 25% of capacity */
+    fn trim(&mut self) {
+        let c = self.data.len();
+        // Checks that size is below 25% capacity and greater than zero,
+        // Re-sizes to half capacity with a min of 1
+        if self.size <= c / 4 && c > 1 {
+            self.data.resize(c.max(1)/2, None);
+        }
     }
     /** Clears all elements from the list and resizes to 1 */
     pub fn clear(&mut self) {
@@ -83,10 +95,6 @@ impl<T: Clone> List<T> {
         }
         self.data.resize(0, None);
         self.size = 0;
-    }
-    /** Resizes the capacity to match the number of elements */
-    pub fn trim(&mut self) {
-        self.data.resize(self.size, None);
     }
 }
 
@@ -133,7 +141,7 @@ pub fn example() {
 
     // Attempts to add an entry to some OOB index
     name = "Wild".to_string();
-    let _ = list.add(name, 21).is_err();
+    assert!(list.add(name, 21).is_err());
     assert_eq!(list.size, 4);
     assert_eq!(list.data.len(), 4);
 
@@ -148,9 +156,12 @@ pub fn example() {
     assert_eq!(list.size, 4);
     assert_eq!(list.data.len(), 8);
 
-    // Trims the capacity to the current size
+    // Removes enough elements such that size = capacity/4, 
+    // at which point trim can halve the lists capacity 
+    list.remove(3).unwrap();
+    list.remove(2).unwrap();
     list.trim();
-    assert_eq!(list.size, 4);
+    assert_eq!(list.size, 2);
     assert_eq!(list.data.len(), 4);
 
     // The list is now empty
@@ -167,26 +178,43 @@ pub fn visualize() {
     // Sets index 0 to a first name, tests the get method
     let mut name = "Chester".to_string();
     list.add(name, 0).unwrap();
-    println!("Generic list: \n{:?}", list); // Capacity == 1
-
     name = "Copperpot".to_string();
     list.add(name, 1).unwrap();
+    println!(
+        "Generic list has {} entries and a capacity of {}: \n\t{:?}",
+        list.size,
+        list.data.len(),
+        list
+    );
+
+    name = "Wild".to_string();
+    let i = 21;
+    if let Err(e) = list.add(name, i) {
+        println!("Attempting to add to index {i}:");
+        println!("\t{e}");
+    }
 
     name = "Oregon".to_string();
     list.add(name, 2).unwrap();
-
-    name = "USA".to_string();
-    list.add(name, 3).unwrap();
-    println!("Generic list: \n{:?}", list); // Capacity == 8
-
-    name = "Wild".to_string();
-    list.add(name, 21).unwrap();
-    println!("Generic list: \n{:?}", list); // Capacity == 22
-
-    name = "Country".to_string();
-    list.add(name, 22).unwrap();
-    println!("Generic list: \n{:?}", list); // Capacity == 44
+    println!(
+        "Generic list has {} entries and a capacity of {}: \n\t{:?}",
+        list.size,
+        list.data.len(),
+        list
+    );
+    list.trim();
+    println!(
+        "After trimming the generic list has {} entries and a capacity of {}: \n\t{:?}",
+        list.size,
+        list.data.len(),
+        list
+    );
 
     list.clear();
-    println!("Generic list: \n{:?}", list); // Capacity == 0
+    println!(
+        "After clearing the generic list has {} entries and a capacity of {}: \n\t{:?}",
+        list.size,
+        list.data.len(),
+        list
+    );
 }
