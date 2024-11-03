@@ -2,6 +2,7 @@
 /** A safe, singly-linked queue */
 //////////////////////////////////
 
+/** An inefficient but safe singly-linked queue implementation where everything runs in linear time */
 pub mod linked_queue {
     pub struct Frame<T> {
         data: T,
@@ -13,11 +14,13 @@ pub mod linked_queue {
             Frame { data, next: None }
         }
     }
-    // The Queue API includes
-    // - new() -> Queue
-    // - enqueue(&mut self, node: Box<Frame>)
-    // - peek(&self) -> Option<char>
-    // - dequeue(&mut self) -> Option<Frame>
+    /** The Queue API includes the following functions:
+    - new() -> Queue
+    - enqueue(&mut self, node: Box<Frame>)
+    - peek(&self) -> Option<char>
+    - dequeue(&mut self) -> Option<Frame>
+    NOTE: This is kind of a terrible implementation as enqueue() runs in O(n) time
+    */
     pub struct Queue<T> {
         front: Option<Box<Frame<T>>>,
         length: usize,
