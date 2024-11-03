@@ -1,22 +1,25 @@
 /////////////////////////////////
 /** A dynamic array-based list */
 /////////////////////////////////
+
 use std::cell::RefCell;
 
-#[derive(Debug)] // Required for generic array initialization
-/** The List's public API contains the following functions:
+/** The List's API contains the following functions:
  - new() -> List<T>
  - is_empty(self) -> bool
  - add(&mut self, e: T, i: usize) -> Result<(), &'static str>
  - get(&self, i: usize) -> Option<T>
  - remove(&mut self, i: usize) -> Option<T>
- - trim(&mut self)
  - clear(&mut self)
-* NOTE: Rust only allows arrays to be instantiated with constants, which are immutable. Even the
-* Vec type in the standard library uses an internal module called RawVec to circumvent this
-* constraint. In order to avoid reimplementing that module, this module uses Vec as its base heap
-* storage vehicle. Please just pretend that the underlying allocations are static.
+
+ - trim(&mut self) - private, called by remove()
+* NOTE: Rust only allows arrays to be instantiated with immutable constants defined at compile time.
+* Even the Vec type in the standard library uses an internal module called RawVec that uses
+* special allocators to circumvent this constraint. In order to avoid reimplementing that module, 
+* this module uses Vec as its base heap storage vehicle. 
+* Please just pretend that the underlying array-based structure is static.
 * */
+#[derive(Debug)] // Required for list visualization in example function
 pub struct List<T> {
     data: Vec<Option<RefCell<T>>>,
     size: usize,
