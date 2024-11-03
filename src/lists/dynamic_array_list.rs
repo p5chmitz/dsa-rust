@@ -11,7 +11,6 @@ use std::cell::RefCell;
  - get(&self, i: usize) -> Option<T>
  - remove(&mut self, i: usize) -> Option<T>
  - clear(&mut self)
-
  - trim(&mut self) - private, called by remove()
 * NOTE: Rust only allows arrays to be instantiated with immutable constants defined at compile time.
 * Even the Vec type in the standard library uses an internal module called RawVec that uses
