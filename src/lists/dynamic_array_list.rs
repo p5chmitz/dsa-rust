@@ -7,7 +7,7 @@ use std::cell::RefCell;
 /** The List's API contains the following functions:
  - new() -> List<T>
  - is_empty(self) -> bool
- - add(&mut self, e: T, i: usize) -> Result<(), &'static str>
+ - set(&mut self, e: T, i: usize) -> Result<(), &'static str>
  - get(&self, i: usize) -> Option<T>
  - remove(&mut self, i: usize) -> Option<T>
  - clear(&mut self)
@@ -16,8 +16,7 @@ NOTE: Rust only allows arrays to be instantiated with lengths as (immutable, com
 Even the Vec type in the standard library uses an internal module called RawVec that uses special 
 allocators to circumvent this constraint. In order to avoid reimplementing that module, 
 this module uses Vec as its base heap-allocated storage vehicle. Let's just pretend that the underlying 
-Vec structure doesn't already handle these features more effectively than this implementation.
-* */
+Vec structure doesn't already handle these features more effectively than this implementation. */
 #[derive(Debug)] // Required for list visualization in example function
 pub struct List<T> {
     data: Vec<Option<RefCell<T>>>,
@@ -32,24 +31,23 @@ impl<T: Clone> Clone for List<T> {
     }
 }
 impl<T: Clone> List<T> {
-    /** Creates a new generic list */
+    /** Creates a new generic list with capacity of 1 */
     pub fn new() -> List<T> {
         List {
-            data: vec![None], // Creates a Vec and sets the only index to None
+            data: vec![None],
             size: 0,
         }
     }
     pub fn is_empty(self) -> bool {
         self.size == 0
     }
-    /** Attempts to add a new element e to the list at index i;
+    /** Attempts to set an element e to the list at index i; 
+     * Warning: Overwrites any existing data at the specified index;
      * Checks that i is within the list's capacity (self.data.len()), otherwise returns an error;
      * If i is equal to the list's capacity the list resizes to be 2x capacity */
-    pub fn add(&mut self, e: T, i: usize) -> Result<(), &'static str> {
-        // Returns error if larger than the current capacity
+    pub fn set(&mut self, e: T, i: usize) -> Result<(), &'static str> {
         if i > self.data.len() {
             return Err("Error: Index out of bounds");
-        // Resizes the list if i == capacity
         } else if i == self.data.len() {
             // Resizes the Vec to be 2x capacity and initializes empty elements as None
             self.data.resize(2 * self.data.len(), None);
@@ -59,9 +57,11 @@ impl<T: Clone> List<T> {
         self.size += 1;
         Ok(())
     }
-    /** Gets (but does not remove) data at index i */
+    /** Gets (but does not remove) cloned data at index i; My limited understanding (and patience)
+     * prevents me from engaging in the song and dance of returning Option<&T> out of RefCell;
+     * Does not validate if i is a valid index */
     pub fn get(&self, i: usize) -> Option<T> {
-        // A naive approach to extraction
+        // An explicit approach to extraction
         //let some_cell_ref: Option<&RefCell<T>> = self.data[i].as_ref();
         //let cell_ref: &RefCell<T> = some_cell_ref.unwrap();
         //let some_val: Option<T> = Some(cell_ref.borrow().clone());
@@ -76,12 +76,12 @@ impl<T: Clone> List<T> {
         // Attempt to take the value out of the RefCell and decrement the list
         if let Some(ref_cell) = self.data[i].take() {
             self.size -= 1;
-            //self.trim();
+            self.trim();
             return Some(ref_cell.into_inner());
         }
         None
     }
-    /** Halves the list's capacity if the size is <= 25% of capacity with a min resize of 1 */
+    /** Halves the list's capacity (down to a min size of 1) if the size is <= 25% of capacity */
     fn trim(&mut self) {
         let capacity = self.data.len();
         if self.size <= capacity / 4 && capacity > 1 {
@@ -93,7 +93,7 @@ impl<T: Clone> List<T> {
         for i in (0..self.data.len()).rev() {
             self.data.remove(i);
         }
-        self.data.resize(0, None);
+        self.data.resize(1, None);
         self.size = 0;
     }
 }
@@ -106,16 +106,16 @@ pub fn example() {
 
     // Sets index 0 to a first name, tests the get method
     let mut name = "Chester".to_string();
-    list.add(name, 0).unwrap();
+    list.set(name, 0).unwrap();
     let mut reference: String = list.get(0).unwrap();
     assert_eq!(reference, "Chester".to_string());
 
-    // Tests that the size is appropriate after the first add
+    // Tests that the size is appropriate after the first.set
     assert_eq!(list.size, 1);
 
     // Sets index 1 to last name, tests the get method
     name = "Copperpot".to_string();
-    list.add(name, 1).unwrap();
+    list.set(name, 1).unwrap();
     reference = list.get(1).unwrap();
     assert_eq!(reference, "Copperpot".to_string());
 
@@ -130,44 +130,52 @@ pub fn example() {
 
     // Tests the resize logic
     name = "Oregon".to_string();
-    list.add(name, 2).unwrap();
+    list.set(name, 2).unwrap();
     assert_eq!(list.size, 3);
     assert_eq!(list.data.len(), 4);
 
     name = "USA".to_string();
-    list.add(name, 3).unwrap();
+    list.set(name, 3).unwrap();
     assert_eq!(list.size, 4);
     assert_eq!(list.data.len(), 4);
 
-    // Attempts to add an entry to some OOB index
+    // Attempts to.set an entry to some OOB index which triggers 
+    // an error but doens't change the list
     name = "Wild".to_string();
-    assert!(list.add(name, 21).is_err());
+    assert!(list.set(name, 21).is_err());
     assert_eq!(list.size, 4);
     assert_eq!(list.data.len(), 4);
 
-    // Adds an entry, doubling the capacity
+    // Adds an entry which doubles the capacity again
     name = "Country".to_string();
-    list.add(name, 4).unwrap();
+    list.set(name, 4).unwrap();
     assert_eq!(list.size, 5);
     assert_eq!(list.data.len(), 8);
 
-    // Removes an element which doens't affect capacity
+    // Removes an element (doens't affect capacity)
     list.remove(4).unwrap();
     assert_eq!(list.size, 4);
     assert_eq!(list.data.len(), 8);
 
+    // Ensures that remove() actually removes data
+    assert!(list.get(4).is_none());
+
     // Removes enough elements such that size = capacity/4, 
-    // at which point trim can halve the lists capacity 
-    list.remove(3).unwrap();
-    list.remove(2).unwrap();
-    list.trim();
+    // at which point trim() automatically halves the list's capacity 
+    list.remove(1).unwrap(); // 3/8 != .25
+    list.remove(2).unwrap(); // 2/8 == .25, automatically calls trim()
     assert_eq!(list.size, 2);
     assert_eq!(list.data.len(), 4);
 
-    // The list is now empty
+    // The list is now (effectively) empty with the only viable index 0
     list.clear();
     assert_eq!(list.size, 0);
-    assert_eq!(list.data.len(), 0);
+    assert_eq!(list.data.len(), 1);
+    name = "Oregon".to_string();
+    assert!(list.set(name, 0).is_ok());
+    assert_eq!(list.size, 1);
+    assert_eq!(list.data.len(), 1);
+
 }
 
 /** Just used to debug print the list to visualize how the list works */
@@ -177,9 +185,9 @@ pub fn visualize() {
 
     // Sets index 0 to a first name, tests the get method
     let mut name = "Chester".to_string();
-    list.add(name, 0).unwrap();
+    list.set(name, 0).unwrap();
     name = "Copperpot".to_string();
-    list.add(name, 1).unwrap();
+    list.set(name, 1).unwrap();
     println!(
         "Generic list has {} entries and a capacity of {}: \n\t{:?}",
         list.size,
@@ -189,13 +197,13 @@ pub fn visualize() {
 
     name = "Wild".to_string();
     let i = 21;
-    if let Err(e) = list.add(name, i) {
-        println!("Attempting to add to index {i}:");
+    if let Err(e) = list.set(name, i) {
+        println!("Attempting to.set to index {i}:");
         println!("\t{e}");
     }
 
     name = "Oregon".to_string();
-    list.add(name, 2).unwrap();
+    list.set(name, 2).unwrap();
     println!(
         "Generic list has {} entries and a capacity of {}: \n\t{:?}",
         list.size,
