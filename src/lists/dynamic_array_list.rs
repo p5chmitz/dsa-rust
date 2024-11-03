@@ -12,7 +12,7 @@ use std::cell::RefCell;
  - remove(&mut self, i: usize) -> Option<T>
  - clear(&mut self)
  - trim(&mut self) - private, called by remove()
-* NOTE: Rust only allows arrays to be instantiated with immutable constants defined at compile time.
+* NOTE: Rust only allows arrays to be instantiated with lengths as (immutable, compile time) constants.
 * Even the Vec type in the standard library uses an internal module called RawVec that uses
 * special allocators to circumvent this constraint. In order to avoid reimplementing that module, 
 * this module uses Vec as its base heap storage vehicle. 
