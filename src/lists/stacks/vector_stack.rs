@@ -6,28 +6,28 @@
  * This exercise reimplements these operations as add, remove, and peek respectively
  * as well as adding an instance variable size that cannot be negative */
 mod wrapper {
-    pub struct Stack {
-        data: Vec<char>,
+    pub struct Stack<T> {
+        data: Vec<T>,
         size: usize,
     }
-    impl Stack {
-        fn new() -> Stack {
+    impl<T> Stack<T> {
+        fn new() -> Stack<T> {
             Stack {
                 data: Vec::new(),
                 size: 0,
             }
         }
         /** Adds an element to the stack */
-        fn add(&mut self, s: char) {
+        fn add(&mut self, e: T) {
             self.size += 1;
-            self.data.push(s) // Uses push() from Vec
+            self.data.push(e) // Uses push() from Vec
         }
         /** Peeks at the top of the list without deleting the element */
-        fn peek(&self) -> Option<&char> {
+        fn peek(&self) -> Option<&T> {
             self.data.last()
         }
         /** Returns and deletes the top of the stack */
-        fn remove(&mut self) -> Option<char> {
+        fn remove(&mut self) -> Option<T> {
             self.size -= 1;
             self.data.pop()
         }
