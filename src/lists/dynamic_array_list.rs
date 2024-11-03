@@ -85,7 +85,7 @@ impl<T: Clone> List<T> {
     fn trim(&mut self) {
         let capacity = self.data.len();
         if self.size <= capacity / 4 && capacity > 1 {
-            self.data.resize(c.max(1)/2, None);
+            self.data.resize(capacity.max(1)/2, None);
         }
     }
     /** Clears all elements from the list and resizes to 1 */
