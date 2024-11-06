@@ -1,92 +1,117 @@
-///////////////////////////////////////
-/** A simple, owned array-based list */
-///////////////////////////////////////
+////////////////////////////////
+/** A simple array-based list */
+////////////////////////////////
 
-#[derive(Default)] // Required for generic array initialization
-pub struct Podium {
-    pub name: String,
+// Sets list size with indexes from 0 to (PODIUM_SIZE - 1)
+const PODIUM_SIZE: usize = 10;
+
+#[derive(Debug)]
+struct Entry {
+    name: String,
     score: Option<usize>,
 }
-impl Clone for Podium {
-    fn clone(&self) -> Podium {
-        Podium {
+// Necessary for shifting entries upon insert
+impl Clone for Entry {
+    fn clone(&self) -> Entry {
+        Entry {
             name: self.name.clone(),
             score: self.score,
         }
     }
 }
+
 /** The Podium's public API contains the following functions:
- * - new() -> [Podium; Self::PODIUM_SIZE]
- * - build(name: String, score: usize) -> Podium
- * - print(print_all: bool, podium: &[Podium; Self::PODIUM_SIZE])
- * - remove(mut podium: [Podium; Self::PODIUM_SIZE], cheater: usize,) -> [Podium; Self::PODIUM_SIZE]
- * - add(mut podium: [Podium; Podium::PODIUM_SIZE], new_entry: Podium,) -> [Podium; Podium::PODIUM_SIZE]
- *
-* NOTE: Rust requires array initializations to happen at compile time; For implementations where the
-* same value is used across several functions in a module you need to use a constant */
+ - new() -> Podium
+ - add<'a>(&mut self, name: &'a str, new_score: Option<usize>)
+ - remove(&mut self, cheater: usize)
+ - print_full(&self, print_all: bool)
+
+ The Podium also as the following private funcitons:
+ - entry(name: String, score: Option<usize>) -> Entry
+ - format(e: &Entry) -> (String, String)
+
+NOTE: Rust requires array initializations to happen at compile time; For implementations where the
+same value is used across several functions in a module you need to use a constant */
+#[derive(Default)] // Required for generic array initialization
+pub struct Podium {
+    data: [Option<Entry>; PODIUM_SIZE],
+    size: usize,
+}
 impl Podium {
-    // Sets list size with indexes from 0 to (PODIUM_SIZE - 1)
-    const PODIUM_SIZE: usize = 10;
-
-    /** Creates a list that contains `const PODIUM_SIZE` number of elements with indexes from 0 to (PODIUM_SIZE - 1) */
-    pub fn new() -> [Podium; Self::PODIUM_SIZE] {
-        let list: [Podium; Self::PODIUM_SIZE] = Default::default();
-        list
-    }
-
-    /** Constructs a new Podium entry */
-    pub fn entry(name: String, score: usize) -> Podium {
+    /** Creates a list that contains `const PODIUM_SIZE` number of elements with indexes
+    from 0 to (PODIUM_SIZE - 1) */
+    pub fn new() -> Podium {
         Podium {
-            name,
-            score: Some(score),
+            data: [const { None }; PODIUM_SIZE],
+            size: 0,
         }
     }
 
-    /** Adds entry to list by score to maintain a sorted list;
+    /** Adds entry to list by score to maintain a sorted list in O(n) time;
     Does not overflow with attempts that exceed the initialized structure size,
     but does not log additional entries without sufficiently high score values */
-    pub fn add(
-        mut podium: [Podium; Podium::PODIUM_SIZE],
-        new_entry: Podium,
-    ) -> [Podium; Podium::PODIUM_SIZE] {
+    pub fn add<'a>(&mut self, name: &'a str, new_score: Option<usize>) {
         // Evaluates the existing array values to find the first appropriate index
         let mut insert_index = None;
-        for i in 0..podium.len() {
-            if podium[i].score.is_none() || podium[i].score < new_entry.score {
+        for i in 0..self.data.len() {
+            //if new_score.is_none() ||
+            if self.data[i].is_none() || self.data[i].as_ref().unwrap().score < new_score {
                 insert_index = Some(i);
                 break;
             }
         }
         // Shift elements to the right of the insertion index to make room
-        // for the new entry; Requires Clone implementation on Podium struct
+        // for the new entry;
         if let Some(index) = insert_index {
-            for j in (index..podium.len() - 1).rev() {
-                podium[j + 1] = podium[j].clone();
+            for j in (index..self.data.len() - 1).rev() {
+                self.data[j + 1] = self.data[j].clone();
             }
-            podium[index] = new_entry;
+            let new_entry = Self::entry(name.to_string(), new_score);
+            self.data[index] = Some(new_entry);
         }
-        podium
     }
 
-    // Takes a podium array and an index, removes the entry at the index
-    // and shifts all remaining elements up by one index
-    /** Removes an entry from the list */
-    pub fn remove(
-        mut podium: [Podium; Self::PODIUM_SIZE],
-        cheater: usize,
-    ) -> [Podium; Self::PODIUM_SIZE] {
-        for i in cheater..podium.len() - 1 {
-            podium[i] = podium[i + 1].clone();
+    /** Removes the ith entry in O(n) time and returns the entry's name,
+    shifts all remaining elements up by one index */
+    pub fn remove(&mut self, index: usize) -> String {
+        if index >= PODIUM_SIZE - 1 {
+            let msg: String = format!(
+                "Index out of bounds: {} is out of the range 0..={}",
+                index,
+                PODIUM_SIZE - 1
+            );
+            return msg;
         }
-        podium[podium.len() - 1] = Default::default();
-        podium
+        let entry: Entry = match self.data[index].clone() {
+            Some(e) => e,
+            None => return "None".to_string(),
+        };
+        for i in index..self.data.len() - 1 {
+            self.data[i] = self.data[i + 1].clone();
+        }
+        self.data[self.data.len() - 1] = None;
+        entry.name
+    }
+
+    // Private utility funcitons
+
+    /** Constructs a new Podium entry */
+    fn entry(name: String, score: Option<usize>) -> Entry {
+        let score = match score {
+            Some(s) => s,
+            None => 0,
+        };
+        Entry {
+            name,
+            score: Some(score),
+        }
     }
 
     /** Formats Podium instances for output */
-    fn format(&self) -> (String, String) {
-        let name = self.name.to_owned();
+    fn format(e: &Entry) -> (String, String) {
+        let name = e.name.to_owned();
         // Required mapping for entries without scores yet
-        let score = match self.score {
+        let score = match e.score {
             Some(s) => s.to_string(),
             None => "".to_string(),
         };
@@ -96,67 +121,87 @@ impl Podium {
     }
 
     /** Der listen printen; Set bool to `true` for whole list or `false` for top three */
-    pub fn print(print_all: bool, podium: &[Podium; Self::PODIUM_SIZE]) {
+    pub fn print_full(&self, print_all: bool) {
         let length: usize;
         if print_all == true {
-            length = Self::PODIUM_SIZE
+            length = PODIUM_SIZE
         } else {
-            // Magic podium number
+            // Magic listen printen number
             length = 3
         }
-        for (i, entry) in podium.iter().enumerate() {
+        for (i, entry) in self.data.iter().enumerate() {
             // Only prints the first three podium entries
             if i >= length {
                 break;
             }
-            let entry = entry.format();
-            println!("{:>2}: {:<8} {:>6}", i + 1, entry.0, entry.1)
+
+            let name: String = match entry.to_owned() {
+                Some(s) => s.name,
+                None => "".to_string(),
+            };
+            // Required mapping for entries without scores yet
+            let score = match entry.to_owned() {
+                Some(s) => s.score.expect("Bullshit").to_string(),
+                None => "".to_string(),
+            };
+
+            println!("{:>2}: {:<8} {:>6}", i + 1, name, score)
         }
         println!("")
     }
 }
 
-/** This driver illustrates an array implementation for the list ADT... using no vectors */
+#[test]
+pub fn array_list_test() {
+    use crate::array_list::Podium;
+
+    let mut pod = Podium::new();
+    pod.add("Bobson", None);
+    pod.add("Peter", Some(1223));
+    pod.print_full(false); // Helps in debugging
+
+    // Removes Bobson because it was shifted when a higher scoring entry was added
+    assert_eq!("Bobson".to_string(), pod.remove(1));
+
+    // Tests removal on empty index
+    assert_eq!("None".to_string(), pod.remove(5));
+
+    // Tests OOB logic with some random usize > (PODIUM_SIZE - 1)
+    let oob = 10;
+    assert_eq!(
+        format!("Index out of bounds: {} is out of the range 0..=9", oob),
+        pod.remove(oob)
+    );
+}
+
+/** Silly little visual test to see all the silly little operations */
 pub fn example() {
-    // Imports the list implementation and creates default list
-    //use crate::lists::array_list::Podium;
-    use super::array_list::Podium;
-    let mut podium = Podium::new();
+    use crate::array_list::Podium;
 
-    // Sample data to build a basic set of Podium instances
-    let names_array: [String; 4] = [
-        "Peter".to_string(),
-        "Dingus".to_string(),
-        "Brain".to_string(),
-        "Bobson".to_string(),
-    ];
-    let scores_array: [usize; 4] = [1223, 34, 616, 42069];
+    let mut pod = Podium::new();
+    pod.add("Bobson", None);
+    pod.add("Dingus", None);
+    pod.add("Dorkus", None);
+    pod.print_full(false);
 
-    // Adds all known sample values to the list and prints the result
-    for i in 0..names_array.len() {
-        podium = Podium::add(
-            podium,
-            Podium::entry(names_array[i].to_string(), scores_array[i as usize]),
-        );
-    }
-    println!("Initial results:");
-    Podium::print(true, &podium);
+    pod.remove(2);
+    pod.print_full(false);
 
-    // Adds an entry to the middle
-    println!("Add Dave\n");
-    podium = Podium::add(podium, Podium::entry("Dave".to_string(), 334));
+    pod.add("Brain", Some(616));
+    pod.print_full(false);
 
-    // Removes the score at the ith index (Bobson)
-    println!("Remove Bobson\n");
-    podium = Podium::remove(podium, 0);
+    pod.add("Peter", Some(1223));
+    pod.print_full(false);
 
-    // 6) Adds an entry to the middle
-    println!("Add Dangus\n");
-    podium = Podium::add(podium, Podium::entry("Dangus".to_string(), 420));
+    pod.add("Dangus", Some(420));
+    pod.print_full(false);
 
-    // 7) Prints the final list and podium results
-    println!("Final List:");
-    Podium::print(true, &podium);
-    println!("Final podium:");
-    Podium::print(false, &podium);
+    let success = pod.remove(4);
+    println!("Removing an entry: \n\t{success}");
+
+    let mut err = pod.remove(5);
+    println!("Attempting to remove an empty index: \n\t{err}");
+
+    err = pod.remove(10);
+    println!("Attempting to remove an OOB index: \n\t{err}");
 }
