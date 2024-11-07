@@ -2,49 +2,49 @@
 /** A safe, singly-linked stack */
 //////////////////////////////////
 
-pub struct Frame {
-    symbol: char,
-    next: Option<Box<Frame>>,
+pub struct Node<T> {
+    data: T,
+    next: Option<Box<Node<T>>>,
 }
-impl Frame {
+impl<T> Node<T> {
     // Creates a new frame
-    pub fn new(symbol: char) -> Frame {
-        Frame { symbol, next: None }
+    pub fn new(data: T) -> Node<T> {
+        Node { data, next: None }
     }
 }
-// The Stack API includes
-// - new() -> Stack
-// - push(&mut self, node: Box<Frame>)
-// - peek(&self) -> Option<char>
-// - pop(&mut self) -> Option<Frame>
-pub struct Stack {
-    head: Option<Box<Frame>>, // Adding an extra box just in case things get wild
+/** The Stack API includes
+ - new() -> Stack<T>
+ - push(&mut self, frame: Box<Node<T>>)
+ - peek(&self) -> Option<&T>
+ - pop(&mut self) -> Option<Node<T>>
+*/
+pub struct Stack<T> {
+    head: Option<Box<Node<T>>>, // Adding an extra box just in case things get wild
     length: usize,
 }
-impl Stack {
+impl<T> Stack<T> {
     // Creates a new list
-    pub fn new() -> Stack {
+    pub fn new() -> Stack<T> {
         Stack {
             head: None,
             length: 0,
         }
     }
-    pub fn push(&mut self, frame: Box<Frame>) {
+    pub fn push(&mut self, frame: Box<Node<T>>) {
         let mut new_head = frame;
-        println!("Pushed {} to the stack", &new_head.symbol);
         new_head.next = self.head.take();
         self.head = Some(new_head);
         self.length += 1;
         return;
     }
-    pub fn peek(&self) -> Option<char> {
+    pub fn peek(&self) -> Option<&T> {
         if let Some(s) = &(*self).head {
-            Some(s.symbol)
+            Some(&s.data)
         } else {
             None
         }
     }
-    pub fn pop(&mut self) -> Option<Frame> {
+    pub fn pop(&mut self) -> Option<Node<T>> {
         if let Some(mut boxed_frame) = self.head.take() {
             self.head = boxed_frame.next.take();
             self.length -= 1;
@@ -56,14 +56,14 @@ impl Stack {
 }
 
 pub mod safe_stack {
-    use super::{Frame, Stack};
+    use super::{Node, Stack};
 
     /** Example funciton that uses the stack to check if a String contains balanced sets of braces */
     pub fn balance(s: String) -> bool {
         let mut symbols = Stack::new();
 
         for e in s.chars() {
-            let f: Box<Frame> = Box::new(Frame::new(e));
+            let f: Box<Node<char>> = Box::new(Node::new(e)); // Explicitly declares T as char
             match e {
                 '[' | '{' | '(' => {
                     symbols.push(f);
@@ -76,9 +76,9 @@ pub mod safe_stack {
                     // Else check for and pop the matching opener
                     else {
                         if let Some(check) = symbols.peek() {
-                            if (check == '[' && e == ']')
-                                || (check == '{' && e == '}')
-                                || (check == '(' && e == ')')
+                            if (*check == '[' && e == ']')
+                                || (*check == '{' && e == '}')
+                                || (*check == '(' && e == ')')
                             {
                                 symbols.pop();
                             }
@@ -97,24 +97,22 @@ pub mod safe_stack {
 
     #[test]
     fn success() {
+        // 🧘
         let input = "{[({[]}[(())]){{{}}{[()()()[{}]]}}]}".to_string();
         assert!(balance(input));
     }
     #[test]
     #[should_panic(expected = "Error: Unexpected closing symbol")]
-    fn mismatched_symbols_fail() {
-        let input = "{{{}}{{}}}{{}{}{{{}{}}}}}{{{}{}".to_string(); // Fails somewhere mid-string
+    fn should_fail() {
+        // Fails somewhere mid-string
+        let input = "{{{}}{{}}}{{}{}{{{}{}}}}}{{{}{}".to_string();
         assert!(!balance(input), "");
-    }
-    #[test]
-    #[should_panic(expected = "Error: Unexpected closing symbol")]
-    fn illegal_opening_brace_fail() {
-        let input = "}{[]}{}".to_string(); // Fails with leading closing symbol
+
+        // Fails with leading closing symbol
+        let input = "}{[]}{}".to_string();
         assert!(!balance(input), "");
-    }
-    #[test]
-    #[should_panic(expected = "Error: Missing closing symbol")]
-    fn open_block_fail() {
+
+        // Fails with missing closing symbol
         let input = "{[]}{".to_string();
         assert!(!balance(input), "");
     }

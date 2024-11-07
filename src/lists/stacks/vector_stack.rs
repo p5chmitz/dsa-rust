@@ -34,10 +34,10 @@ mod wrapper {
     }
 
     /** Example of a nested symbol balancer using a stack;
-     *  Reads each character from the input string;
-     *   - if the char is an opening symbol its pushed to the stack
-     *   - if the char is a closing symbol and the stack size is zero: error
-     *   - if the char is a closing symbol and it matches an opening char on the stac, its popped */
+    Reads each character from the input string;
+     - if the char is an opening symbol its pushed to the stack
+     - if the char is a closing symbol and the stack size is zero: error
+     - if the char is a closing symbol and it matches an opening char on the stac, its popped */
     pub fn balance(s: String) -> bool {
         let mut symbols = Stack::new();
 

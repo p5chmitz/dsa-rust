@@ -1,135 +1,177 @@
-////////////////////////////////////////
-/** A simple, owned vector-based list */
-////////////////////////////////////////
+/////////////////////////////////
+/** A simple vector-based list */
+/////////////////////////////////
 
 #[derive(Default)] // Required for generic array initialization
-pub struct PodiumEntry {
-    pub name: String,
-    score: Option<usize>,
+pub struct PodiumEntry<'a> {
+    pub name: &'a str,
+    score: Option<i32>,
 }
-impl Clone for PodiumEntry {
-    fn clone(&self) -> PodiumEntry {
+impl<'a> Clone for PodiumEntry<'a> {
+    fn clone(&self) -> PodiumEntry<'a> {
         PodiumEntry {
-            name: self.name.clone(),
+            name: self.name,
             score: self.score,
         }
     }
 }
 /** The Podium's public API contains the following functions:
- * - new() -> Vec<PodiumEntry>
- * - build(name: String, score: usize) -> PodiumEntry
- * - add(mut podium: Vec<PodiumEntry>, new_entry: PodiumEntry) -> Vec<PodiumEntry>
- * - remove(mut podium: Vec<PodiumEntry>, index: usize) -> Vec<PodiumEntry>
- * - format(&self) -> (String, String)
- * - print(print_all: bool, podium: &Vec<PodiumEntry>)
-* NOTE: This list is a little wonky as the PodiumEntry struct doesn't give any real indication
-* that the data structure is actually build on a Vec. Additionally, each major method returns
-* a new, owned Vec which skirts the multiple mutability issue */
-impl PodiumEntry {
+ - new() -> Podium<'a>
+ - add(&mut self, name: &'a str, score: Option<i32>)
+ - remove(&mut self, index: usize) -> Option<&str>
+ - peek???
+ - print(&self, print_all: bool) {
+
+Podium also contains the following utility functions:
+ - build(name: &str, score: Option<i32>) -> PodiumEntry {
+ - format(&self, entry: &PodiumEntry) -> (String, String) {
+
+NOTE: Seriously, just use Vec */
+pub struct Podium<'a> {
+    data: Vec<PodiumEntry<'a>>,
+    size: usize,
+}
+impl<'a> Podium<'a> {
     /** Builds new default list containing at least three elements */
-    pub fn new() -> Vec<PodiumEntry> {
-        vec![PodiumEntry::default(); 1]
-    }
-    /** Constructs a new PodiumEntry instance */
-    pub fn build(name: String, score: usize) -> PodiumEntry {
-        PodiumEntry {
-            name,
-            score: Some(score),
+    pub fn new() -> Podium<'a> {
+        Podium {
+            data: vec![PodiumEntry::default(); 3],
+            size: 0
         }
     }
-    /** Adds entry to list by score to maintain order */
-    pub fn add(mut podium: Vec<PodiumEntry>, new_entry: PodiumEntry) -> Vec<PodiumEntry> {
+    /** Returns a reference to the ith node */
+    pub fn peek(&self, index: usize) -> Option<&PodiumEntry> { 
+        let data = &self.data[index];
+        Some(data)
+    }
+    /** Adds entry to list by score to maintain order in O(n) time */
+    pub fn add(&mut self, name: &'a str, score: Option<i32>) { 
+        let entry = Self::build(name, score);
         // Evaluates the existing vector and finds appropriate insertion index
-        let mut insert_index: i32 = -1;
-        for i in 0..podium.len() {
-            if podium[i].score.is_none() || podium[i].score < new_entry.score {
-                insert_index = i as i32;
+        let mut insert_index = 0;
+        for i in 0..self.data.len() {
+            if self.data[i].score.is_none() || self.data[i].score < score {
+                insert_index = i;
                 break;
             }
         }
         // Inserts the entry at the appropriate index
-        podium.insert(insert_index as usize, new_entry);
-        podium
+        self.data.insert(insert_index as usize, entry);
+        self.size += 1;
     }
-    // Takes a podium vec and an index, removes the entry at the index
-    // and shifts all remaining elements up by one index
-    /** Removes an entry from the list */
-    pub fn remove(mut podium: Vec<PodiumEntry>, index: usize) -> Vec<PodiumEntry> {
-        for e in index..podium.len() - 1 {
-            podium[e] = podium[e + 1].clone();
+    /** Removes the entry at the index and shifts all remaining elements up by one 
+    place in O(n) time; Vec::remove() also runs in O(n) time but does not clone */
+    pub fn remove(&mut self, index: usize) -> Option<&str> {
+        let rtn = Some(self.data[index].clone().name);
+        for e in index..self.data.len() - 1 {
+            self.data[e] = self.data[e + 1].clone();
         }
-        //podium[podium.len() - 1] = Default::default();
-        podium
+        self.size -= 1;
+        rtn
     }
-    /** Formats PodiumEntry instances for output */
-    pub fn format(&self) -> (String, String) {
-        let name = self.name.to_owned();
-        // Required mapping for entries without scores yet
-        let score = self.score.map_or("".to_string(), |s| s.to_string());
-        (name, score)
-    }
-    /** Prints the first three entires of the list; set print_type to 0 for whole list or 1 for
-     * just the top three entries */
-    pub fn print(print_all: bool, podium: &Vec<PodiumEntry>) {
+
+    // Utility functions
+
+    /** Prints the Podium list; If you supply true the function prints the entire list,
+     if you supply false the function just prints the top three spots */
+    pub fn print_full(&self, print_all: bool) {
         let length: usize;
         if print_all == true {
-            length = podium.len()
+            length = self.data.len()
         } else {
             length = 3
         }
-        for (i, entry) in podium.iter().enumerate() {
+        for (i, entry) in self.data.iter().enumerate() {
             // Only prints the first three podium entries
             if i >= length {
                 break;
             }
-            let entry = entry.format();
+            let entry = self.format(&entry);
             println!("{:>2}: {:<8} {:>6}", i + 1, entry.0, entry.1)
         }
         println!("")
     }
+    /** Constructs a new PodiumEntry instance */
+    fn build(name: &str, score: Option<i32>) -> PodiumEntry {
+        PodiumEntry {
+            name,
+            score,
+        }
+    }
+    /** Formats PodiumEntry instances for output */
+    fn format(&self, entry: &PodiumEntry) -> (String, String) {
+        let name = entry.name.to_owned();
+        // Required mapping for entries without scores yet
+        let score = entry.score.map_or("".to_string(), |s| s.to_string());
+        (name, score)
+    }
+
 }
 
-/** This example illustrates an array implementation for the list ADT... using no vectors */
-pub fn naive_example() {
-    // Imports the list implementation and creates default list
-    //use crate::lists::vector_list::PodiumEntry;
-    use super::vector_list::PodiumEntry;
-    let mut podium = PodiumEntry::new();
+#[test]
+fn vector_list_test() {
+    use crate::lists::vector_list::Podium;
+    let mut podium = Podium::new();
 
     // Sample data to build a basic set of PodiumEntry instances
     let names_vec = vec![
-        "Peter".to_string(),
-        "Dingus".to_string(),
-        "Brain".to_string(),
-        "Bobson".to_string(),
+        "Peter",
+        "Dingus",
+        "Brain",
+        "Bobson",
+    ];
+    let scores_vec = vec![1223, 34, 616, 42069];
+
+    // Adds all known sample values to the list
+    for i in 0..names_vec.len() {
+        podium.add(names_vec[i], Some(scores_vec[i as usize]));
+    }
+
+    // Tests that the lead score is the cheater
+    assert_eq!(Some("Bobson"), podium.remove(0));
+
+    // Adds the new bronze medalist... but it turns out its not legit
+    podium.add("Dangus", Some(187));
+    assert_eq!(Some("Dangus"), podium.remove(2));
+
+}
+
+/** This example illustrates an array implementation for the list ADT... using no vectors */
+pub fn example() {
+    use crate::lists::vector_list::Podium;
+    let mut podium = Podium::new();
+
+    // Sample data to build a basic set of PodiumEntry instances
+    let names_vec = vec![
+        "Peter",
+        "Dingus",
+        "Brain",
+        "Bobson",
     ];
     let scores_vec = vec![1223, 34, 616, 42069];
 
     // Adds all known sample values to the list and prints the result
     for i in 0..names_vec.len() {
-        podium = PodiumEntry::add(
-            podium,
-            PodiumEntry::build(names_vec[i].to_string(), scores_vec[i as usize]),
-        );
+        podium.add(names_vec[i], Some(scores_vec[i as usize]));
     }
     println!("Initial results:");
-    PodiumEntry::print(true, &podium);
+    podium.print_full(true);
 
     // Adds an entry to the middle
     println!("Add Dave\n");
-    podium = PodiumEntry::add(podium, PodiumEntry::build("Dave".to_string(), 334));
+    podium.add("Dave", Some(334));
 
     // Removes the score at the ith index (Bobson)
     println!("Remove Bobson\n");
-    podium = PodiumEntry::remove(podium, 0);
+    podium.remove(0);
 
-    // 6) Adds an entry to the middle
+    // Adds an entry to the middle
     println!("Add Dangus\n");
-    podium = PodiumEntry::add(podium, PodiumEntry::build("Dangus".to_string(), 420));
+    podium.add("Dangus", Some(420));
 
-    // 7) Prints the final list and podium results
+    // Prints the final list and podium results
     println!("Final List:");
-    PodiumEntry::print(true, &podium);
+    podium.print_full(true);
     println!("Final podium:");
-    PodiumEntry::print(false, &podium);
+    podium.print_full(false);
 }

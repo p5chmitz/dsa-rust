@@ -6,7 +6,7 @@ mod tgg;
 
 use crate::lists::queues::{singly_linked_queue, vec_circ_queue, vec_queue, vecdeque_queue};
 use crate::lists::stacks::{safe_linked_stack, unsafe_linked_stack, vector_stack};
-use crate::lists::{array_list, doubly_linked_list_2, generic_doubly_linked_list};
+use crate::lists::{array_list, doubly_linked_list_2, generic_doubly_linked_list, vector_list};
 
 use crate::tgg::{tgg_04, tgg_05};
 
@@ -118,7 +118,11 @@ fn main() {
 
     // Static array list implementation
     println!("Static array list:");
-    //array_lists::list_adt_driver_0();
+    array_list::example();
+
+    // Vector list implementation
+    println!("Vector array list:");
+    vector_list::example();
 
     // Dynamic array list implementation
     println!("Dynamic array list:");
@@ -133,7 +137,7 @@ fn main() {
     println!("Doubly-linked list:");
     //doubly_linked_list_1::example();
     println!("\nDoubly-linked list (with NonNull):");
-    doubly_linked_list_2::example();
+    //doubly_linked_list_2::example();
 
     // Queues
     println!("\nQueues:");
@@ -141,7 +145,7 @@ fn main() {
 
     // Generic List ADT
     println!("\nGeneric List ADT:");
-    lists::dynamic_array_list::visualize();
+    //lists::dynamic_array_list::visualize();
 }
 
 #[test]

@@ -15,13 +15,13 @@ impl Frame {
         Frame { symbol, next: None }
     }
 }
-// The Stack API includes
-// - new() -> Stack
-// - push(&mut self, node: Box<Frame>)
-// - peek(&self) -> Option<char>
-// - pop(&mut self) -> Option<Frame>
-// - iter(&self) -> Iter
-// - print(&self)
+/** The Stack API includes
+ - new() -> Stack
+ - push(&mut self, node: Box<Frame>)
+ - peek(&self) -> Option<char>
+ - pop(&mut self) -> Option<Frame>
+ - iter(&self) -> Iter
+ - print(&self) */
 pub struct Stack {
     head: Link,
     length: usize,
@@ -70,35 +70,34 @@ impl Stack {
             }
         }
     }
-    // NOTE: There is no need to iterate over the stack
-    //pub fn iter(&self) -> Iter {
-    //    Iter {
-    //        next: self.head.as_ref().map(|&ptr| unsafe { &*ptr }),
-    //    }
-    //}
-    // NOTE: There is no need to print the stack
-    //pub fn print(&self) {
-    //    let mut counter = 1;
-    //    for e in self.iter() {
-    //        println!("{:>2}: {:<2}", counter, e.symbol);
-    //        counter += 1;
-    //    }
-    //    println!("")
-    //}
+    // Iterating over and printing the stack is really only for debugging and visibility
+    pub fn iter(&self) -> Iter {
+        Iter {
+            next: self.head.as_ref().map(|&ptr| unsafe { &*ptr }),
+        }
+    }
+    pub fn print(&self) {
+        let mut counter = 1;
+        for e in self.iter() {
+            println!("{:>2}: {:<2}", counter, e.symbol);
+            counter += 1;
+        }
+        println!("")
+    }
 }
-//pub struct Iter<'a> {
-//    next: Option<&'a Frame>,
-//}
-//impl<'a> Iterator for Iter<'a> {
-//    type Item = &'a Frame;
-//    /** Returns each Frame in the list until there are None */
-//    fn next(&mut self) -> Option<Self::Item> {
-//        self.next.take().map(|current| {
-//            self.next = current.next.as_ref().map(|&ptr| unsafe { &*ptr });
-//            current
-//        })
-//    }
-//}
+pub struct Iter<'a> {
+    next: Option<&'a Frame>,
+}
+impl<'a> Iterator for Iter<'a> {
+    type Item = &'a Frame;
+    /** Returns each Frame in the list until there are None */
+    fn next(&mut self) -> Option<Self::Item> {
+        self.next.take().map(|current| {
+            self.next = current.next.as_ref().map(|&ptr| unsafe { &*ptr });
+            current
+        })
+    }
+}
 impl Drop for Stack {
     /** Stack destructor */
     fn drop(&mut self) {

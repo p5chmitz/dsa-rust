@@ -12,11 +12,7 @@ use std::cell::RefCell;
  - remove(&mut self, i: usize) -> Option<T>
  - clear(&mut self)
  - trim(&mut self) - private, called by remove()
-NOTE: Rust only allows arrays to be instantiated with lengths as (immutable, compile-time) constants.
-Even the Vec type in the standard library uses an internal module called RawVec that uses special 
-allocators to circumvent this constraint. In order to avoid reimplementing that module, 
-this module uses Vec as its base heap-allocated storage vehicle. Let's just pretend that the underlying 
-Vec structure doesn't already handle these features more effectively than this implementation. */
+NOTE: This is just a funsies excuse to use RefCell; This list probably doesn't need it */
 #[derive(Debug)] // Required for list visualization in example function
 pub struct List<T> {
     data: Vec<Option<RefCell<T>>>,
@@ -41,7 +37,7 @@ impl<T: Clone> List<T> {
     pub fn is_empty(self) -> bool {
         self.size == 0
     }
-    /** Attempts to set an element e to the list at index i; 
+    /** Attempts to set an element e to the list at index i;
      * Warning: Overwrites any existing data at the specified index;
      * Checks that i is within the list's capacity (self.data.len()), otherwise returns an error;
      * If i is equal to the list's capacity the list resizes to be 2x capacity */
@@ -85,7 +81,7 @@ impl<T: Clone> List<T> {
     fn trim(&mut self) {
         let capacity = self.data.len();
         if self.size <= capacity / 4 && capacity > 1 {
-            self.data.resize(capacity.max(1)/2, None);
+            self.data.resize(capacity.max(1) / 2, None);
         }
     }
     /** Clears all elements from the list and resizes to 1 */
@@ -139,7 +135,7 @@ pub fn example() {
     assert_eq!(list.size, 4);
     assert_eq!(list.data.len(), 4);
 
-    // Attempts to.set an entry to some OOB index which triggers 
+    // Attempts to.set an entry to some OOB index which triggers
     // an error but doens't change the list
     name = "Wild".to_string();
     assert!(list.set(name, 21).is_err());
@@ -160,8 +156,8 @@ pub fn example() {
     // Ensures that remove() actually removes data
     assert!(list.get(4).is_none());
 
-    // Removes enough elements such that size = capacity/4, 
-    // at which point trim() automatically halves the list's capacity 
+    // Removes enough elements such that size = capacity/4,
+    // at which point trim() automatically halves the list's capacity
     list.remove(1).unwrap(); // 3/8 != .25
     list.remove(2).unwrap(); // 2/8 == .25, automatically calls trim()
     assert_eq!(list.size, 2);
@@ -175,7 +171,6 @@ pub fn example() {
     assert!(list.set(name, 0).is_ok());
     assert_eq!(list.size, 1);
     assert_eq!(list.data.len(), 1);
-
 }
 
 /** Just used to debug print the list to visualize how the list works */

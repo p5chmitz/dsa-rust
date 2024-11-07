@@ -72,25 +72,26 @@ impl Podium {
     }
 
     /** Removes the ith entry in O(n) time and returns the entry's name,
-    shifts all remaining elements up by one index */
-    pub fn remove(&mut self, index: usize) -> String {
+    shifts all remaining elements up by one index;
+    NOTE: Probably should return Option<String>, but Im lazy and this list sucks */
+    pub fn remove(&mut self, index: usize) -> Result<String, String> {
         if index >= PODIUM_SIZE - 1 {
             let msg: String = format!(
                 "Index out of bounds: {} is out of the range 0..={}",
                 index,
                 PODIUM_SIZE - 1
             );
-            return msg;
+            return Err(msg);
         }
         let entry: Entry = match self.data[index].clone() {
             Some(e) => e,
-            None => return "None".to_string(),
+            None => return Err("No data at index".to_string()),
         };
         for i in index..self.data.len() - 1 {
             self.data[i] = self.data[i + 1].clone();
         }
         self.data[self.data.len() - 1] = None;
-        entry.name
+        Ok(entry.name)
     }
 
     // Private utility funcitons
@@ -161,16 +162,17 @@ pub fn array_list_test() {
     pod.print_full(false); // Helps in debugging
 
     // Removes Bobson because it was shifted when a higher scoring entry was added
-    assert_eq!("Bobson".to_string(), pod.remove(1));
+    assert_eq!("Bobson".to_string(), pod.remove(1).unwrap());
 
-    // Tests removal on empty index
-    assert_eq!("None".to_string(), pod.remove(5));
+    // Tests that a removal on empty index is a) an error and b) the error message
+    assert!(pod.remove(9).is_err());
+    assert_eq!("No data at index".to_string(), pod.remove(7).unwrap_err());
 
     // Tests OOB logic with some random usize > (PODIUM_SIZE - 1)
     let oob = 10;
     assert_eq!(
         format!("Index out of bounds: {} is out of the range 0..=9", oob),
-        pod.remove(oob)
+        pod.remove(oob).unwrap_err()
     );
 }
 
@@ -184,7 +186,7 @@ pub fn example() {
     pod.add("Dorkus", None);
     pod.print_full(false);
 
-    pod.remove(2);
+    let _ = pod.remove(2);
     pod.print_full(false);
 
     pod.add("Brain", Some(616));
@@ -196,12 +198,14 @@ pub fn example() {
     pod.add("Dangus", Some(420));
     pod.print_full(false);
 
-    let success = pod.remove(4);
+    let success = pod.remove(4).unwrap();
     println!("Removing an entry: \n\t{success}");
 
-    let mut err = pod.remove(5);
-    println!("Attempting to remove an empty index: \n\t{err}");
+    if let Err(msg) = pod.remove(5) {
+        println!("Attempting to remove an empty index: {msg}");
+    }
 
-    err = pod.remove(10);
-    println!("Attempting to remove an OOB index: \n\t{err}");
+    if let Err(msg) = pod.remove(10) {
+        println!("Attempting to remove an OOB index: {msg}");
+    }
 }

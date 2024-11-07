@@ -3,7 +3,7 @@
 /////////////////////////////////////
 
 pub mod vec_wrapper {
-    /** The Queue's API contains the following functions: 
+    /** The Queue's API contains the following functions:
     - new() -> Queue<T>
     - push(&mut self, s: T)
     - peek(&self) -> Option<&T>
@@ -73,7 +73,7 @@ pub mod vec_wrapper {
 }
 
 /** Illustrates how Vec can be used as a queue by itself; Convenient, but remove(0) runs in O(n) time;
- Use VecDeque for flexible operations in O(1) time */
+Use VecDeque for flexible operations in O(1) time */
 pub mod vec {
     #[test]
     // Illustrates how Vec can be used as a queue, but with some inefficiencies
@@ -83,14 +83,14 @@ pub mod vec {
         queue.push('b');
         queue.push('c');
         queue.push('d');
-        let first: Vec<char> = vec!('a', 'b', 'c', 'd');
+        let first: Vec<char> = vec!['a', 'b', 'c', 'd'];
         assert_eq!(first, queue);
 
         // remove() scales in O(n) time
         queue.remove(0);
         queue.remove(0);
         queue.push('z');
-        let second: Vec<char> = vec!('c', 'd', 'z');
+        let second: Vec<char> = vec!['c', 'd', 'z'];
         assert_eq!(second, queue);
     }
 }

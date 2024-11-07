@@ -1,17 +1,15 @@
-//#![allow(dead_code)]
-
 /////////////////////////////////
 /** A safe, singly-linked list */
 /////////////////////////////////
 
-pub struct Node {
-    name: String,
+pub struct Node<'a> {
+    name: &'a str,
     score: i32,
-    next: Option<Box<Node>>,
+    next: Option<Box<Node<'a>>>,
 }
-impl Node {
+impl<'a> Node<'a> {
     // Creates a new node
-    pub fn new(name: String, score: i32) -> Node {
+    pub fn new(name: &'a str, score: i32) -> Node<'a> {
         Node {
             name,
             score,
@@ -19,20 +17,26 @@ impl Node {
         }
     }
 }
-pub struct List {
-    head: Option<Box<Node>>, // Adding an extra box just in case things get wild
+/** The List's public API includes the following functions:
+ - new() -> List<'a>
+ - insert(&mut self, node: Node<'a>)
+ - remove(&mut self, index: u32)
+ - print_list(&mut self)
+*/
+pub struct List<'a> {
+    head: Option<Box<Node<'a>>>, // Adding an extra box just in case things get wild
     length: usize,
 }
-impl List {
+impl<'a> List<'a> {
     // Creates a new list
-    pub fn new() -> List {
+    pub fn new() -> List<'a> {
         List {
             head: None,
             length: 0,
         }
     }
     /** Inserts a node, sorted by its score */
-    pub fn insert(&mut self, node: Node) {
+    pub fn insert(&mut self, node: Node<'a>) {
         // Handle the special case of inserting at the head
         if self.head.is_none() || self.head.as_ref().unwrap().score <= node.score {
             let mut new_head = Box::new(node);
@@ -111,6 +115,21 @@ impl List {
     }
 }
 
+// Not a lot here to test aside from the fact that opertions dont error and the list's length
+#[test]
+fn singly_linked_test() {
+    let mut list = List::new();
+    list.insert(Node::new("Peter", 1223));
+
+    assert_eq!(list.length, 1);
+
+    list.insert(Node::new("Dingus", 12));
+    list.insert(Node::new("Dangus", 23));
+    list.remove(0);
+
+    assert_eq!(list.length, 2);
+}
+
 pub fn example() {
     // Creates a new (empty list)
     let mut podium: List = List::new();
@@ -120,14 +139,14 @@ pub fn example() {
     podium.remove(0);
 
     // Basic insertion
-    let node = Node::new("Peter".to_string(), 1223);
+    let node = Node::new("Peter", 1223);
     podium.insert(node);
 
     // Streamlined insertion
-    podium.insert(Node::new("Dangus".to_string(), 34));
-    podium.insert(Node::new("Remus".to_string(), 8234));
-    podium.insert(Node::new("Dingus".to_string(), 602));
-    podium.insert(Node::new("Brain".to_string(), 616));
+    podium.insert(Node::new("Dangus", 34));
+    podium.insert(Node::new("Remus", 8234));
+    podium.insert(Node::new("Dingus", 602));
+    podium.insert(Node::new("Brain", 616));
 
     println!("After all insertions:");
     podium.print_list();
@@ -146,8 +165,8 @@ pub fn example() {
     println!("Deleting list index {}", i);
     podium.remove(i);
 
-    podium.insert(Node::new("Romulus".to_string(), 12837));
-    podium.insert(Node::new("Bobson".to_string(), 42069));
+    podium.insert(Node::new("Romulus", 12837));
+    podium.insert(Node::new("Bobson", 42069));
 
     println!("Final list:");
     podium.print_list();

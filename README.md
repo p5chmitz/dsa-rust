@@ -10,11 +10,11 @@ For detailed explanations and analysis of the structures and algorithms presente
 
 The lists section centers around solutions to create a simple podium of sorted entries consisting of names and associated scores.
 
-- [Array-based list](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/array_list.rs): A basic introduction to lists (and arrays) 
-- [Vector-based list](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/vector_list.rs): Safe, easy, convenient... but SUPER naive and gross
-- [Dynamic array list](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/dynamic_array_list.rs): Safe, a little harder, a little less convenient, but addresses the multiple mutability issue skirted by the simple vec-based list... and also represents a half-assed lie
-- [Singly-linked list](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/singly_linked_list.rs): A safe, singly-owned, singly-linked list
-- [Doubly-linked list](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/doubly_linked_list_2.rs): A naive and horribly unsafe doubly-linked list with raw, mutable (and null-able) pointers everywhere balanced out with just enough Miri testing to not immediately cause concern among friends and loved ones
+- [Array-based list](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/array_list.rs): A basic introduction to lists (and arrays)
+- [Vector-based list](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/vector_list.rs): A little more fun with `&str` lifetimes, but still no reason not to just use `Vec`
+- [Dynamic array list](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/dynamic_array_list.rs): A little more involved, a little less convenient; Presents a (needless) illustration of `RefCell` while still illustrating dynamic arrays with... a dynamic array; This list is fun but real dumb
+- [Singly-linked list](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/singly_linked_list.rs): A safe, singly-owned, singly-linked implementation of the podium 
+- [Unsafe doubly-linked list](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/doubly_linked_list_2.rs): My first attempt at a naive and horribly unsafe doubly-linked list with raw, mutable (and null-able) pointers everywhere; This implementation is balanced out with just enough Miri testing to not immediately cause concern among friends and loved ones
 
 </details>
 
@@ -22,12 +22,11 @@ The lists section centers around solutions to create a simple podium of sorted e
 
 <summary> Stacks </summary>
 
-This section builds on the structures and approaches established in the Lists section. Instead of featuring solutions to implement a podium, this section features slightly more pragmatic solutions including a symbol balancer for the stack implementation. As it turns out, Rust's `Vec` type can serve as a fully-funcitonal stack implementation right out of the box with `push`, `pop`, and `last` included methods. This module is all about learning though, so it starts with a wrapper to illustrate concepts.
+This section builds on the structures and approaches established in the Lists section. Instead of featuring solutions to implement a podium, this section features slightly more pragmatic solutions including a symbol balancer for the stack implementation. As it turns out, Rust's `Vec` type can serve as a fully-functional stack implementation right out of the box with `push`, `pop`, and `last` included methods. This module is all about learning though, so it starts with a useless wrapper to illustrate concepts (and proceeds to get progressively sillier).
 
-- [Vector-based stack (wrapper)](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/stacks/vector_stack.rs): Simple and effective, likely the preferred approach; This crate includes two modules that implement a symbol-balancer; One uses a raw `Vec` implementation and the other implements a `Vec` wrapper for funsies
-- [Safe singly-linked stack](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/stacks/safe_linked_stack.rs): The easiest of the custom options; Seriously, just use `Vec`
+- [Vector-based stack (wrapper)](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/stacks/vector_stack.rs): Simple, effective, but deeply dumb; It's just `Vec` with a new jacket and sunglasses; This module includes two sub-modules that each illustrate a stack-based symbol-balancer; One wraps `Vec` and the other illustrates how needless that is by raw-dogging it
+- [Singly-linked stack](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/stacks/safe_linked_stack.rs): This is probably the only viable implementation in this whole exercise; This module implements the stack-based symbol balancer for funsies; Unfortunately this list is still kinda dumb because `Vec` is already more robust and takes advantage of cache locality
 - [Unsafe singly-linked stack](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/stacks/unsafe_linked_stack.rs): Just because its possible and we somehow thrive on making things more difficult than they have to be
-- [Vector-based queue (wrapper)](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/queues/vec_queue.rs): Its a queue, why aren't you using `Vec` or `VecDeque`?
 
 </details>
 
@@ -35,12 +34,13 @@ This section builds on the structures and approaches established in the Lists se
 
 <summary> Queues </summary>
 
-This section builds on the structures and approaches established in the Lists section. Instead of featuring solutions to implement a podium, this section features slightly more pragmatic solutions including a symbol balancer for the stack implementation. As it turns out, Rust's `Vec` type can serve as a fully-funcitonal stack implementation right out of the box with `push`, `pop`, and `last` included methods. This module is all about learning though, so it starts with a wrapper to illustrate concepts.
+This section also utilizes the structures and approaches established in the Lists section. This section gets a little more fun with the idea of a circular queue, as well as presenting the final boss of linked-lists; an unsafe, doubly-linked deque that can be used as a stack, a queue, or some other generic linked list.
 
-- [Vector-based circular queue](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/queues/vec_circ_queue.rs): Its a Vec with capacity and wrapping logic
-- [A simple linked-list queue](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/queues/singly_linked_queue.rs): Kind of busted because enqueue() runs in O(n); Might be good for something though? IDK
-- [A VecDeque-based queue (wrapper)](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/queues/vecdeque_queue.rs): Something something both ends, but also the proper tool for the job
-- [Unsafe doubly-linked queue]() This is the end of my lists, I swear
+- [Vector-based queue (wrapper)](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/queues/vec_queue.rs): This wrapper illustrates the basics of the ADT; You should probably just use `Vec` or `VecDeque` (this list does, so why aren't you?)
+- [A VecDeque-based queue (wrapper)](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/queues/vecdeque_queue.rs): Something something both ends; Are you using `VecDeque` yet? 
+- [Vector-based circular queue](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/queues/vec_circ_queue.rs): Probably the second most useful of all of these horridly useless lists; A little more fun/interesting, but it's still just a `Vec` with capacity constraints and wrapping logic
+- [A simple linked-list queue](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/queues/singly_linked_queue.rs): Kind of a busted implementation because `enqueue()` runs in O(n); It was a fun exercise though!
+- [Unsafe doubly-linked queue]() This is the end of my lists, I swear; Why aren't you using `Vec` or `VecDeque` yet?!
 
 </details>
 
