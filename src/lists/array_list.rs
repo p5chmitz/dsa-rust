@@ -164,7 +164,7 @@ pub fn array_list_test() {
     // Removes Bobson because it was shifted when a higher scoring entry was added
     assert_eq!("Bobson".to_string(), pod.remove(1).unwrap());
 
-    // Tests that a removal on empty index is a) an error and b) the error message
+    // Tests that a removal on empty index a) is an error and b) the error message itself
     assert!(pod.remove(9).is_err());
     assert_eq!("No data at index".to_string(), pod.remove(7).unwrap_err());
 
