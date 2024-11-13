@@ -141,18 +141,18 @@ mod raw {
     #[should_panic(expected = "Error: Unexpected closing symbol")]
     fn mismatched_symbols_fail() {
         let input = "{{{}}{{}}}{{}{}{{{}{}}}}}{{{}{}".to_string(); // Fails somewhere mid-string
-        assert!(!balance(input), "");
+        assert!(!balance(input));
     }
     #[test]
     #[should_panic(expected = "Error: Unexpected closing symbol")]
     fn illegal_opening_brace_fail() {
         let input = "}{[]}{}".to_string(); // Fails with leading closing symbol
-        assert!(!balance(input), "");
+        assert!(!balance(input));
     }
     #[test]
     #[should_panic(expected = "Error: Missing closing symbol")]
     fn open_block_fail() {
         let input = "{[]}{".to_string();
-        assert!(!balance(input), "");
+        assert!(!balance(input));
     }
 }
