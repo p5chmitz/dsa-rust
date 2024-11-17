@@ -4,7 +4,7 @@
 
 #[derive(Default)] // Required for generic array initialization
 pub struct PodiumEntry<'a> {
-    pub name: &'a str,
+    name: &'a str,
     score: Option<i32>,
 }
 impl<'a> Clone for PodiumEntry<'a> {
