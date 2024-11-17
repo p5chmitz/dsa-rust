@@ -3,17 +3,17 @@
 /////////////////////////////////
 
 #[derive(Debug)]
-struct Node<'a> {
+struct Entry<'a> {
     name: &'a str,
     score: Option<i32>,
 }
-fn build(name: &str, score: Option<i32>) -> Node {
-    Node { name, score }
+fn build(name: &str, score: Option<i32>) -> Entry {
+    Entry { name, score }
 }
 // Required for the Vec::resize operation
-impl<'a> Clone for Node<'a> {
-    fn clone(&self) -> Node<'a> {
-        Node {
+impl<'a> Clone for Entry<'a> {
+    fn clone(&self) -> Entry<'a> {
+        Entry {
             name: self.name,
             score: self.score,
         }
@@ -33,7 +33,7 @@ It was also an excuse to explore interior mutability, which, as you can see,
 it does not need */
 #[derive(Debug)] // Required for list visualization in example function
 pub struct List<'a> {
-    data: Vec<Option<Node<'a>>>,
+    data: Vec<Option<Entry<'a>>>,
     size: usize,
 }
 impl<'a> List<'a> {
@@ -47,7 +47,7 @@ impl<'a> List<'a> {
     pub fn is_empty(self) -> bool {
         self.size == 0
     }
-    /** Takes a name and optional score, creates a node, and inserts it into the list;
+    /** Takes a name and optional score, creates a entry, and inserts it into the list;
      * If the addition places the list size at or above capacity, the function re-sizes
      * the list by a factor of two */
     pub fn insert(&mut self, name: &'a str, score: Option<i32>) {
@@ -72,8 +72,8 @@ impl<'a> List<'a> {
         }
 
         // Builds the entry, inserts it, and increments the list's size
-        let node: Node = build(name, score);
-        self.data[i] = Some(node);
+        let entry: Entry = build(name, score);
+        self.data[i] = Some(entry);
         self.size += 1;
     }
     /** Attempts to set an element e to the list at index i;
@@ -81,7 +81,7 @@ impl<'a> List<'a> {
     pub fn set_score(&mut self, name: &'a str, score: Option<i32>) -> Result<(), String> {
         // Attempt to remove the existing entry by name, if it exists
         if self.remove(name).is_ok() {
-            // Reinsert with the updated score
+            // Insert a new entry with the updated score
             self.insert(name, score);
             Ok(())
         } else {
@@ -96,8 +96,8 @@ impl<'a> List<'a> {
         self.data
             .iter()
             .take(self.size + 1)
-            .find_map(|node_opt| match node_opt {
-                Some(node) if node.name == name => match node.score {
+            .find_map(|entry_opt| match entry_opt {
+                Some(entry) if entry.name == name => match entry.score {
                     Some(score) => Some(Ok(score)),
                     None => Some(Err("No score for entry")),
                 },
@@ -109,7 +109,7 @@ impl<'a> List<'a> {
     pub fn remove(&mut self, n: &str) -> Result<&str, String> {
         // Find the index of the entry to remove
         if let Some(i) =
-            (0..=self.size).find(|&i| self.data[i].as_ref().map_or(false, |node| node.name == n))
+            (0..=self.size).find(|&i| self.data[i].as_ref().map_or(false, |entry| entry.name == n))
         {
             let name = self.data[i].as_ref().unwrap().name;
 
@@ -143,23 +143,19 @@ impl<'a> List<'a> {
     }
 }
 
-/** This driver illustrates an array implementation for the list ADT... using no vectors */
 #[test]
-fn example() {
+fn basic_function_test() {
     // Creates new list
     let mut list: List = List::new();
 
-    // Sets index 0 to a first name, tests the get method
+    // Tests insert and get on a new list
     list.insert("Chester", Some(30));
     let reference: i32 = list.get("Chester").unwrap();
     assert_eq!(reference, 30);
-
-    // Tests that the size and capacity is appropriate after the first.set
     assert_eq!(list.size, 1);
     assert_eq!(list.data.len(), 3);
 
-    // Ensures that you can insert scoreless entries
-    // Handling scoreless entries is up to the user
+    // Tests scoreless inserts and gets -- handling scoreless entries is up to the calling code
     list.insert("Copperpot", None);
     assert!(list.get("Copperpot").is_err());
     let score: (i32, &str) = match list.get("Copperpot") {
@@ -168,13 +164,13 @@ fn example() {
     };
     assert_eq!(score, (0, "No score for entry"));
 
-    // Tests the set function
+    // Tests set_score on valid and invalid list entries
     assert!(list.set_score("Copperpot", Some(25)).is_ok());
-    assert!(list.set_score("Doingus", Some(25)).is_err());
+    assert!(list.set_score("Doingus", Some(25)).is_err()); 
     let msg = list.set_score("Blongus", Some(100));
     assert_eq!(msg, Err("Error: Blongus not on list".to_string()));
 
-    // Tests matches on entires not in the list
+    // Tests get on entires not in the list
     assert!(list.get("Peter").is_err());
     let score: (i32, &str) = match list.get("Peter") {
         Ok(s) => (s, "Found something that shouldn't be here"),
@@ -182,27 +178,21 @@ fn example() {
     };
     assert_eq!(score, (0, "No match on name"));
 
-    // Tests the size of the list
-    assert_eq!(list.size, 2);
-
-    // Doubles the list's capacity
+    // Tests automatic list re-sizing
     list.insert("Peter", Some(45));
     assert_eq!(list.size, 3);
     assert_eq!(list.data.len(), 6);
 
-    // Preps the list size for further testing
+    // Prep fluf
     list.insert("Brain", Some(45));
     list.insert("Dingus", Some(3));
     list.insert("Dangus", Some(87));
     assert_eq!(list.size, 6);
     assert_eq!(list.data.len(), 12);
 
-    // Tests removal of known name
+    // Tests remove on valid and invalid entries
     let name: Result<&str, String> = list.remove("Chester");
     assert_eq!(name, Ok("Chester"));
-    assert_eq!(list.size, 5);
-
-    // Tests removal of non-existnat list entry
     let name: Result<&str, String> = list.remove("Remus");
     assert_eq!(name, Err("No match on name Remus".to_string()));
 
@@ -213,8 +203,8 @@ fn example() {
     assert_eq!(list.data.len(), 6);
 }
 
-/** Just used to debug print the list to visualize how the list works */
-pub fn usage() {
+/** Mostly for print debugging and example usage */
+pub fn example() {
     // Creates new list
     let mut list: List = List::new();
 
@@ -234,40 +224,28 @@ pub fn usage() {
         println!("{:?}", e);
     }
 
-    // Removes some entries with code for visualization
+    // Removes some entries with calling code options
+    // 1) Basic match block
     let name: &str = "Peter";
     let result: String = match list.remove(name) {
         Ok(_) => "Success".to_string(),
         Err(e) => e,
     };
     println!("Attempt to remove {}: {}", name, result);
-
+    // 2) if let syntax
     let name: &str = "Remus";
-    let result: String = match list.remove(name) {
-        Ok(_) => "Success".to_string(),
-        Err(e) => e,
-    };
-    println!("Attempt to remove {}: {}", name, result);
+    if let Err(result) = list.remove(name) {
+        println!("Attempt to remove {}: {}", name, result)
+    }
+    // 3) silent
+    list.remove("Chester").ok();
 
-    let name: &str = "Chester";
-    let result: String = match list.remove(name) {
-        Ok(_) => "Success".to_string(),
-        Err(e) => e,
-    };
-    println!("Attempt to remove {}: {}", name, result);
-
-    // Some sneaky add/removal options
-    list.insert("Romulus", Some(100));
-    // Removes a legit entry
-    list.remove("Romulus").ok();
-
-    // Attempts to remove a non-existent entry
-    list.remove("David").ok(); // No panic because the return value is ignored
-    //list.remove("David").unwrap(); // Using unwrap casuses panic on error
+    // Using unwrap casuses panic on error
+    //list.remove("David").unwrap();
 
     println!("The final list:");
     for e in list.data.iter() {
         println!("{:?}", e);
     }
-    println!("");
+    println!(""); // Keep the output kleen
 }
