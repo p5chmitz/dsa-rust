@@ -12,7 +12,7 @@ The lists section centers around solutions to create a simple podium of sorted e
 
 - [Array-based list](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/array_list.rs): A basic introduction to lists (and arrays)
 - [Vector-based list](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/vector_list.rs): A little more fun with `&str` lifetimes, but still no reason not to just use `Vec`
-- [Dynamic array list](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/dynamic_array_list.rs): A little more involved, a little less convenient; Presents a (needless) illustration of `RefCell` while still illustrating dynamic arrays with... a dynamic array; This list is fun but real dumb
+- [Dynamic array list](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/dynamic_array_list.rs): A little more involved; This imposes some manual logic on top of Rust's dynamic array `Vec` to illustrate geometric re-sizing while maintaining a sorted list
 - [Singly-linked list](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/singly_linked_list.rs): A safe, singly-owned, singly-linked implementation of the podium 
 - [Unsafe doubly-linked list](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/doubly_linked_list_2.rs): My first attempt at a naive and horribly unsafe doubly-linked list with raw, mutable (and null-able) pointers everywhere; This implementation is balanced out with just enough Miri testing to not immediately cause concern among friends and loved ones
 
@@ -34,7 +34,7 @@ This section builds on the structures and approaches established in the Lists se
 
 <summary> Queues </summary>
 
-This section also utilizes the structures and approaches established in the Lists section. This section gets a little more fun with the idea of a circular queue, as well as presenting the final boss of linked-lists; an unsafe, doubly-linked deque that can be used as a stack, a queue, or some other generic linked list. You reckon 12 lists is enough?
+This section also utilizes the structures and approaches established in the Lists section. This section gets a little more fun with the idea of a circular queue and presents the final boss of linked-lists; an unsafe, doubly-linked deque that can be used as a stack, a queue, or some other generic linked list.
 
 - [Vector-based queue (wrapper)](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/queues/vec_queue.rs): This wrapper illustrates the basics of the ADT; You should probably just use `Vec` or `VecDeque` (this list does, so why aren't you?)
 - [A VecDeque-based queue (wrapper)](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/queues/vecdeque_queue.rs): Something something both ends; Are you using `VecDeque` yet? 
