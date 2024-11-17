@@ -59,14 +59,15 @@ pub mod safe_stack {
     use super::{Node, Stack};
 
     /** Example funciton that uses the stack to check if a String contains balanced sets of braces */
-    pub fn balance(s: String) -> bool {
+    pub fn balance(string: String) -> bool {
         let mut symbols = Stack::new();
 
-        for e in s.chars() {
-            let f: Box<Node<char>> = Box::new(Node::new(e)); // Explicitly declares T as char
-            match e {
+        for element in string.chars() {
+            // Heap-allocates a Node containing an individual char from s
+            let node: Box<Node<char>> = Box::new(Node::new(element)); 
+            match element {
                 '[' | '{' | '(' => {
-                    symbols.push(f);
+                    symbols.push(node);
                 }
                 ']' | '}' | ')' => {
                     // Error if there is a closer with an empty list
@@ -76,9 +77,11 @@ pub mod safe_stack {
                     // Else check for and pop the matching opener
                     else {
                         if let Some(check) = symbols.peek() {
-                            if (*check == '[' && e == ']')
-                                || (*check == '{' && e == '}')
-                                || (*check == '(' && e == ')')
+                            // matches the next element with the top of the stack
+                            // and pops it if theres a match
+                            if (*check == '[' && element == ']')
+                                || (*check == '{' && element == '}')
+                                || (*check == '(' && element == ')')
                             {
                                 symbols.pop();
                             }
