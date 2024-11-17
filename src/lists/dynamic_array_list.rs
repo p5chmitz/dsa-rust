@@ -8,10 +8,7 @@ struct Node<'a> {
     score: Option<i32>,
 }
 fn build(name: &str, score: Option<i32>) -> Node {
-    Node {
-        name,
-        score,
-    }
+    Node { name, score }
 }
 // Required for the Vec::resize operation
 impl<'a> Clone for Node<'a> {
@@ -26,15 +23,14 @@ impl<'a> Clone for Node<'a> {
  - new() -> List<'a>
  - is_empty(self) -> bool
  - insert(&mut self, name: &'a str, score: Option<i32>)
- - set(&mut self, e: T, i: usize) -> Result<(), &'static str>
- - get(&self, i: usize) -> Option<T>
- - remove(&mut self, i: usize) -> Option<T>
+ - set_score(&mut self, name: &'a str, score: Option<i32>) -> Result<(), String>
+ - get(&self, name: &str) -> Result<i32, &str>
+ - remove(&mut self, n: &str) -> Result<&str, String> 
  - clear(&mut self)
  - trim(&mut self) - private, called by remove()
-NOTE: This is just a funsies excuse to use RefCell; This list probably doesn't need it,
-but notice that the get method only takes a reference, which should violate Rust's rules about
-having mutable and immutable references in scope, but RefCell takes care of us, that is 
-until you try to get and set simultaneously! */
+NOTE: This is mostly just a funsies excuse to illustrate dynamic sizing;
+It was also an excuse to explore interior mutability, which, as you can see,
+it does not need */
 #[derive(Debug)] // Required for list visualization in example function
 pub struct List<'a> {
     data: Vec<Option<Node<'a>>>,
@@ -55,35 +51,11 @@ impl<'a> List<'a> {
      * If the addition places the list size at or above capacity, the function re-sizes
      * the list by a factor of two */
     pub fn insert(&mut self, name: &'a str, score: Option<i32>) {
-        // Checks the list's size against its capacity and 
+        // Checks the list's size against its capacity and
         // grows geometrically to accommodate new entries
         if self.size + 1 >= self.data.len() {
             self.data.resize(2 * self.data.len(), None);
         }
-        //// Initializes the insert index
-        //let mut i: usize = 0;
-        //// If the list is empty, skips the rest of the checks
-        //if self.size == 0 {}
-        //// If the new entry has no score its added to the end of the list
-        //else if score.is_none() { i = self.size }
-        //// Walks all entires with scores to find the insertion point, shifts all lower scores
-        //// to make room for new entry
-        //else { 
-        //    while i <= self.size {
-        //        if self.data[i].as_ref().is_none() || self.data[i].as_ref().unwrap().score <= score {
-        //            break;
-        //        }
-        //        i += 1;
-        //    }
-        //    // Shifts lower scores to the right of the new entry
-        //    for j in (i..self.size).rev() {
-        //        self.data[j + 1] = self.data[j].clone();
-        //    }
-        //};
-        // Builds and inserts node at correct index, increments list size
-
-        // Or, if you're good at Rust
-        //
         // Finds the (first) index that:
         // - Places the new entry at the end of the list if its score is None or
         // - Has data with a score less than or equal to the new entry's score
@@ -106,91 +78,39 @@ impl<'a> List<'a> {
     }
     /** Attempts to set an element e to the list at index i;
      * Warning: Overwrites any existing data for the specified name */
-    pub fn set_score(&mut self, name: &'a str, score: i32) -> Result<(), &'static str> {
-        // Matches name with current element values
-        let mut i: usize = 0;
-        while i <= self.size {
-            if self.data[i].as_ref().unwrap().name == name {
-                break;
-            }
-            i += 1;
+    pub fn set_score(&mut self, name: &'a str, score: Option<i32>) -> Result<(), String> {
+        // Attempt to remove the existing entry by name, if it exists
+        if self.remove(name).is_ok() {
+            // Reinsert with the updated score
+            self.insert(name, score);
+            Ok(())
+        } else {
+            Err(format!("Error: {name} not on list"))
         }
-        if i > self.size {
-            return Err("Error: name on in list")
-        }
-        // Add element to the list and increment the list size
-        self.data[i].as_mut().unwrap().score = Some(score);
-        self.size += 1;
-        Ok(())
     }
-    /** Gets (but does not remove) the score for an input name, 
+    /** Gets (but does not remove) the score for an input name,
      * if the name matches but there is no score, the function returns 0,
      * if there is no match on the name, function returns Err */
     //pub fn get(&self, name: &str) -> Option<i32> {
     pub fn get(&self, name: &str) -> Result<i32, &str> {
-        let mut i: usize = 0;
-        while i <= self.size {
-            // Matches occupied indexes for the input name
-            if self.data[i].is_some() && self.data[i].as_ref().unwrap().name == name {
-                break;
-            }
-            i += 1;
-        }
-        // Tests if name exists
-        if i > self.size {
-            return Err("No match on name")
-        // Tests if the matched name has a score
-        } else if self.data[i].as_ref().unwrap().score.is_none() {
-            return Err("No score for entry")
-        // Returns the matched name's score
-        } else {
-            let score: i32 = self.data[i].as_ref().unwrap().score.unwrap();
-            Ok(score)
-        }
-        // Or, if you're good at Rust
-        //self.data
-        //    .iter()
-        //    .take(self.size + 1)
-        //    .find_map(|node_opt| match node_opt {
-        //        Some(node) if node.name == name => match node.score {
-        //            Some(score) => Some(Ok(score)),
-        //            None => Some(Err("No score for entry")),
-        //        },
-        //        _ => None,
-        //    })
-        //    .unwrap_or(Err("No match on name"))
+        self.data
+            .iter()
+            .take(self.size + 1)
+            .find_map(|node_opt| match node_opt {
+                Some(node) if node.name == name => match node.score {
+                    Some(score) => Some(Ok(score)),
+                    None => Some(Err("No score for entry")),
+                },
+                _ => None,
+            })
+            .unwrap_or(Err("No match on name"))
     }
     /** Attempts to remove (and return) the data that matches the input name */
     pub fn remove(&mut self, n: &str) -> Result<&str, String> {
-        //let mut i: usize = 0;
-        //while i <= self.size {
-        //    // Matches occupied indexes for the input name
-        //    if self.data[i].is_some() && self.data[i].as_ref().unwrap().name == n {
-        //        break;
-        //    }
-        //    i += 1;
-        //}
-        //// Tests if name exists
-        //if i > self.size {
-        //    return Err("No match on name")
-        //// Returns the matched name's score
-        //} else {
-        //    // Captures name for return
-        //    let name: &str = self.data[i].as_ref().unwrap().name;
-
-        //    // Shifts lower scores to the left to fill in the gap of removed entry
-        //    for j in i..self.size {
-        //        self.data[j] = self.data[j + 1].clone();
-        //    }
-
-        //    self.size -= 1;
-        //    self.trim();
-        //    Ok(name)
-        //}
-            // Find the index of the entry to remove
-        if let Some(i) = (0..=self.size).find(|&i| {
-            self.data[i].as_ref().map_or(false, |node| node.name == n)
-        }) {
+        // Find the index of the entry to remove
+        if let Some(i) =
+            (0..=self.size).find(|&i| self.data[i].as_ref().map_or(false, |node| node.name == n))
+        {
             let name = self.data[i].as_ref().unwrap().name;
 
             // Shift entries to the left to fill the gap
@@ -248,6 +168,12 @@ fn example() {
     };
     assert_eq!(score, (0, "No score for entry"));
 
+    // Tests the set function
+    assert!(list.set_score("Copperpot", Some(25)).is_ok());
+    assert!(list.set_score("Doingus", Some(25)).is_err());
+    let msg = list.set_score("Blongus", Some(100));
+    assert_eq!(msg, Err("Error: Blongus not on list".to_string()));
+
     // Tests matches on entires not in the list
     assert!(list.get("Peter").is_err());
     let score: (i32, &str) = match list.get("Peter") {
@@ -282,7 +208,7 @@ fn example() {
 
     // Tests that list auto-resizes on removal too
     let _ = list.remove("Copperpot");
-    let _ = list.remove("Dingus");
+    list.remove("Dingus").ok(); // More idiomatic way to neglect error handling
     assert_eq!(list.size, 3);
     assert_eq!(list.data.len(), 6);
 }
@@ -293,11 +219,17 @@ pub fn usage() {
     let mut list: List = List::new();
 
     // Inserts some entries
-    list.insert("Chester", Some(30));
-    list.insert("Copperpot", None);
-    list.insert("Peter", Some(45));
+    list.insert("Chester", None);
+    list.insert("Copperpot", Some(30));
+    list.insert("Peter", Some(40));
 
     println!("The initial list:");
+    for e in list.data.iter() {
+        println!("{:?}", e);
+    }
+
+    list.set_score("Chester", Some(35)).ok();
+    println!("The list after setting Chester's score:");
     for e in list.data.iter() {
         println!("{:?}", e);
     }
@@ -308,34 +240,34 @@ pub fn usage() {
         Ok(_) => "Success".to_string(),
         Err(e) => e,
     };
-    println!("Attempt to remove {}: {}", name, result); 
+    println!("Attempt to remove {}: {}", name, result);
 
     let name: &str = "Remus";
     let result: String = match list.remove(name) {
         Ok(_) => "Success".to_string(),
         Err(e) => e,
     };
-    println!("Attempt to remove {}: {}", name, result); 
+    println!("Attempt to remove {}: {}", name, result);
 
     let name: &str = "Chester";
     let result: String = match list.remove(name) {
         Ok(_) => "Success".to_string(),
         Err(e) => e,
     };
-    println!("Attempt to remove {}: {}", name, result); 
+    println!("Attempt to remove {}: {}", name, result);
 
     // Some sneaky add/removal options
     list.insert("Romulus", Some(100));
     // Removes a legit entry
-    let _ = list.remove("Romulus");
+    list.remove("Romulus").ok();
+
     // Attempts to remove a non-existent entry
-    let _ = list.remove("David"); // No panic because the return value is ignored
-    // list.remove("David").unwrap(); // Using unwrap casuses panic on error
+    list.remove("David").ok(); // No panic because the return value is ignored
+    //list.remove("David").unwrap(); // Using unwrap casuses panic on error
 
     println!("The final list:");
     for e in list.data.iter() {
         println!("{:?}", e);
     }
     println!("");
-
 }
