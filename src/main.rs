@@ -105,46 +105,55 @@ fn main() {
     //tgg::tgg_05::tower_of_hanoi(6, 'a', 'b', 'c');
 
     // Dir printer
+    println!("\n\x1b[1;34mTGG's directory (tree) structure printer:\x1b[0m");
+    println!("\x1b[1mNOTE:\x1b[0m Hardcoded vals only allow fn to list results when run from root");
     let path = std::path::Path::new("src");
     tgg::tgg_05::disk_usage(path);
+    println!();
 
     // Ch 6
     ///////
 
+    println!("\x1b[1;34mTGG's Vec-based stack exploration:\x1b[0m");
     tgg::tgg_06::stack_0();
+    println!();
 
     // Sandbox runner
     /////////////////
 
     // Static array list implementation
-    println!("Static array list:");
+    println!("\x1b[1;34mStatic array list:\x1b[0m");
     array_list::example();
+    println!();
 
     // Vector list implementation
-    println!("Vector array list:");
+    println!("\x1b[1;34mVector list:\x1b[0m");
     vector_list::example();
+    println!();
 
     // Dynamic array list implementation
-    println!("Dynamic array list:");
+    println!("\x1b[1;34mDynamic array list:\x1b[0m");
     //array_lists::list_adt_driver_1();
+    lists::dynamic_array_list::example();
+    println!();
 
     // Singly linked list
-    println!("Singly-linked list:");
-    //linked_lists::singly_linked_list_example();
-    //singly_linked_list::example();
+    println!("\x1b[1;34mSingly-linked list:\x1b[0m");
+    lists::singly_linked_list::example();
 
     // Doubly linked list
-    println!("Doubly-linked list:");
-    //doubly_linked_list_1::example();
-    println!("\nDoubly-linked list (with NonNull):");
+    println!("\x1b[1;34mDoubly-linked list:\x1b[0m");
+    doubly_linked_list_2::example();
+    println!();
+    //println!("\nDoubly-linked list (with NonNull):");
     //doubly_linked_list_2::example();
 
     // Queues
-    println!("\nQueues:");
+    //println!("\nQueues:");
     //lists::queues::vec_circ_queue::empirical_test();
 
     // Generic List ADT
-    println!("\nGeneric List ADT:");
+    //println!("\nGeneric List ADT:");
     //lists::dynamic_array_list::visualize();
 }
 
