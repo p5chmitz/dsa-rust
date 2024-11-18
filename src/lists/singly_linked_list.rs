@@ -4,12 +4,12 @@
 
 pub struct Node<'a> {
     name: &'a str,
-    score: i32,
+    score: Option<i32>,
     next: Option<Box<Node<'a>>>,
 }
 impl<'a> Node<'a> {
     // Creates a new node
-    pub fn new(name: &'a str, score: i32) -> Node<'a> {
+    pub fn new(name: &'a str, score: Option<i32>) -> Node<'a> {
         Node {
             name,
             score,
@@ -37,7 +37,7 @@ impl<'a> List<'a> {
     }
     /** Inserts a node, sorted by its score */
     pub fn insert(&mut self, node: Node<'a>) {
-        // Handle the special case of inserting at the head
+        // Handle the special case of inserting a new head node
         if self.head.is_none() || self.head.as_ref().unwrap().score <= node.score {
             let mut new_head = Box::new(node);
             println!("A new star {} emerges", &new_head.name);
@@ -47,7 +47,7 @@ impl<'a> List<'a> {
             return;
         }
 
-        // Traverse the list to find the insertion point
+        // Traverse the list to find the proper insertion point
         let mut iter_node = &mut self.head;
         while let Some(ref mut peek) = iter_node {
             if peek.next.is_none() || peek.next.as_ref().unwrap().score <= node.score {
@@ -60,6 +60,10 @@ impl<'a> List<'a> {
             iter_node = &mut peek.next;
         }
     }
+
+    //TODO: This
+    pub fn set_score() {}
+
     /** Removes a node at a provided index */
     pub fn remove(&mut self, index: u32) {
         // Basic logic checks
@@ -108,23 +112,29 @@ impl<'a> List<'a> {
         let mut current = &self.head;
         let mut c = 0;
         while let Some(node) = current {
-            println!("{:>2}: {:<8} {:>6}", c + 1, node.name, node.score);
+            println!(
+                "{:>2}: {:<8} {:>6}",
+                c + 1,
+                node.name,
+                node.score
+                    .map_or("".to_string(), |_| node.score.unwrap().to_string())
+            );
             current = &node.next;
             c += 1;
         }
     }
 }
 
-// Not a lot here to test aside from the fact that opertions dont error and the list's length
+// Not a lot here to test aside from the list's length and the fact that opertions dont error 
 #[test]
-fn singly_linked_test() {
+fn basic_funciton_test() {
     let mut list = List::new();
-    list.insert(Node::new("Peter", 1223));
+    list.insert(Node::new("Peter", Some(1223)));
 
     assert_eq!(list.length, 1);
 
-    list.insert(Node::new("Dingus", 12));
-    list.insert(Node::new("Dangus", 23));
+    list.insert(Node::new("Dingus", Some(12)));
+    list.insert(Node::new("Dangus", Some(23)));
     list.remove(0);
 
     assert_eq!(list.length, 2);
@@ -138,17 +148,17 @@ pub fn example() {
     // Proves that remove is safe on an empty list
     podium.remove(0);
 
-    // Basic insertion
-    let node = Node::new("Peter", 1223);
+    // Basic list insertion
+    let node = Node::new("Peter", Some(1223));
     podium.insert(node);
 
-    // Streamlined insertion
-    podium.insert(Node::new("Dangus", 34));
-    podium.insert(Node::new("Remus", 8234));
-    podium.insert(Node::new("Dingus", 602));
-    podium.insert(Node::new("Brain", 616));
+    // Streamlined list insertions
+    podium.insert(Node::new("Dangus", None));
+    podium.insert(Node::new("Remus", Some(8234)));
+    podium.insert(Node::new("Dingus", Some(602)));
+    podium.insert(Node::new("Brain", Some(616)));
 
-    println!("After all insertions:");
+    println!("After all list insertions:");
     podium.print_list();
 
     // Removing items
@@ -165,8 +175,8 @@ pub fn example() {
     println!("Deleting list index {}", i);
     podium.remove(i);
 
-    podium.insert(Node::new("Romulus", 12837));
-    podium.insert(Node::new("Bobson", 42069));
+    podium.insert(Node::new("Romulus", Some(12837)));
+    podium.insert(Node::new("Bobson", Some(42069)));
 
     println!("Final list:");
     podium.print_list();
