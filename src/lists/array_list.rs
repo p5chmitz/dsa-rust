@@ -73,16 +73,16 @@ impl Podium {
     }
 
     /** Attempts to write new score data to an index; Returns an error if there is no
-     * data at the specified index, or if the index is out of bounds by 
+     * data at the specified index, or if the index is out of bounds by
      * using recycled logic and propagated errors from remove()
      *
-     * NOTE: There is probably a better way to write directly to the underlying 
+     * NOTE: There is probably a better way to write directly to the underlying
      * node instead of overwriting it, but then you'd have to write another set
      * of logical assertions */
     pub fn set_score(&mut self, index: usize, score: Option<usize>) -> Result<(), String> {
         // Or, if you're good at Rust
         //
-        // Remove and rewrite data to the entry at the index, 
+        // Remove and rewrite data to the entry at the index,
         // propagate the error if it fails
         let name = self.remove(index)?;
         self.add(&name, score);
@@ -179,7 +179,7 @@ pub fn array_list_test() {
     pod.add("Peter", Some(1223));
     pod.add("Brain", None);
 
-    // Tests that the None score is below the only Some score in the list 
+    // Tests that the None score is below the only Some score in the list
     assert_eq!("Bobson", &pod.remove(1).unwrap());
 
     // Tests the set_score function, then shifts its position and checks it

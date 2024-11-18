@@ -18,9 +18,9 @@ impl Clone for PodiumEntry {
 }
 /** The Podium's public API contains the following functions:
  - new() -> Podium
- - add(&mut self, name: String, score: Option<i32>) 
+ - add(&mut self, name: String, score: Option<i32>)
  - set_score(&mut self, index: usize, score: Option<i32>) -> Result<(), String>
- - remove(&mut self, index: usize) -> Option<String> 
+ - remove(&mut self, index: usize) -> Option<String>
  - print_full(&self, print_all: bool)
 
 Podium also contains the following utility functions:
@@ -49,7 +49,7 @@ impl Podium {
             insert_index = self.size;
         } else {
             for i in 0..self.data.len() {
-                if  self.data[i].score < score {
+                if self.data[i].score < score {
                     insert_index = i;
                     break;
                 }
@@ -109,7 +109,7 @@ impl Podium {
         let name = entry.name.to_owned();
         // Required mapping for entries without scores yet
         let score = match entry.score {
-            Some(s) => s.to_string(), 
+            Some(s) => s.to_string(),
             None => "".to_string(),
         };
         (name, score)
@@ -153,13 +153,13 @@ pub fn example() {
     // Adds an entry to the middle
     let mut name = "Dave";
     println!("Add {name}");
-    podium.add({name}.to_string(), Some(334));
+    podium.add({ name }.to_string(), Some(334));
 
     // Adds an entry with no score to the end of the list
     name = "Blorbson";
     println!("Add {name} with score None");
     podium.add(name.to_string(), None);
-    //podium.print_full(true);
+    podium.print_full(true);
 
     // Sets the None score entry to Some
     println!("Set {name}'s score to 345555");
@@ -174,7 +174,7 @@ pub fn example() {
     // Adds an entry to the middle
     name = "Dangus";
     println!("Add {name}");
-    podium.add({name}.to_string(), Some(420));
+    podium.add({ name }.to_string(), Some(420));
 
     // Prints the final list and podium results
     println!("Final List:");
