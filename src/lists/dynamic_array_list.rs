@@ -25,7 +25,7 @@ impl<'a> Clone for Entry<'a> {
  - insert(&mut self, name: &'a str, score: Option<i32>)
  - set_score(&mut self, name: &'a str, score: Option<i32>) -> Result<(), String>
  - get(&self, name: &str) -> Result<i32, &str>
- - remove(&mut self, n: &str) -> Result<&str, String> 
+ - remove(&mut self, n: &str) -> Result<&str, String>
  - clear(&mut self)
  - trim(&mut self) - private, called by remove()
 NOTE: This is mostly just a funsies excuse to illustrate dynamic sizing;
@@ -108,9 +108,11 @@ impl<'a> List<'a> {
     /** Attempts to remove (and return) the data that matches the input name */
     pub fn remove(&mut self, name: &str) -> Result<&str, String> {
         // Find the index of the entry to remove
-        if let Some(i) =
-            (0..=self.size).find(|&i| self.data[i].as_ref().map_or(false, |entry| entry.name == name))
-        {
+        if let Some(i) = (0..=self.size).find(|&i| {
+            self.data[i]
+                .as_ref()
+                .map_or(false, |entry| entry.name == name)
+        }) {
             let name = self.data[i].as_ref().unwrap().name;
 
             // Shift entries to the left to fill the gap
@@ -141,6 +143,43 @@ impl<'a> List<'a> {
         self.data.resize(1, None);
         self.size = 0;
     }
+
+    // Utility functions
+
+    /** Prints the Podium list; If you supply true the function prints the entire list,
+    if you supply false the function just prints the top three spots */
+    pub fn print_full(&self, print_all: bool) {
+        let length: usize;
+        if print_all == true {
+            length = self.data.len()
+        } else {
+            length = 3
+        }
+        for (i, entry) in self.data.iter().enumerate() {
+            // Only prints the first three podium entries
+            if i >= length {
+                break;
+            }
+            let mut fmtd: (String, String) = ("".to_string(), "".to_string());
+            if let Some(e) = entry {
+                fmtd = self.format(e);
+                println!("{:>2}: {:<9} {:>6}", i + 1, fmtd.0, fmtd.1);
+            } else {
+                println!("{:>2}: {:<8} ", i + 1, fmtd.0)
+            }
+        }
+        println!("")
+    }
+    /** Formats PodiumEntry instances for output */
+    fn format(&self, entry: &Entry) -> (String, String) {
+        let name = entry.name.to_owned();
+        // Required mapping for entries without scores yet
+        let score = match entry.score {
+            Some(s) => s.to_string(),
+            None => "".to_string(),
+        };
+        (name, score)
+    }
 }
 
 #[test]
@@ -166,7 +205,7 @@ fn basic_function_test() {
 
     // Tests set_score on valid and invalid list entries
     assert!(list.set_score("Copperpot", Some(25)).is_ok());
-    assert!(list.set_score("Doingus", Some(25)).is_err()); 
+    assert!(list.set_score("Doingus", Some(25)).is_err());
     let msg = list.set_score("Blongus", Some(100));
     assert_eq!(msg, Err("Error: Blongus not on list".to_string()));
 
@@ -214,38 +253,33 @@ pub fn example() {
     list.insert("Peter", Some(40));
 
     println!("The initial list:");
-    for e in list.data.iter() {
-        println!("{:?}", e);
-    }
+    list.print_full(true);
 
     list.set_score("Chester", Some(35)).ok();
     println!("The list after setting Chester's score:");
-    for e in list.data.iter() {
-        println!("{:?}", e);
-    }
+    list.print_full(true);
 
     // Removes some entries with calling code options
     // 1) Basic match block
-    let name: &str = "Peter";
+    let mut name: &str = "Peter";
     let result: String = match list.remove(name) {
         Ok(_) => "Success".to_string(),
         Err(e) => e,
     };
     println!("Attempt to remove {}: {}", name, result);
     // 2) if let syntax
-    let name: &str = "Remus";
+    name = "Remus";
     if let Err(result) = list.remove(name) {
         println!("Attempt to remove {}: {}", name, result)
     }
     // 3) silent
+    name = "Chester";
+    println!("(Silent) attempt to remove {}: 🤫", name);
     list.remove("Chester").ok();
 
     // Using unwrap casuses panic on error
     //list.remove("David").unwrap();
 
     println!("The final list:");
-    for e in list.data.iter() {
-        println!("{:?}", e);
-    }
-    println!(""); // Keep the output kleen
+    list.print_full(true);
 }
