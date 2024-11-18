@@ -23,6 +23,7 @@ impl Clone for Entry {
 /** The Podium's public API contains the following functions:
  - new() -> Podium
  - add<'a>(&mut self, name: &'a str, new_score: Option<usize>)
+ - set_score(&mut self, index: usize, score: Option<usize>) -> Result<(), String>
  - remove(&mut self, cheater: usize)
  - print_full(&self, print_all: bool)
 
@@ -71,10 +72,26 @@ impl Podium {
         }
     }
 
+    /** Attempts to write new score data to an index; Returns an error if there is no
+     * data at the specified index, or if the index is out of bounds by 
+     * using recycled logic and propagated errors from remove()
+     *
+     * NOTE: There is probably a better way to write directly to the underlying 
+     * node instead of overwriting it, but then you'd have to write another set
+     * of logical assertions */
+    pub fn set_score(&mut self, index: usize, score: Option<usize>) -> Result<(), String> {
+        // Or, if you're good at Rust
+        //
+        // Remove and rewrite data to the entry at the index, 
+        // propagate the error if it fails
+        let name = self.remove(index)?;
+        self.add(&name, score);
+        Ok(())
+    }
+
     /** Removes the ith entry in O(n) time and returns the entry's name,
-    shifts all remaining elements up by one index;
-    NOTE: Probably should return Option<String>, but Im lazy and this list sucks */
-    pub fn remove(&mut self, index: usize) -> Result<String, String> {
+    shifts all remaining elements up by one index */
+    pub fn remove<'a>(&mut self, index: usize) -> Result<String, String> {
         if index >= PODIUM_SIZE - 1 {
             let msg: String = format!(
                 "Index out of bounds: {} is out of the range 0..={}",
@@ -156,17 +173,22 @@ impl Podium {
 pub fn array_list_test() {
     use crate::array_list::Podium;
 
+    // Creates a new list and adds some entries
     let mut pod = Podium::new();
     pod.add("Bobson", None);
     pod.add("Peter", Some(1223));
-    pod.print_full(false); // Helps in debugging
+    pod.add("Brain", None);
 
-    // Removes Bobson because it was shifted when a higher scoring entry was added
-    assert_eq!("Bobson".to_string(), pod.remove(1).unwrap());
+    // Tests that the None score is below the only Some score in the list 
+    assert_eq!("Bobson", &pod.remove(1).unwrap());
 
-    // Tests that a removal on empty index a) is an error and b) the error message itself
-    assert!(pod.remove(9).is_err());
-    assert_eq!("No data at index".to_string(), pod.remove(7).unwrap_err());
+    // Tests the set_score function, then shifts its position and checks it
+    pod.set_score(1, Some(616)).ok();
+    pod.add("Remus", Some(899));
+    assert_eq!("Brain", &pod.remove(2).unwrap());
+
+    // Tests removal on an empty index
+    assert_eq!("No data at index", &pod.remove(7).unwrap_err());
 
     // Tests OOB logic with some random usize > (PODIUM_SIZE - 1)
     let oob = 10;
