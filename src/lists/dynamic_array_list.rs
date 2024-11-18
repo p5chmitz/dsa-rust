@@ -106,10 +106,10 @@ impl<'a> List<'a> {
             .unwrap_or(Err("No match on name"))
     }
     /** Attempts to remove (and return) the data that matches the input name */
-    pub fn remove(&mut self, n: &str) -> Result<&str, String> {
+    pub fn remove(&mut self, name: &str) -> Result<&str, String> {
         // Find the index of the entry to remove
         if let Some(i) =
-            (0..=self.size).find(|&i| self.data[i].as_ref().map_or(false, |entry| entry.name == n))
+            (0..=self.size).find(|&i| self.data[i].as_ref().map_or(false, |entry| entry.name == name))
         {
             let name = self.data[i].as_ref().unwrap().name;
 
@@ -122,7 +122,7 @@ impl<'a> List<'a> {
             self.trim();
             Ok(name)
         } else {
-            let err = format!("No match on name {n}");
+            let err = format!("No match on name {name}");
             Err(err)
         }
     }
