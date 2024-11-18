@@ -8,13 +8,13 @@ For detailed explanations and analysis of the structures and algorithms presente
 
 <summary> Core Lists </summary>
 
-The lists section centers around solutions to create a simple podium of sorted entries consisting of names and associated scores. Why run a single O(n log n) sorting algorithm if you can create the list with a series of O(n) insert operations?
+The core lists section focuses on solutions to create a simple podium list. In the first phase of the project each list entry contains a name and a score, and the list maintains a sorted invariant. It is actually more efficient to periodically run a O(n log n) sorting function on a list that simply appends entries in O(1) time, but that approach sacrifices the convenience of the sorted invariant. Warning: writing a bunch of O(n) traversals is good practice, but can results in unnecessarily complex and error-prone code.
 
 - [Array-based list](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/array_list.rs): A basic introduction to lists (and arrays)
-- [Vector-based list](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/vector_list.rs): A little more fun with `&str` lifetimes, but still no reason not to just use `Vec`
-- [Dynamic array list](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/dynamic_array_list.rs): A little more involved; This imposes some manual logic on top of Rust's dynamic array `Vec` to illustrate geometric re-sizing while maintaining a sorted list
-- [Singly-linked list](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/singly_linked_list.rs): A safe, singly-owned, singly-linked implementation of the podium 
-- [Unsafe doubly-linked list](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/doubly_linked_list_2.rs): My first attempt at a naive and horribly unsafe doubly-linked list with raw, mutable (and null-able) pointers everywhere; This implementation is balanced out with just enough Miri testing to not immediately cause concern among friends and loved ones
+- [Vector-based list](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/vector_list.rs): Vectors are more convenient and more powerful; theres no reason _not_ to use `Vec` here
+- [Dynamic array list](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/dynamic_array_list.rs): A little more involved; This variation imposes some manual logic on top of Rust's dynamic array `Vec` to illustrate geometric re-sizing while maintaining a sorted list invariant; Removes entries by name instead of index
+- [Singly-linked list](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/singly_linked_list.rs): A safe, singly-owned (via `Box`), singly-linked implementation of the podium 
+- [Unsafe doubly-linked list](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/doubly_linked_list_2.rs): My first attempt at a naive and horribly unsafe doubly-linked list with raw, mutable (and null-able) pointers everywhere; This implementation is balanced out with just enough Miri testing to not immediately cause concern among friends and loved ones; Removes entries by name instead of index
 
 </details>
 
