@@ -3,18 +3,18 @@
 ///////////////////////////////////////////
 
 // A raw pointer to some Node
-type Link = Option<*mut Node>;
+type Link<'a> = Option<*mut Node<'a>>;
 
 #[derive(Debug)]
-pub struct Node {
-    pub name: String,
-    pub score: i32,
-    prev: Link,
-    next: Link,
+pub struct Node<'a> {
+    pub name: &'a str,
+    pub score: Option<i32>,
+    prev: Link<'a>,
+    next: Link<'a>,
 }
-impl Node {
+impl<'a> Node<'a> {
     // Creates a new node with a unique, heap-allocated address via Box
-    pub fn new(name: String, score: i32) -> Box<Node> {
+    pub fn new(name: &'a str, score: Option<i32>) -> Box<Node<'a>> {
         Box::new(Node {
             name,
             score,
@@ -31,14 +31,14 @@ impl Node {
  - print(&self)
  - print_rev(&self)
 */
-pub struct List {
-    head: Link,
-    tail: Link,
+pub struct List<'a> {
+    head: Link<'a>,
+    tail: Link<'a>,
     length: usize,
 }
-impl List {
+impl<'a> List<'a> {
     // Creates a new list
-    pub fn new() -> List {
+    pub fn new() -> List<'a> {
         List {
             head: None,
             tail: None,
@@ -46,18 +46,20 @@ impl List {
         }
     }
     /** Inserts a node, sorted by its score */
-    pub fn insert(&mut self, node: Box<Node>) {
+    pub fn insert(&mut self, node: Box<Node<'a>>) {
         // Gets a raw, mutable pointer to the (new) unique heap object
         let new_node_ptr: *mut Node = Box::into_raw(node);
 
         unsafe {
             // Special case for empty list
             if self.head.is_none() {
-                // Sets the new node's next pointer to the current tail (None)
-                (*new_node_ptr).next = self.tail;
+                // Sets the new node's pointers to None
+                (*new_node_ptr).next = None;
+                (*new_node_ptr).prev = None;
 
                 println!("Inserts first node");
-                // Sets initial head and tail pointers, increments the list size
+
+                // Sets the list's initial head and tail pointers, increments the list size
                 self.head = Some(new_node_ptr);
                 self.tail = Some(new_node_ptr);
                 self.length += 1;
@@ -71,6 +73,7 @@ impl List {
                 (*self.head.unwrap()).prev = Some(new_node_ptr);
 
                 println!("Inserts new head");
+
                 // Resets the list's head and increments the list size
                 self.head = Some(new_node_ptr);
                 self.length += 1;
@@ -83,40 +86,32 @@ impl List {
                 let current_node = &mut *current_ptr;
                 // Special case for inserting new tail
                 if current_node.next.is_none() {
-                    // b.prev -> a
                     (*new_node_ptr).prev = Some(current_ptr);
-                    // b.next -> c
-                    (*new_node_ptr).next = current_node.next;
-                    // If c exists, c.prev -> b
-                    if let Some(next_node_ptr) = current_node.next {
-                        (*next_node_ptr).prev = Some(new_node_ptr);
-                    }
-                    // a.next -> b
+                    (*new_node_ptr).next = None;
                     current_node.next = Some(new_node_ptr);
 
-                    // Resets new tail pointer
-                    self.tail = Some(new_node_ptr);
-
                     println!("Inserts new tail");
-                    // Increments the list size
+
+                    // Resets the list's tail pointer and increments the list size
+                    self.tail = Some(new_node_ptr);
                     self.length += 1;
                     return;
                 }
-                // If the next node's score is None or if the next node's score is less than
-                // the new node's score; insert the new node between current and current.next
+                // Inserts mid-list;
+                // If the next node's score is less than the new node's score
+                // insert the new node between current and current.next
                 else if (*current_node.next.unwrap()).score <= (*new_node_ptr).score {
                     // b.prev -> a
                     (*new_node_ptr).prev = Some(current_ptr);
                     // b.next -> c
                     (*new_node_ptr).next = current_node.next;
-                    // If c exists, c.prev -> b
-                    if let Some(next_node_ptr) = current_node.next {
-                        (*next_node_ptr).prev = Some(new_node_ptr);
-                    }
+                    // c.prev -> b
+                    (*current_node.next.unwrap()).prev = Some(new_node_ptr);
                     // a.next -> b
                     current_node.next = Some(new_node_ptr);
 
                     println!("Inserts mid-list");
+
                     // Increments the list size
                     self.length += 1;
                     return;
@@ -125,8 +120,19 @@ impl List {
             }
         }
     }
+    pub fn set_score(&mut self, name: &'a str, score: Option<i32>) -> Result<(), String> {
+        println!("Attempts to set score for {}", name);
+        match self.remove(name) {
+            Ok(_) => {
+                let node = Node::new(name, score);
+                self.insert(node);
+                Ok(())
+            },
+            Err(e) => Err(e),
+        }
+    }
     /** Removes a node at a provided index */
-    pub fn remove(&mut self, name: String) {
+    pub fn remove(&mut self, name: &str) -> Result<(), String> {
         let mut current = self.head;
         unsafe {
             while let Some(current_ptr) = current {
@@ -158,42 +164,53 @@ impl List {
 
                     println!("Removed node: {}", name);
                     self.length -= 1;
-                    return;
+                    //return;
+                    return Ok(())
                 }
                 current = current_node.next;
             }
-            println!("Node not found: {}", name);
+            Err(format!("Node not found: {}", name))
+            //println!("Node not found: {}", name);
         }
     }
-    pub fn iter(&self) -> Iter {
+    pub fn iter(&self) -> Iter<'a> {
         Iter {
             next: self.head.as_ref().map(|&ptr| unsafe { &*ptr }),
             prev: self.tail.as_ref().map(|&ptr| unsafe { &*ptr }),
         }
     }
-    pub fn print(&self) {
-        let mut counter = 1;
-        for e in self.iter() {
-            println!("{:>2}: {:<8} {:>6}", counter, e.name, e.score);
-            counter += 1;
+    pub fn print_fwd(&self, rev: bool) {
+        let none = "";
+        if rev {
+            let mut counter = 1;
+            for e in self.iter() {
+                if let Some(v) = e.score {
+                    println!("{:>2}: {:<8} {:>6}", counter, e.name, v);
+                } else {
+                    println!("{:>2}: {:<8}   {none}", counter, e.name);
+                }
+                counter += 1;
+            }
+        } else {
+            let mut counter = self.length;
+            for e in self.iter().rev() {
+                if let Some(v) = e.score {
+                    println!("{:>2}: {:<8} {:>6}", counter, e.name, v);
+                } else {
+                    println!("{:>2}: {:<8}   {none}", counter, e.name);
+                }
+                counter -= 1;
+            }
         }
-        println!("")
-    }
-    pub fn print_rev(&self) {
-        let mut counter = self.length;
-        for e in self.iter().rev() {
-            println!("{:>2}: {:<8} {:>6}", counter, e.name, e.score);
-            counter -= 1;
-        }
-        println!("")
+        println!()
     }
 }
 pub struct Iter<'a> {
-    next: Option<&'a Node>,
-    prev: Option<&'a Node>,
+    next: Option<&'a Node<'a>>,
+    prev: Option<&'a Node<'a>>,
 }
 impl<'a> Iterator for Iter<'a> {
-    type Item = &'a Node;
+    type Item = &'a Node<'a>;
     /** Returns each Node in the list until there are None */
     //fn next(&mut self) -> Option<Self::Item> {
     //    // Update the iterator to point to the next node, return the current one,
@@ -229,7 +246,7 @@ impl<'a> DoubleEndedIterator for Iter<'a> {
         })
     }
 }
-impl Drop for List {
+impl<'a> Drop for List<'a> {
     /** List destructor */
     fn drop(&mut self) {
         unsafe {
@@ -254,95 +271,104 @@ fn test() {
     let mut list = List::new();
 
     // Creates initial head and tail nodes
-    let a = Node::new("a".to_string(), 101);
-    let b = Node::new("b".to_string(), 91);
-    let c = Node::new("c".to_string(), 69);
-    let d = Node::new("d".to_string(), 47);
-    let e = Node::new("e".to_string(), 35);
+    let a = Node::new("a", Some(101));
+    let b = Node::new("b", Some(91));
+    let c = Node::new("c", None);
+    let d = Node::new("d", Some(47));
+    let e = Node::new("e", Some(35));
 
     unsafe {
-        // Test case: Inserts first Node (push)
+        // Test case: Inserts first Node
         list.insert(b); // head is now b...ecause its the only item so far
         let b_ptr: *mut Node = list.head.unwrap();
         let b_ref: &mut Node = &mut *b_ptr;
         assert_eq!(b_ref.name, "b");
-        assert_eq!(b_ref.score, 91);
+        assert_eq!(b_ref.score, Some(91));
         assert_eq!(b_ref.next, None);
         assert_eq!(b_ref.prev, None);
         // b...ut its also the tail
         let b_t_ptr: *mut Node = list.tail.unwrap();
         let b_t_ref: &mut Node = &mut *b_t_ptr;
         assert_eq!(b_t_ref.name, "b");
-        assert_eq!(b_t_ref.score, 91);
+        assert_eq!(b_t_ref.score, Some(91));
         assert_eq!(b_t_ref.next, None);
         assert_eq!(b_t_ref.prev, None);
 
-        // Test case: Inserts new tail (push back)
+        // Test case: Inserts new tail
         list.insert(d); // tail is now d
-        let tail_ptr: *mut Node = list.tail.unwrap();
-        let d_ref: &mut Node = &mut *tail_ptr;
+        let d_ptr: *mut Node = list.tail.unwrap();
+        let d_ref: &mut Node = &mut *d_ptr;
         assert_eq!(d_ref.name, "d");
-        assert_eq!(d_ref.score, 47);
+        assert_eq!(d_ref.score, Some(47));
         assert_eq!(d_ref.next, None);
-        assert_eq!(d_ref.prev, Some(b_ptr));
+        assert_eq!(d_ref.prev, Some(list.head.unwrap()));
 
-        // Test case: Inserts mid-list
-        list.insert(c); // b.next is c
+        // Test case: Inserts None score at the tail 
+        list.insert(c); // tail is now c (None)
+        let c_ptr: *mut Node = list.tail.unwrap();
+        let c_ref: &mut Node = &mut *c_ptr;
+        assert_eq!(c_ref.name, "c");
+        assert_eq!(c_ref.score, None);
+        assert_eq!(c_ref.next, None);
+        assert_eq!(c_ref.prev, Some(d_ptr));
+
+        // Test case: Sets None score to Some, placing it mid-list
+        assert!(list.set_score("c", Some(69)).is_ok()); // Asserts that the operation took
         let c_ptr: *mut Node = (*b_ptr).next.unwrap();
         let c_ref: &mut Node = &mut *c_ptr;
         assert_eq!(c_ref.name, "c");
-        assert_eq!(c_ref.score, 69);
-        assert_eq!(c_ref.next, Some(tail_ptr));
+        assert_eq!(c_ref.score, Some(69));
+        assert_eq!(c_ref.next, Some(d_ptr));
         assert_eq!(c_ref.prev, Some(b_ptr));
 
-        // Test case: Replace head (push)
+        // Test case: Replace head
         list.insert(a); // head is now a
         let a_ptr: *mut Node = list.head.unwrap();
         let a_ref: &mut Node = &mut *a_ptr;
         assert_eq!(a_ref.name, "a");
-        assert_eq!(a_ref.score, 101);
+        assert_eq!(a_ref.score, Some(101));
         assert_eq!(a_ref.next, Some(b_ptr));
         assert_eq!(a_ref.prev, None);
 
-        // Test case: Replace tail (push back)
+        // Test case: Replace tail
         list.insert(e); // tail is now e
         let e_ptr: *mut Node = list.tail.unwrap();
         let e_ref: &mut Node = &mut *e_ptr;
         assert_eq!(e_ref.name, "e");
-        assert_eq!(e_ref.score, 35);
+        assert_eq!(e_ref.score, Some(35));
         assert_eq!(e_ref.next, None);
-        assert_eq!(e_ref.prev, Some(tail_ptr));
+        assert_eq!(e_ref.prev, Some(d_ptr));
 
         // Test case: Remove head (pop)
-        list.remove("a".to_string()); // head is still b
+        list.remove("a").ok(); // head is still b
         let b_ptr: *mut Node = list.head.unwrap();
         let b_ref: &mut Node = &mut *b_ptr;
         assert_eq!(b_ref.name, "b");
-        assert_eq!(b_ref.score, 91);
+        assert_eq!(b_ref.score, Some(91));
         assert_eq!(b_ref.next, Some(c_ptr));
         assert_eq!(b_ref.prev, None);
 
-        // Test case: Remove tail (pop back)
-        list.remove("e".to_string()); // tail is now d
+        // Test case: Remove tail
+        list.remove("e").ok(); // tail is now d
         let tail_ptr: *mut Node = list.tail.unwrap();
         let d_ref: &mut Node = &mut *tail_ptr;
         assert_eq!(d_ref.name, "d");
-        assert_eq!(d_ref.score, 47);
+        assert_eq!(d_ref.score, Some(47));
         assert_eq!(d_ref.next, None);
         assert_eq!(d_ref.prev, Some(c_ptr));
 
         // Test case: Remove mid-list
-        list.remove("c".to_string());
+        list.remove("c").ok();
         let head_ptr: *mut Node = list.head.unwrap(); // head is still b
         let head_nex: *mut Node = (*head_ptr).next.unwrap(); // head.next should be d
         let d_ref: &mut Node = &mut *head_nex; // Type coercion for assertions
         assert_eq!(d_ref.name, "d");
-        assert_eq!(d_ref.score, 47);
+        assert_eq!(d_ref.score, Some(47));
         assert_eq!(d_ref.next, None);
         assert_eq!(d_ref.prev, Some(b_ptr));
 
         // Test case: Removes a non-existant Node safely
-        list.remove("x".to_string());
+        list.remove("x").ok();
     }
 }
 
@@ -350,38 +376,51 @@ fn test() {
 pub fn example() {
     let mut list = List::new();
 
-    let mut node = Node::new("Peter".to_string(), 1223);
+    let mut node = Node::new("Peter", Some(1223));
     list.insert(node);
 
-    node = Node::new("Brain".to_string(), 616);
+    node = Node::new("Brain", None);
     list.insert(node);
 
-    node = Node::new("Remus".to_string(), 1225);
+    node = Node::new("Remus", Some(1225));
     list.insert(node);
 
-    node = Node::new("Bobson".to_string(), 69);
+    node = Node::new("Bobson", Some(69));
     list.insert(node);
 
-    node = Node::new("Dorkus".to_string(), 412);
+    node = Node::new("Dorkus", Some(412));
     list.insert(node);
 
-    node = Node::new("Dongus".to_string(), 873);
+    node = Node::new("Dongus", Some(873));
     list.insert(node);
+
+    println!("The initial list contains {} results:", list.length);
+    list.print_fwd(true);
+    
+    // Sets Brain's score and prints the list again
+    list.set_score("Brain", Some(616)).ok();
+    println!("The revised list contains {} results:", list.length);
+    list.print_fwd(true);
+
+    // Attempts to set a non-existent score
+    if let Err(msg) = list.set_score("Blorbson", None) {
+        println!("Attempt to set a non-existent score:\n\t{}", msg);
+    }
 
     // Removes tail
-    list.remove("Bobson".to_string());
+    list.remove("Bobson").ok();
 
     // Removes head
-    list.remove("Remus".to_string());
+    list.remove("Remus").ok();
 
     // Ensures safety for non-existent entries
-    list.remove("Bjorn".to_string());
+    list.remove("Bjorn").ok();
 
     // Removes mid-list
-    list.remove("Dongus".to_string());
+    list.remove("Dongus").ok();
 
     // Print this bih
     println!("The final list contains {} results:", list.length);
-    list.print();
-    list.print_rev();
+    list.print_fwd(true);
+    list.print_fwd(false);
 }
