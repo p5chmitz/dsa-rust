@@ -120,16 +120,26 @@ impl<'a> List<'a> {
             }
         }
     }
+    /** Attempts to set a node's score by first matching the name via remove(), 
+     * and if successful, inserting a new node */
     pub fn set_score(&mut self, name: &'a str, score: Option<i32>) -> Result<(), String> {
         println!("Attempts to set score for {}", name);
-        match self.remove(name) {
-            Ok(_) => {
+        //match self.remove(name) {
+        //    Ok(_) => {
+        //        let node = Node::new(name, score);
+        //        self.insert(node);
+        //        Ok(())
+        //    },
+        //    Err(e) => Err(e),
+        //}
+        //
+        // Or, if you're good at Rust
+        self.remove(name)
+            .and_then(|_| {
                 let node = Node::new(name, score);
                 self.insert(node);
                 Ok(())
-            },
-            Err(e) => Err(e),
-        }
+            })
     }
     /** Removes a node at a provided index */
     pub fn remove(&mut self, name: &str) -> Result<(), String> {
