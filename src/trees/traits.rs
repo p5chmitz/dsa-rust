@@ -2,10 +2,13 @@
 ///////////////////////////////
 
 /** Defines the a basic Tree ADT where P is a position, and T is a type */
-pub trait Tree<P, T> {
+pub trait Tree<P, T>
+where 
+    T: std::cmp::PartialEq
+{
 
-    // Fundamental operations
-    /////////////////////////
+    // Fundamental methods
+    //////////////////////
 
     /** Returns the node's data */
     //fn get<'a>(&self, node: &'a T) -> &'a T;
@@ -40,8 +43,8 @@ pub trait Tree<P, T> {
     /** Returns true if the specified position is external */
     fn is_leaf(&self, node: &P) -> bool;
 
-    // Derived operations
-    /////////////////////
+    // Derived methods
+    //////////////////
 
     fn depth(&self, node: &P) -> u32;
 
@@ -53,49 +56,7 @@ pub trait Tree<P, T> {
 
 }
 
-/** Abstract (partial implementation) for a general tree type */
-//pub trait AbstractTree<T: std::cmp::PartialEq>: Tree<T> {
-//    /** Returns an immutable reference to the root of the tree */
-//    fn is_root(&self, node: &T) -> bool {
-//        if let Some(r) = self.root() {
-//            // The == operator evaluates to bool
-//            node == r
-//        } else {
-//            false
-//        }
-//    }
-//
-//    /** Returns true if the tree is empty */
-//    fn is_empty(&self) -> bool {
-//        self.size() == 0
-//    }
-//
-//    /** Default implementation of is_leaf() using num_children from Tree */
-//    fn is_leaf(&self, node: &T) -> bool {
-//        self.num_children(node) == 0
-//    }
-//
-//    /** Recursive algorithm that returns the depth of an input node */
-//    fn depth(&self, node: &T) -> u32 {
-//        if AbstractTree::is_root(self, node) {
-//            0
-//        } else {
-//            1 + self.depth(node)
-//        }
-//    }
-//
-//    /** Calculates the height of a given sub-tree based on an input position */
-//    fn height(&self, node: &T) -> usize {
-//        let mut h = 0;
-//        for p in Tree::children(self, node) {
-//            h = std::cmp::max(h, 1 + self.height(p))
-//        }
-//        h
-//    }
-//}
-
 /** Abstract interface definition for a binary tree type */
-//pub trait BinaryTree<T: std::cmp::PartialEq>: Tree<T> {
 pub trait BinaryTree<P, T> 
 where 
     T: std::cmp::PartialEq
