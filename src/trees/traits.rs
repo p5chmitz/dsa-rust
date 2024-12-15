@@ -2,16 +2,13 @@
 ///////////////////////////////
 
 /** Defines the a basic Tree ADT where P is a position, and T is a type */
-pub trait Tree<P, T>
-where 
-    T: std::cmp::PartialEq
-{
+pub trait Tree<P, T> {
 
     // Fundamental methods
     //////////////////////
 
     /** Returns the node's data */
-    //fn get<'a>(&self, node: &'a T) -> &'a T;
+    fn get<'a>(&self, node: &'a P) -> Option<&'a T>;
 
     /** Returns the number of nodes in the tree */
     fn size(&self) -> usize;
@@ -32,7 +29,8 @@ where
 
     /** Returns an iterator over immutable references to the node's children */
     //fn children<'a>(&self, node: &'a P) -> Box<dyn Iterator<Item = &T>>;
-    fn children<'a>(&self, node: &'a P) -> Vec<&'a P>; // Returns an iterABLE for now
+    //fn children<'a>(&self, node: &'a P) -> Vec<&'a P>; // Returns an iterABLE for now
+    fn children<'a>(&self, node: &'a P) -> Vec<&'a P>;
 
     // Query methods
     ////////////////
@@ -56,6 +54,14 @@ where
 
 }
 
+/** Abstract interface definition for a general tree type */
+pub trait GeneralTree<P, T> 
+where 
+    T: std::cmp::PartialEq
+{
+
+}
+
 /** Abstract interface definition for a binary tree type */
 pub trait BinaryTree<P, T> 
 where 
@@ -72,40 +78,3 @@ where
     /** Returns the position of the sibling of a given node */
     fn sibling<'a>(&self, node: &'a P) -> Option<&'a P>;
 }
-
-// /** Abstract (partial implementation) for a binary tree */
-//pub trait AbstractBinaryTree<T, P>: AbstractTree<T> + BinaryTree<T> 
-//where 
-//    T: std::cmp::PartialEq,
-//    P: AsRef<T>
-//{
-//    fn sibling(&self, node: &T) -> Option<&T> {
-//        if let Ok(parent) = Tree::parent(self, node) {
-//            if let Some(l) = BinaryTree::left(self, parent) {
-//                if parent == l {
-//                    BinaryTree::right(self, parent)
-//                } else {
-//                    BinaryTree::left(self, parent)
-//                }
-//            // The node has no sibling
-//            } else {
-//                None
-//            } 
-//        // Parent is empty for some reason
-//        } else {
-//            None
-//        } 
-//    }
-//    fn num_children(&self, node: &T) -> usize {
-//        let mut count = 0;
-//        if BinaryTree::left(self, node).is_some() {
-//            count += 1
-//        };
-//        if BinaryTree::right(self, node).is_some() {
-//            count += 1
-//        };
-//        count
-//    }
-//    /** Required method: Returns an iterator over all children in the sub-tree */
-//    fn children(&self, node: &T) -> Box<dyn Iterator<Item = &T>>;
-//}
