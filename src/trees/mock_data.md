@@ -28,29 +28,32 @@ Lorem ipsum odor amet, consectetuer adipiscing elit. Per rhoncus erat lacus vel,
 Vulputate ad nec eget arcu; parturient curae ornare lacinia. Rhoncus senectus etiam, nunc integer inceptos nibh. Porta tristique integer integer vitae fames non parturient. Aturpis tristique integer vel orci a accumsan cras. Aliquet congue conubia consequat malesuada proin lacinia euismod vivamus eu. Ante iaculis ornare leo tempus efficitur condimentum lacinia felis. Porta habitasse nostra praesent interdum orci semper etiam inceptos. Mauris consequat orci, commodo orci molestie vulputate congue. Bibendum eros suscipit semper praesent litora nunc tincidunt nisi.
 
   Visual references for algorithm construction
-  [
-    lvl: 2, title: "H2"
-    lvl: 3, title: "H3"
-    lvl: 3, title: "H3"
-    lvl: 2, title: "H2"
-    lvl: 3, title: "H3"
-    lvl: 4, title: "H4"
-    lvl: 3, title: "H3"
-  ]
+```
+    [
+      lvl: 2, title: "H2"
+      lvl: 3, title: "H3"
+      lvl: 3, title: "H3"
+      lvl: 2, title: "H2"
+      lvl: 3, title: "H3"
+      lvl: 4, title: "H4"
+      lvl: 3, title: "H3"
+    ]
+```
 
+```
+    [] Lorem Ipsum Test 
+    │    An ordered look at MD parsing
+    │
+    ├── H2
+    │   ├── H3
+    │   └── H3
+    └── H2
+        ├── H3
+        │   └── H4
+        └── H3
+```
 
-  [] Lorem Ipsum Test 
-  │    An ordered look at MD parsing
-  │
-  ├── H2
-  │   ├── H3
-  │   └── H3
-  └── H2
-      ├── H3
-      │   └── H4
-      └── H3
-
-
+```
        Lorem Ipsum Test
               |
          ------------
@@ -62,4 +65,4 @@ Vulputate ad nec eget arcu; parturient curae ornare lacinia. Rhoncus senectus et
     H3    H3      H3    H3
            |
            H4
-    
+```  
