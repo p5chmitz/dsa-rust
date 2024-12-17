@@ -3,6 +3,7 @@
 mod lists;
 mod maw;
 mod tgg;
+mod trees;
 
 use crate::lists::queues::{singly_linked_queue, vec_circ_queue, vec_queue, vecdeque_queue};
 use crate::lists::stacks::{safe_linked_stack, unsafe_linked_stack, vector_stack};
@@ -15,7 +16,7 @@ fn main() {
     ////////
 
     maw::maw_01::recursion(420);
-    binary_search_driver();
+    binary_search_example();
 
     // Tamassia, Goodrich, and Goldwasser
     /////////////////////////////////////
@@ -23,7 +24,7 @@ fn main() {
     // Ch 4
     ///////
 
-    // Compares two vectors for uniqueness
+    // Compares two vectors for uniqueness in O(n^2) time
     let a = vec![1, 2, 3];
     let b = vec![4, 5, 6];
     if tgg_04::unique_0(&a, &b) {
@@ -111,15 +112,15 @@ fn main() {
     tgg::tgg_05::disk_usage(path);
     println!();
 
-    // Ch 6
-    ///////
-
     println!("\x1b[1;34mTGG's Vec-based stack exploration:\x1b[0m");
     tgg::tgg_06::stack_0();
     println!();
 
     // Sandbox runner
     /////////////////
+
+    // LISTS
+    ////////
 
     // Static array list implementation
     println!("\x1b[1;34mStatic array list:\x1b[0m");
@@ -155,6 +156,19 @@ fn main() {
     // Generic List ADT
     //println!("\nGeneric List ADT:");
     //lists::dynamic_array_list::visualize();
+
+    // TREES
+    ////////
+
+    println!("\x1b[1;34mRecursive dir analyzer:\x1b[0m");
+    let path = std::path::Path::new("src");
+    trees::file_tree::disk_usage(path);
+    println!();
+
+    println!("\x1b[1;34mGeneral tree:\x1b[0m");
+    let path = std::path::Path::new("../tech-docs/src/content/docs/cs");
+    trees::unsafe_linked_general_tree::example(path);
+    println!();
 }
 
 #[test]
@@ -177,7 +191,7 @@ fn unsafe_test() {
     }
 }
 
-fn binary_search_driver() {
+fn binary_search_example() {
     let target = 73;
     let array: [i32; 39] = [
         1, 4, 5, 6, 10, 12, 16, 21, 23, 24, 25, 27, 31, 32, 33, 35, 37, 39, 40, 41, 42, 43, 45, 47,
