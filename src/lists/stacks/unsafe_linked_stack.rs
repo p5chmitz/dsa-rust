@@ -16,12 +16,12 @@ impl Frame {
     }
 }
 /** The Stack API includes
- - new() -> Stack
- - push(&mut self, node: Box<Frame>)
- - peek(&self) -> Option<char>
- - pop(&mut self) -> Option<Frame>
- - iter(&self) -> Iter
- - print(&self) */
+- new() -> Stack
+- push(&mut self, node: Box<Frame>)
+- peek(&self) -> Option<char>
+- pop(&mut self) -> Option<Frame>
+- iter(&self) -> Iter
+- print(&self) */
 pub struct Stack {
     head: Link,
     length: usize,

@@ -1,14 +1,14 @@
 #![allow(dead_code)]
 
 /**
- * This is a sandbox crate for Data Structures and Algorithm Analysis in Java by Tamassia, Goodrich, and Goldwasser
- */
+ * This is a sandbox crate for Data Structures and Algorithm Analysis in Java by
+ * Tamassia, Goodrich, and Goldwasser */
 
 // Ch 4 - Asymptotic Analysis
 /////////////////////////////
 
 // My first stab comparing the elements of two vectors for uniqueness
-/** Compares two vectors for unique elements in O(n^2) time */
+/** Compares two vectors for unique elements in O(n * m) time */
 pub fn unique_0(a: &Vec<i32>, b: &Vec<i32>) -> bool {
     for j in a.iter() {
         for k in b.iter() {
@@ -21,6 +21,7 @@ pub fn unique_0(a: &Vec<i32>, b: &Vec<i32>) -> bool {
 }
 
 // My first ham-fisted attempt at checking a single array for uniqueness
+// Generally viewed as overly complicated an inefficient
 /** Checks a single array for uniqueness in O(n^2) time */
 pub fn unique_1(a: &Vec<i32>) -> bool {
     for (j, val) in a.iter().enumerate() {
@@ -50,8 +51,10 @@ pub fn unique_2(a: &Vec<i32>) -> bool {
     true
 }
 
-// A reimplementation with a simple tweak
-/** A reimplementation of tgg::unique_2() that checks an array for uniqueness in O(n * log(n)) time */
+// A reimplementation with a simple tweak, technically incorrect as this can
+// result in OOB panics
+/** A reimplementation of tgg::unique_2() that checks an array for uniqueness in
+ * O(n * log(n)) time */
 pub fn unique_3(a: &Vec<i32>) -> bool {
     a.to_owned().sort();
     for j in 0..a.len() {

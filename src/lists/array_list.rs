@@ -55,7 +55,6 @@ impl Podium {
         // Evaluates the existing array values to find the first appropriate index
         let mut insert_index = None;
         for i in 0..self.data.len() {
-            //if new_score.is_none() ||
             if self.data[i].is_none() || self.data[i].as_ref().unwrap().score < new_score {
                 insert_index = Some(i);
                 break;

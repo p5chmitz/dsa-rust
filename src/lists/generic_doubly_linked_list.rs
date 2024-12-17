@@ -60,13 +60,15 @@ impl<T> List<T> {
 
             // Special case for empty list
             if self.head.is_none() {
-                // Sets the new node's next pointer to the current head
-                (*new_node_wrapper.as_ptr()).next = self.head;
-                //(*new_raw_ptr).next = self.head;
+                // Sets the new node's pointers to None
+                (*new_node_wrapper.as_ptr()).next = None;
+                (*new_node_wrapper.as_ptr()).prev = None;
 
                 println!("Inserts head");
-                // Resets the list's head and increments the list size
+
+                // Resets the list's initial head and tail pointers, increments the list size
                 self.head = Some(new_node_wrapper);
+                self.tail = Some(new_node_wrapper);
                 self.length += 1;
                 return;
             }

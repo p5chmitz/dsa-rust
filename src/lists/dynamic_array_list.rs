@@ -10,7 +10,7 @@ struct Entry<'a> {
 fn build(name: &str, score: Option<i32>) -> Entry {
     Entry { name, score }
 }
-// Required for the Vec::resize operation
+// Required for an easy, idiomatic re-size operation
 impl<'a> Clone for Entry<'a> {
     fn clone(&self) -> Entry<'a> {
         Entry {
@@ -106,23 +106,23 @@ impl<'a> List<'a> {
             .unwrap_or(Err("No match on name"))
     }
     /** Attempts to remove (and return) the data that matches the input name */
-    pub fn remove(&mut self, name: &str) -> Result<&str, String> {
-        // Find the index of the entry to remove
+    pub fn remove(&mut self, name: &'a str) -> Result<&'a str, String> {
+        // Uses Iterator::find() to identify the index of an entry that matches the name input;
+        // No special syntax: this block has an awkwardly long find expression
         if let Some(i) = (0..=self.size).find(|&i| {
             self.data[i]
                 .as_ref()
-                .map_or(false, |entry| entry.name == name)
+                .map_or(false, |entry| entry.name == name) // Finds matching name or returns false
         }) {
-            let name = self.data[i].as_ref().unwrap().name;
-
-            // Shift entries to the left to fill the gap
+            // If a match is found shift entries to the left to fill the gap
             for j in i..self.size {
                 self.data[j] = self.data[j + 1].clone();
             }
-
+            // Decrement the list's size, call the trim function, and return the name
             self.size -= 1;
             self.trim();
             Ok(name)
+        // If no match is found the function surfaces an Err
         } else {
             let err = format!("No match on name {name}");
             Err(err)

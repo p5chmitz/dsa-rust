@@ -2,7 +2,7 @@
 /** A horribly unsafe doubly-linked list */
 ///////////////////////////////////////////
 
-// A raw pointer to some Node
+/** A raw pointer to some Node */
 type Link<'a> = Option<*mut Node<'a>>;
 
 #[derive(Debug)]
@@ -59,7 +59,8 @@ impl<'a> List<'a> {
 
                 println!("Inserts first node");
 
-                // Sets the list's initial head and tail pointers, increments the list size
+                // Sets the list's initial head and tail pointers,
+                // increments the list size
                 self.head = Some(new_node_ptr);
                 self.tail = Some(new_node_ptr);
                 self.length += 1;
@@ -80,7 +81,8 @@ impl<'a> List<'a> {
                 return;
             }
 
-            // Traverse the list to find the correct insertion point by peeking at the next node
+            // Traverse the list to find the correct insertion point by peeking
+            // at the next node
             let mut current = self.head;
             while let Some(current_ptr) = current {
                 let current_node = &mut *current_ptr;
@@ -120,7 +122,7 @@ impl<'a> List<'a> {
             }
         }
     }
-    /** Attempts to set a node's score by first matching the name via remove(), 
+    /** Attempts to set a node's score by first matching the name via remove(),
      * and if successful, inserting a new node */
     pub fn set_score(&mut self, name: &'a str, score: Option<i32>) -> Result<(), String> {
         println!("Attempts to set score for {}", name);
@@ -134,12 +136,11 @@ impl<'a> List<'a> {
         //}
         //
         // Or, if you're good at Rust
-        self.remove(name)
-            .and_then(|_| {
-                let node = Node::new(name, score);
-                self.insert(node);
-                Ok(())
-            })
+        self.remove(name).and_then(|_| {
+            let node = Node::new(name, score);
+            self.insert(node);
+            Ok(())
+        })
     }
     /** Removes a node at a provided index */
     pub fn remove(&mut self, name: &str) -> Result<(), String> {
@@ -175,7 +176,7 @@ impl<'a> List<'a> {
                     println!("Removed node: {}", name);
                     self.length -= 1;
                     //return;
-                    return Ok(())
+                    return Ok(());
                 }
                 current = current_node.next;
             }
@@ -313,7 +314,7 @@ fn test() {
         assert_eq!(d_ref.next, None);
         assert_eq!(d_ref.prev, Some(list.head.unwrap()));
 
-        // Test case: Inserts None score at the tail 
+        // Test case: Inserts None score at the tail
         list.insert(c); // tail is now c (None)
         let c_ptr: *mut Node = list.tail.unwrap();
         let c_ref: &mut Node = &mut *c_ptr;
@@ -384,6 +385,8 @@ fn test() {
 
 /** Runs example operations to demonstrate functionality */
 pub fn example() {
+    use crate::lists::doubly_linked_list_2::{List, Node};
+
     let mut list = List::new();
 
     let mut node = Node::new("Peter", Some(1223));
@@ -406,7 +409,7 @@ pub fn example() {
 
     println!("The initial list contains {} results:", list.length);
     list.print_fwd(true);
-    
+
     // Sets Brain's score and prints the list again
     list.set_score("Brain", Some(616)).ok();
     println!("The revised list contains {} results:", list.length);

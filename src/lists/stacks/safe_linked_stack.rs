@@ -64,7 +64,7 @@ pub mod safe_stack {
 
         for element in string.chars() {
             // Heap-allocates a Node containing an individual char from s
-            let node: Box<Node<char>> = Box::new(Node::new(element)); 
+            let node: Box<Node<char>> = Box::new(Node::new(element));
             match element {
                 '[' | '{' | '(' => {
                     symbols.push(node);

@@ -125,7 +125,7 @@ impl<'a> List<'a> {
     }
 }
 
-// Not a lot here to test aside from the list's length and the fact that opertions dont error 
+// Not a lot here to test aside from the list's length and the fact that opertions dont error
 #[test]
 fn basic_funciton_test() {
     let mut list = List::new();
