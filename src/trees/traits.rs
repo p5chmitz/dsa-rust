@@ -3,7 +3,6 @@
 
 /** Defines the a basic Tree ADT where P is a position, and T is a type */
 pub trait Tree<P, T> {
-
     // Fundamental methods
     //////////////////////
 
@@ -51,21 +50,19 @@ pub trait Tree<P, T> {
 
     /** Returns the immediate number of children for a given node */
     fn num_children(&self, node: &P) -> usize;
-
 }
 
 /** Abstract interface definition for a general tree type */
-pub trait GeneralTree<P, T> 
-where 
-    T: std::cmp::PartialEq
+pub trait GeneralTree<P, T>
+where
+    T: std::cmp::PartialEq,
 {
-
 }
 
 /** Abstract interface definition for a binary tree type */
-pub trait BinaryTree<P, T> 
-where 
-    T: std::cmp::PartialEq
+pub trait BinaryTree<P, T>
+where
+    T: std::cmp::PartialEq,
 {
     /** Returns the position of the left child of a given node */
     //fn left(&self, node: &P) -> Option<&P>;

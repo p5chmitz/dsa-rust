@@ -11,7 +11,7 @@ pub struct Node<T: std::cmp::PartialEq> {
     right: Option<Pos<T>>,
     data: Option<T>,
 }
-/** The BinTree struct represents a binary tree structure with a root node, a 
+/** The BinTree struct represents a binary tree structure with a root node, a
 reference to the root node, and the structure's size.
 
 BinTree's fundamental implementation includes the following functions:
@@ -31,9 +31,9 @@ BinTree implements the Tree trait which provides the following functions:
 - parent<'a>(&self, node: &'a Pos<T>) -> Option<&'a Pos<T>>
 - num_children(&self, node: &Pos<T>) -> usize
 - children<'a>(&self, node: &'a Pos<T>) -> Vec<&'a Pos<T>>
-- is_leaf(&self, node: &Pos<T>) -> bool 
-- is_root(&self, node: &Pos<T>) -> bool 
-- depth(&self, node: &Pos<T>) -> u32 
+- is_leaf(&self, node: &Pos<T>) -> bool
+- is_root(&self, node: &Pos<T>) -> bool
+- depth(&self, node: &Pos<T>) -> u32
 - height(&self, node: &Pos<T>) -> usize
 
 The Binary Tree implements the BinaryTree trait which provides the following functions:
@@ -46,10 +46,10 @@ pub struct BinTree<T: std::cmp::PartialEq> {
 }
 impl<T> BinTree<T>
 where
-    T: std::cmp::PartialEq
+    T: std::cmp::PartialEq,
 {
     // Creates a new char tree
-    fn new() -> BinTree<T> { 
+    fn new() -> BinTree<T> {
         let node: Node<T> = Node {
             parent: None,
             left: None,
@@ -57,8 +57,8 @@ where
             data: None,
         };
         BinTree {
-           root: Box::from(node),
-           size: 0
+            root: Box::from(node),
+            size: 0,
         }
     }
 
@@ -70,10 +70,10 @@ where
     fn attach(&mut self, _left: Pos<T>, _right: Pos<T>) {}
     fn remove(&mut self, _p: Pos<T>) {}
 }
-// NOTE: Requires the PartialEq trait bounds for binary tree operations 
+// NOTE: Requires the PartialEq trait bounds for binary tree operations
 impl<T> Tree<Pos<T>, T> for BinTree<T>
 where
-    T: std::cmp::PartialEq
+    T: std::cmp::PartialEq,
 {
     // Fundamental methods
     //////////////////////
@@ -120,7 +120,7 @@ where
         //} else {
         //    None
         //}
-        node.parent.as_ref()?.parent.as_ref() // Propagates the None option with ? 
+        node.parent.as_ref()?.parent.as_ref() // Propagates the None option with ?
     }
 
     // Descendant methods
@@ -156,10 +156,10 @@ where
     fn is_root(&self, node: &Pos<T>) -> bool {
         *node == self.root
     }
-    
+
     // Derived methods
     //////////////////
-    
+
     /** Recursive algorithm that returns the depth of an input node */
     fn depth(&self, node: &Pos<T>) -> u32 {
         if self.is_root(node) {
@@ -180,7 +180,7 @@ where
 }
 impl<T> BinaryTree<Pos<T>, T> for BinTree<T>
 where
-    T: std::cmp::PartialEq
+    T: std::cmp::PartialEq,
 {
     /** Returns the position of the left child of a given node */
     fn left<'a>(&self, node: &'a Pos<T>) -> Option<&'a Pos<T>> {
@@ -198,17 +198,18 @@ where
     fn sibling<'a>(&self, node: &'a Pos<T>) -> Option<&'a Pos<T>> {
         if let Some(parent_ref) = &node.parent {
             if parent_ref.left.as_ref() == Some(node) {
-                return parent_ref.right.as_ref()
-            } else { 
-                return parent_ref.right.as_ref()
+                return parent_ref.right.as_ref();
+            } else {
+                return parent_ref.right.as_ref();
             }
-        } else { None } // else for original check
+        } else {
+            None
+        } // else for original check
     }
-
 }
 
 // Original, flat implementation
-//impl<T> BinTree<T> 
+//impl<T> BinTree<T>
 //where
 //    T: std::cmp::PartialEq
 //{
@@ -287,10 +288,10 @@ where
 //            false
 //        }
 //    }
-//    
+//
 //    // Derived methods
 //    //////////////////
-//    
+//
 //    /** Recursive algorithm that returns the depth of an input node */
 //    fn depth(&self, node: &T) -> u32 {
 //        if self.is_root(node) {
