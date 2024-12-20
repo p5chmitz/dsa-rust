@@ -16,8 +16,9 @@ pub fn disk_usage(root: &Path) -> u64 {
         let this_dir = std::fs::metadata(root)
             .expect("metadata call failed [0]")
             .len();
-        println!("d {:>7}B  {}", dir_size + this_dir, root.display());
-    } else if root.is_file() { // Base case
+        println!("D {:>7}B  {}", dir_size + this_dir, root.display());
+    } else if root.is_file() {
+        // Base case
         let size = std::fs::metadata(root)
             .expect("metadata call failed [1]")
             .len();
