@@ -2,7 +2,7 @@
 ///////////////////////////////
 
 /** Defines the a basic Tree ADT where P is a position, and T is a type */
-pub trait Tree<P, T> {
+pub trait ATree<P, T> {
     // Fundamental methods
     //////////////////////
 
@@ -50,6 +50,44 @@ pub trait Tree<P, T> {
 
     /** Returns the immediate number of children for a given node */
     fn num_children(&self, node: &P) -> usize;
+}
+
+pub trait Tree<T> {
+    type Position;
+
+    // Fundamental methods
+    //////////////////////
+
+    /** Returns an iterator over immutable references to the node's children */
+    //TODO: Make this iterable into an iterator
+    fn children(&self, node: Self::Position) -> Option<&Vec<Self::Position>>;
+
+    /** Returns an immutable reference to the node's data type */
+    fn get(&self, node: Self::Position) -> Option<&T>;
+
+    /** Returns an immutable reference to the parent of the given node */
+    fn parent(&self, node: Self::Position) -> Self::Position;
+
+    // Query methods
+    ////////////////
+
+    /** Returns true if the specified position is the tree's root */
+    fn is_root(&self, node: Self::Position) -> bool;
+
+    /** Returns true if the specified position is external */
+    fn is_leaf(&self, node: Self::Position) -> bool;
+
+    // Derived methods
+    //////////////////
+
+    fn depth(&self, node: Self::Position) -> usize;
+
+    //fn height(&self, node: &T) -> usize;
+    fn height(&self, node: Self::Position) -> usize;
+
+    /** Returns the immediate number of children for a given node */
+    fn num_children(&self, node: Self::Position) -> usize;
+
 }
 
 /** Abstract interface definition for a general tree type */
