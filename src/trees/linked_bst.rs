@@ -11,6 +11,9 @@ pub struct Node<T: std::cmp::PartialEq> {
     right: Option<Pos<T>>,
     data: Option<T>,
 }
+//impl<T> Clone for Node<T> {
+//    
+//}
 /** The BinTree struct represents a binary tree structure with a root node, a
 reference to the root node, and the structure's size.
 
@@ -71,15 +74,19 @@ where
     fn remove(&mut self, _p: Pos<T>) {}
 }
 // NOTE: Requires the PartialEq trait bounds for binary tree operations
-impl<T> Tree<Pos<T>, T> for BinTree<T>
+//impl<T> Tree<Pos<T>, T> for BinTree<T>
+//impl<T> Tree<T> for BinTree<T>
+impl<T> BinTree<T>
 where
     T: std::cmp::PartialEq,
 {
+    //type Position = Pos<T>;
+
     // Fundamental methods
     //////////////////////
 
     /** Returns an immutable reference to the node's data */
-    fn get<'a>(&self, node: &'a Pos<T>) -> Option<&'a T> {
+    fn get<'a>(&'a self, node: &'a Pos<T>) -> Option<&T> {
         //if let Some(d) = &node.data {
         //    Some(d)
         //} else { None }
