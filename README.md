@@ -48,7 +48,10 @@ This section also utilizes the structures and approaches established in the List
 
 <summary> Trees </summary>
 
-This section explores tree structures.
+Building off the lessons learned in the Core Lists module this section contains examples of hierarchical data structures. The content currently combines general trees and search trees. This section is in active development.
+
+- [Unsafe Linked N-ary Tree](): An undirected acyclic graph... err, tree. This exercise illustrates a `tree`-like Markdown parser; This is a labor of love for me as a professional documentarian as it generates a fancy hierarchical rendering of a Markdown document's headings, also known as a table of contents
+- [Linked Binary Search Tree](): Safe and easy; Nice
 
 </details>
 
