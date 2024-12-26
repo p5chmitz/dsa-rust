@@ -110,21 +110,27 @@ impl<T> Tree<T> for GenTree<T> {
 
     type Position = Pos<T>;
 
-    /** Returns an iterator over immutable references to the node's children */
-    //TODO: Make this iterable into an iterator
-    fn children(&self, node: Pos<T>) -> Option<&Vec<Pos<T>>> {
+    fn children(&self, node: Self::Position) -> Option<Vec<Self::Position>> {
+        //let mut children = Vec::new();
+        //if let Some(c) = node {
+        //    unsafe { 
+        //        for e in (*c).children.clone() {
+        //            children.push(e)
+        //        }
+        //    }
+        //}
+        //Some(children)
         if let Some(c) = node {
-            unsafe { Some(&(*c).children.as_ref()) }
+            Some(unsafe { (*c).children.clone() }) 
         } else {
-            None
+            None 
         }
     }
 
-    /** Returns an immutable reference to the node's data type */
-    fn get(&self, node: Pos<T>) -> Option<&T> {
+    fn get(&self, node: &Self::Position) -> Option<&T> {
         // Imperative approach
         if let Some(n) = node {
-            unsafe { (*n).data.as_ref() }
+            unsafe { (*(*n)).data.as_ref() }
         } else {
             None
         }
@@ -132,17 +138,15 @@ impl<T> Tree<T> for GenTree<T> {
         //node.as_ref().and_then(|n| unsafe { (*(*n)).data.as_ref() })
     }
 
-    /** Returns an immutable reference to the parent of the given node */
-    fn parent(&self, node: Pos<T>) -> Pos<T> {
+    fn parent(&self, node: Self::Position) -> Option<Self::Position> {
         if let Some(n) = node {
-            unsafe { (*n).parent }
+            unsafe { Some((*n).parent) }
         } else {
             None
         }
     }
 
-    /** Returns true if the specified position is the tree's root */
-    fn is_root(&self, node: Pos<T>) -> bool {
+    fn is_root(&self, node: Self::Position) -> bool {
         node == self.root
         //std::ptr::eq(node, &self.root)
         //self.root.as_ref().map_or(false, |root| std::ptr::eq(node, *root))
@@ -150,37 +154,37 @@ impl<T> Tree<T> for GenTree<T> {
 
     // Additional required methods by type
 
-    /** Returns the number of children for a given position */
-    fn num_children(&self, node: Pos<T>) -> usize {
+    fn num_children(&self, node: Self::Position) -> Option<usize> {
         if let Some(c) = node {
-            unsafe { (*c).children.len() } 
-        } else { 0 }
+            unsafe { Some((*c).children.len()) } 
+        } else { None }
     }
 
-    /** Returns true if the position has no children */
-    fn is_leaf(&self, node: Pos<T>) -> bool {
-        self.num_children(node) == 0
+    fn is_leaf(&self, node: Self::Position) -> bool {
+        if let Some(n) = node {
+            unsafe { (*n).children.len() == 0 }
+        } else {
+            false
+        }
     }
 
-    /** Returns the depth (aka level) of the provided position */
-    fn depth(&self, node: Pos<T>) -> usize {
+    fn depth(&self, node: Self::Position) -> Option<usize> {
         let mut d = 1;
         let mut cursor = node;
         while !self.is_root(cursor) {
-            cursor = self.parent(cursor);
+            cursor = self.parent(cursor)?;
             d += 1;
         }
-        d
+        Some(d)
     }
 
-    /** Returns the height of the subtree rooted at the provided position */
-    fn height(&self, node: Pos<T>) -> usize {
+    fn height(&self, node: Self::Position) -> Option<usize> {
         let mut h = 0;
         if let Some(n) = node {
             for e in unsafe { &(*n).children } {
-                h = std::cmp::max(h, self.height(Some(e.expect("uh oh"))))
+                h = std::cmp::max(h, self.height(Some(e.expect("uh oh")))?)
             }
-        } h + 1 
+        } Some(h + 1)
     }
 
 }
@@ -275,7 +279,7 @@ impl<T> GenTree<T> {
         // Instantiates a Tree with a generic root and traversal positioning
         let mut tree: GenTree<Heading> = new();
         // TODO: Make this a dynamic argument
-        let mut level_cursor = 1; // Astro content starts at H2, skipping H1 
+        let mut level_cursor = 0; // Astro content starts at H2, skipping H1 
         let mut position_cursor: Pos<Heading> = tree.root;
 
         // Constructs tree from Vec<T>
@@ -286,7 +290,7 @@ impl<T> GenTree<T> {
             // Case: Adds a child to the current parent and sets level cursor
             if e.level == level_cursor + 1 {
                 tree.add_child(position_cursor, node);
-                let data = tree.get(node).unwrap();
+                let data = tree.get(&node).unwrap();
                 level_cursor = data.level;
             }
             // Case: Adds a child with multi-generational skips with empty nodes
@@ -300,24 +304,24 @@ impl<T> GenTree<T> {
                     level_cursor += 1;
                 }
                 tree.add_child(position_cursor, node);
-                let data = tree.get(node).unwrap();
+                let data = tree.get(&node).unwrap();
                 level_cursor = data.level;
             }
             // Case: Adds sibling to current parent
             else if e.level == level_cursor {
-                tree.add_child(tree.parent(position_cursor), node);
+                tree.add_child(tree.parent(position_cursor).expect("No parent"), node);
             }
             // Case: Adds a child to the appropriate ancestor,
             // ensuring proper generational skips
             else {
                 let diff = level_cursor - e.level;
-                position_cursor = tree.parent(position_cursor);
+                position_cursor = tree.parent(position_cursor).expect("No parent");
                 for _ in 0..diff {
-                    position_cursor = tree.parent(position_cursor);
+                    position_cursor = tree.parent(position_cursor).expect("No parent");
                     level_cursor -= 1;
                 }
                 tree.add_child(position_cursor, node);
-                let data = tree.get(node).unwrap();
+                let data = tree.get(&node).unwrap();
                 level_cursor = data.level;
             }
 
@@ -331,12 +335,12 @@ impl<T> GenTree<T> {
     pub fn preorder_print(name: &str, position: &Pos<Heading>) {
         //println!("\t[] {name}\n\t│");
         println!("📄 {}\n", name);
-        strict_preorder(position, "");
+        preorder_strict(position, "");
         println!("");
     }
 
     /** Represents a strict preorder traversal that prints the nodes */
-    fn strict_preorder(position: &Pos<Heading>, prefix: &str) {
+    fn preorder_strict(position: &Pos<Heading>, prefix: &str) {
         if let Some(p) = position {
             // Visits the current node, prints all but ROOT
             let node = Node::get(Some(*p));
@@ -347,7 +351,7 @@ impl<T> GenTree<T> {
             // Gets the node's children
             let children: &Vec<Pos<Heading>> = unsafe { (*(*p)).children.as_ref() };
             for e in children {
-                strict_preorder(e, &format!("{}    ", prefix));
+                preorder_strict(e, &format!("{}    ", prefix));
             }
         } else {
             println!("Not a valid position");
@@ -358,12 +362,12 @@ impl<T> GenTree<T> {
     pub fn pretty_print(name: &str, position: &Pos<Heading>) {
         //println!("\t[] {name}\n\t│");
         println!("📄 {}\n\t│", name);
-        preorderish(position, "");
+        preorder_mod(position, "");
         println!("");
     }
 
     /** Traverse the tree recursively, printing each node's title and children */
-    fn preorderish(position: &Pos<Heading>, prefix: &str) {
+    fn preorder_mod(position: &Pos<Heading>, prefix: &str) {
         // Checks that the position (node) exists
         if let Some(p) = position {
             // Visit the node at the referenced position
@@ -376,10 +380,10 @@ impl<T> GenTree<T> {
                 index -= 1;
                 if index == 0 {
                     println!("\t{}└── {}", prefix, node.title);
-                    preorderish(e, &format!("{}    ", prefix));
+                    preorder_mod(e, &format!("{}    ", prefix));
                 } else {
                     println!("\t{}├── {}", prefix, node.title);
-                    preorderish(e, &format!("{}│   ", prefix));
+                    preorder_mod(e, &format!("{}│   ", prefix));
                 }
             }
         } else {
@@ -404,36 +408,36 @@ impl<T> GenTree<T> {
         }
     }
 
-impl<T> Drop for GenTree<T> {
-    fn drop(&mut self) {
-        /** Recursive tree destructor */
-        // TODO: Update implementation with NonNull
-        // to avoid null pointer dereference check
-        unsafe fn drop_node_recursive<T>(node_ptr: *mut Node<T>) {
-            // Avoids a null pointer dereference
-            if node_ptr.is_null() {
-                return;
-            }
-
-            // Dereference the pointer and process its children
-            let node = &mut *node_ptr;
-            for &child_ptr in node.children.iter() {
-                if let Some(child_ptr) = child_ptr {
-                    drop_node_recursive(child_ptr);
+    impl<T> Drop for GenTree<T> {
+        fn drop(&mut self) {
+            /** Recursive tree destructor */
+            // TODO: Update implementation with NonNull
+            // to avoid null pointer dereference check
+            unsafe fn drop_node_recursive<T>(node_ptr: *mut Node<T>) {
+                // Avoids a null pointer dereference
+                if node_ptr.is_null() {
+                    return;
                 }
+    
+                // Dereference the pointer and process its children
+                let node = &mut *node_ptr;
+                for &child_ptr in node.children.iter() {
+                    if let Some(child_ptr) = child_ptr {
+                        drop_node_recursive(child_ptr);
+                    }
+                }
+    
+                // Deallocate the current node
+                let _ = Box::from_raw(node_ptr);
             }
-
-            // Deallocate the current node
-            let _ = Box::from_raw(node_ptr);
-        }
-
-        unsafe {
-            if let Some(root_ptr) = self.root {
-                drop_node_recursive(root_ptr);
+    
+            unsafe {
+                if let Some(root_ptr) = self.root {
+                    drop_node_recursive(root_ptr);
+                }
             }
         }
     }
-}
 
 
 #[test]
@@ -458,9 +462,9 @@ fn basic_function_test() {
         tree.add_child(tree.root, node_a_ptr);
 
         // Checks that add_child() assigns correct parent for the node
-        assert_eq!(tree.root, tree.parent(node_a_ptr));
+        assert_eq!(tree.root, tree.parent(node_a_ptr).expect("No parent"));
         // Checks that the parent (ROOT) has exactly one child as the "a" node
-        assert_eq!(tree.children(tree.root), Some(&vec![node_a_ptr]));
+        assert_eq!(tree.children(tree.root), vec![node_a_ptr].into());
         // Checks that the ROOT's children list _contains_ the "a" node
         assert!(tree.children(tree.root).unwrap().iter().any(|&item| {
             if let Some(ptr) = item {
@@ -485,8 +489,8 @@ fn basic_function_test() {
         // Checks the tree's size, height, and depth of "b"
         // NOTE: size, height, and depth include the ROOT node
         assert_eq!(tree.size, 3);
-        assert_eq!(tree.height(tree.root), 3);
-        assert_eq!(tree.depth(node_b_ptr), 3);
+        assert_eq!(tree.height(tree.root), Some(3));
+        assert_eq!(tree.depth(node_b_ptr), Some(3));
 
     }
 }
@@ -515,7 +519,8 @@ fn n_ary_algorithm_test() {
 
         // Empty doc test
 }
-}
+
+} // end to toc module
 
 /** Putting it all together */
 pub fn example() {
