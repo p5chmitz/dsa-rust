@@ -22,24 +22,24 @@ impl<K, V> Entry<K, V> {
 /** Defines a MIN queue where the key's value is inversely proportional to its 
 priority; Based on a sorted Vec of Entry<K, V> where K is the key, 
 and V is the value ("payload") */
-pub struct SortedListQueue<K, V> {
+pub struct SortedVecQueue<K, V> {
     pub data: Vec<Entry<K, V>>
 }
-impl<K, V> SortedListQueue<K, V> {
+impl<K, V> SortedVecQueue<K, V> {
     // Creates a new, empty priority queue structure
-    pub fn new() -> SortedListQueue<K, V> {
-        SortedListQueue {
+    pub fn new() -> SortedVecQueue<K, V> {
+        SortedVecQueue {
             data: Vec::with_capacity(0)
         }
     }
 }
-impl<K, V> PriorityQueue<K, V> for SortedListQueue<K, V>
+impl<K, V> PriorityQueue<K, V> for SortedVecQueue<K, V>
 where K: Ord {
 
     type Entry = Entry<K, V>;
 
     //NOTE: Provides a wrapper for Vec::insert() which runs in O(n) time
-    fn insert(&mut self, key: K, value: V) -> Result<(), Box<dyn std::error::Error>> {
+    fn enqueue(&mut self, key: K, value: V) -> Result<(), Box<dyn std::error::Error>> {
         if Self::check_key(&key) {
             let mut insertion_index = self.data.len(); 
             // Finds the correct insertion index
@@ -50,7 +50,7 @@ where K: Ord {
                 }
             }
             let entry = Entry::new(key, value);
-            self.data.insert(insertion_index, entry); // Actually calls Vec::insert()
+            self.data.insert(insertion_index, entry);
             Ok(())
         } else {
             Err("Invalid key".into())
@@ -97,18 +97,19 @@ where K: Ord {
 pub fn example() {
     use crate::lists::queues::priority_queue::sorted_list::{
         PriorityQueue, 
-        SortedListQueue
+        SortedVecQueue
     };
     
     // Instantiates new list, declares the K and V types
-    let mut list: SortedListQueue<usize, &str> = SortedListQueue::new();
+    //let mut list: SortedVecQueue<usize, &str> = SortedVecQueue::new();
+    let mut list: SortedVecQueue<usize, &str> = SortedVecQueue::new();
 
     // Pushes a bunch of values with an associated key priority to the list
-    list.insert(3, "Peter").ok();
-    list.insert(5, "Bobson").ok();
-    list.insert(2, "Brain").ok();
-    list.insert(4, "Dingus").ok();
-    list.insert(6, "Dorkus").ok();
+    list.enqueue(3, "Peter").ok();
+    list.enqueue(5, "Bobson").ok();
+    list.enqueue(2, "Brain").ok();
+    list.enqueue(4, "Dingus").ok();
+    list.enqueue(6, "Dorkus").ok();
 
     // Checks that the list is taking entries properly,
     // and that the peek() operation matches expectations

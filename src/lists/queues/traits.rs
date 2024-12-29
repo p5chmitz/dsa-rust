@@ -8,7 +8,7 @@ where
 
     /** Takes a key/value pair, checks for key validity, 
     creates an Entry, and returns a Result */
-    fn insert(&mut self, key: K, value: V) -> Result<(), Box<dyn std::error::Error>>;
+    fn enqueue(&mut self, key: K, value: V) -> Result<(), Box<dyn std::error::Error>>;
 
     // Returns an immutable reference to the min/max Entry
     fn peek(&self) -> Option<&V>;
