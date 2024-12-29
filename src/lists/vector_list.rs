@@ -16,7 +16,7 @@ impl Clone for PodiumEntry {
         }
     }
 }
-/** The Podium's public API contains the following functions:
+/** The Podium's public interface contains the following functions:
  - new() -> Podium
  - add(&mut self, name: String, score: Option<i32>)
  - set_score(&mut self, index: usize, score: Option<i32>) -> Result<(), String>
