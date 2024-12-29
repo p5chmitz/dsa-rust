@@ -130,7 +130,7 @@ impl<T> Tree<T> for GenTree<T> {
     fn get(&self, node: &Self::Position) -> Option<&T> {
         // Imperative approach
         if let Some(n) = node {
-            unsafe { (*(*n)).data.as_ref() }
+            unsafe { (*(*n)).data.as_ref() } // Double de-ref for &*mut type
         } else {
             None
         }
@@ -569,4 +569,6 @@ pub fn example() {
     //let path = std::path::Path::new("../tech-docs/src/content/docs/cs/dsa/trees.md");
     //toc::navigator(path);
     toc::navigator(std::path::Path::new("../tech-docs/src/content/docs/cs/dsa/trees.md"));
+    toc::navigator(std::path::Path::new("scratch.md"));
+
 }
