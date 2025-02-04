@@ -1,6 +1,7 @@
 #![allow(dead_code, unused_imports)]
 
 mod lists;
+mod maps;
 mod maw;
 mod tgg;
 mod trees;
@@ -160,15 +161,44 @@ fn main() {
     // TREES
     ////////
 
-    println!("\x1b[1;34mRecursive dir analyzer:\x1b[0m");
+    //let path = std::path::Path::new("../tech-docs/src/content/docs/cs");
     let path = std::path::Path::new("src");
     trees::file_tree::disk_usage(path);
+    println!("");
+
+    println!("\x1b[1;34mN-ary tree example:\x1b[0m");
+    // Paths exist as hard-coded values in example() functions
+    //trees::md_toc_gen::example();
     println!();
 
-    println!("\x1b[1;34mGeneral tree:\x1b[0m");
-    let path = std::path::Path::new("../tech-docs/src/content/docs/cs");
-    trees::unsafe_linked_general_tree::example(path);
+    //trees::unsafe_linked_general_tree::example();
+    //println!();
+
+    // MAPS
+    ///////
+ 
+    println!("Bit shift example");
+    maps::hash_map::bit_shift("Peter");
+    println!("Hash code");
+    maps::hash_map::hash_code("Schmitz");
+    println!("Hash code 2");
+    let s = "Carl";
+    let v = maps::hash_map::hash_code_2(s);
+    println!("{} = {}", s, v);
     println!();
+    maps::hash_map::default_hasher();
+
+    println!("\x1b[1;34mMapped word frequency analysis:\x1b[0m");
+    //maps::word_freq::word_freq("../../tech-docs/src/content/docs/cs/dsa/trees.md");
+    //match File::open("./maps/word-freq-data.txt") {
+
+    println!("B Movie script:");
+    maps::word_freq::word_freq("./maps/word-freq-data-b-movie.txt");
+    println!();
+    println!("A Midsummer Night's Dream");
+    maps::word_freq::word_freq("./maps/word-freq-data.txt");
+    println!();
+
 }
 
 #[test]
