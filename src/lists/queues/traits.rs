@@ -6,7 +6,7 @@ where
 {
     type Entry;
 
-    /** Takes a key/value pair, checks for key validity, 
+    /** Takes a key/value pair, checks for key validity,
     creates an Entry, and returns a Result */
     fn enqueue(&mut self, key: K, value: V) -> Result<(), Box<dyn std::error::Error>>;
 
@@ -18,7 +18,7 @@ where
 
     // Returns the size of the priority queue
     fn size(&self) -> usize;
-    
+
     // Checks if the list is empty
     fn is_empty(&self) -> bool;
 
@@ -28,6 +28,4 @@ where
     //NOTE: Is this needed?
     // Checks if a provided key is valid by testing if it can be compared with itself
     fn check_key(key: &K) -> bool;
-
 }
-
