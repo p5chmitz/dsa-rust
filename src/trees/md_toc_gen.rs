@@ -1,212 +1,210 @@
-/////////////////////////////////
-/** An unsafe MD toc generator */
-/////////////////////////////////
-
+///////////////////////////////////////////
+/** An unsafe linked tree implementation */
+///////////////////////////////////////////
 
 mod toc {
-use crate::trees::traits::Tree;
+    use crate::trees::traits::Tree;
 
-use std::fs::File; // Used by parse()
-use std::io::{self, BufRead, BufReader}; // Used by parse()
-use std::path::Path; // Used by example()
-use std::ptr;
+    use std::fs::File; // Used by parse()
+    use std::io::{self, BufRead, BufReader}; // Used by parse()
+    use std::path::Path; // Used by example()
+    use std::ptr;
 
-use regex::Regex; // Used by parse()
+    use regex::Regex; // Used by parse()
 
-/** Used for parsing Markdown headings; Heading is T */
-#[derive(Clone, Debug)]
-pub struct Heading {
-    level: usize,
-    title: String,
-}
-impl Heading {
-    /** Just a humble Heading builder */
-    fn new(title: String, level: usize) -> Heading {
-        Heading { level, title }
+    /** Used for parsing Markdown headings; Heading is T */
+    #[derive(Clone, Debug)]
+    pub struct Heading {
+        level: usize,
+        title: String,
     }
-
-    /** For building placeholder nodes */
-    fn new_root(level: usize) -> Heading {
-        Heading {
-            level,
-            title: "ROOT".to_string(),
+    impl Heading {
+        /** Just a humble Heading builder */
+        fn new(title: String, level: usize) -> Heading {
+            Heading { level, title }
         }
-    }
-}
 
-/** A position in the tree as raw pointer to a Node, generic over T */
-type Pos<T> = Option<*mut Node<T>>;
-
-/** Represents a general tree with a collection of children
- - fn build(data: Option<T>) -> Pos<T> {
- - fn get<'a>(position: &'a Pos<T>) -> Option<&'a T>
-*/
-#[derive(PartialEq)]
-pub struct Node<T> {
-    parent: Pos<T>,
-    children: Vec<Pos<T>>,
-    data: Option<T>,
-}
-impl<T> Node<T> {
-    /** Builds a new Node and returns its position */
-    fn build(data: Option<T>) -> Box<Node<T>> {
-        Box::new(Node {
-            parent: None,
-            children: Vec::new(),
-            data,
-        })
-
-        // Return a raw pointer to the node
-        //let node_ptr: *mut Node<T> = Box::new(node));
-        //Some(node_ptr)
-    }
-
-    /** Gets an immutable reference to the data at a position */
-    fn get<'a>(position: Pos<T>) -> Option<&'a T> {
-        if let Some(p) = position {
-            unsafe { (*p).data.as_ref() }
-        } else {
-            None
-        }
-    }
-}
-
-/** The Tree struct represents a positional, linked-based general
-tree structure with a root node that contains a single raw pointer
-to the root node and the structure's size.
-The genericity of the struct means you'll have to explicitly
-type associated functions.
-
-Example:
-```
-    let path = std::path::Path::new("~/Developer/project/src/doc");
-    let parsed = Tree::<Heading>::parse(path);
-    let tree = Tree::<Heading>::construct(parsed.1);
-    Tree::<Heading>::preorder_proof(&tree.root);
-```
-
-Methods:
- - fn add_child(&mut self, ancestor: Pos<T>, node: Pos<T>)
- - fn children(&self, node: Pos<Heading>) -> Option<&Vec<Pos<Heading>>>
- - fn get(&self, node: Pos<Heading>) -> Option<&Heading>
- - fn parent(&self, node: Pos<Heading>) -> Pos<Heading>
- - fn is_root(&self, node: &Pos<T>) -> bool
-
-Associated & Utility Functions:
- - fn new() -> Tree<Heading>
- - fn simple_print(title: &String, headings: &Vec<Heading>)
- - fn parse(root: &Path) -> (String, Vec<Heading>)
- - fn construct(data: &Vec<Heading>) -> Tree<Heading>
- - fn pretty_print(name: &str, position: &Pos<Heading>)
- - fn preorder(position: &Pos<Heading>, prefix: &str)
- - fn navigator(path: &Path)
-*/
-#[derive(Debug)]
-pub struct GenTree<T> {
-    pub root: Pos<T>,
-    size: usize,
-}
-impl<T> Tree<T> for GenTree<T> {
-
-    type Position = Pos<T>;
-
-    fn children(&self, node: Self::Position) -> Option<Vec<Self::Position>> {
-        //let mut children = Vec::new();
-        //if let Some(c) = node {
-        //    unsafe { 
-        //        for e in (*c).children.clone() {
-        //            children.push(e)
-        //        }
-        //    }
-        //}
-        //Some(children)
-        if let Some(c) = node {
-            Some(unsafe { (*c).children.clone() }) 
-        } else {
-            None 
-        }
-    }
-
-    fn get(&self, node: &Self::Position) -> Option<&T> {
-        // Imperative approach
-        if let Some(n) = node {
-            unsafe { (*(*n)).data.as_ref() } // Double de-ref for &*mut type
-        } else {
-            None
-        }
-        // Functional approach
-        //node.as_ref().and_then(|n| unsafe { (*(*n)).data.as_ref() })
-    }
-
-    fn parent(&self, node: Self::Position) -> Option<Self::Position> {
-        if let Some(n) = node {
-            unsafe { Some((*n).parent) }
-        } else {
-            None
-        }
-    }
-
-    fn is_root(&self, node: Self::Position) -> bool {
-        node == self.root
-        //std::ptr::eq(node, &self.root)
-        //self.root.as_ref().map_or(false, |root| std::ptr::eq(node, *root))
-    }
-
-    // Additional required methods by type
-
-    fn num_children(&self, node: Self::Position) -> Option<usize> {
-        if let Some(c) = node {
-            unsafe { Some((*c).children.len()) } 
-        } else { None }
-    }
-
-    fn is_leaf(&self, node: Self::Position) -> bool {
-        if let Some(n) = node {
-            unsafe { (*n).children.len() == 0 }
-        } else {
-            false
-        }
-    }
-
-    fn depth(&self, node: Self::Position) -> Option<usize> {
-        let mut d = 1;
-        let mut cursor = node;
-        while !self.is_root(cursor) {
-            cursor = self.parent(cursor)?;
-            d += 1;
-        }
-        Some(d)
-    }
-
-    fn height(&self, node: Self::Position) -> Option<usize> {
-        let mut h = 0;
-        if let Some(n) = node {
-            for e in unsafe { &(*n).children } {
-                h = std::cmp::max(h, self.height(Some(e.expect("uh oh")))?)
+        /** For building placeholder nodes */
+        fn new_root(level: usize) -> Heading {
+            Heading {
+                level,
+                title: "ROOT".to_string(),
             }
-        } Some(h + 1)
+        }
     }
 
-}
-impl<T> GenTree<T> {
+    /** A position in the tree as raw pointer to a Node, generic over T */
+    type Pos<T> = Option<*mut Node<T>>;
 
-    /** Adds a child to a parent's child arena Vec<Pos<T>> */
-    fn add_child(&mut self, ancestor: Pos<T>, node: Pos<T>) {
-        unsafe {
-            if let Some(p) = ancestor {
-                // Adds the position to the parents arena
-                (*p).children.push(node);
+    /** Represents a general tree with a collection of children
+     - fn build(data: Option<T>) -> Pos<T> {
+     - fn get<'a>(position: &'a Pos<T>) -> Option<&'a T>
+    */
+    #[derive(PartialEq)]
+    pub struct Node<T> {
+        parent: Pos<T>,
+        children: Vec<Pos<T>>,
+        data: Option<T>,
+    }
+    impl<T> Node<T> {
+        /** Builds a new Node and returns its position */
+        fn build(data: Option<T>) -> Box<Node<T>> {
+            Box::new(Node {
+                parent: None,
+                children: Vec::new(),
+                data,
+            })
 
-                // Links the node's parent Pos<T> to the correct ancestor
-                if let Some(n) = node {
-                    (*n).parent = ancestor;
+            // Return a raw pointer to the node
+            //let node_ptr: *mut Node<T> = Box::new(node));
+            //Some(node_ptr)
+        }
+
+        /** Gets an immutable reference to the data at a position */
+        fn get<'a>(position: Pos<T>) -> Option<&'a T> {
+            if let Some(p) = position {
+                unsafe { (*p).data.as_ref() }
+            } else {
+                None
+            }
+        }
+    }
+
+    /** The Tree struct represents a positional, linked-based general
+    tree structure with a root node that contains a single raw pointer
+    to the root node and the structure's size.
+    The genericity of the struct means you'll have to explicitly
+    type associated functions.
+
+    Example:
+    ```
+        let path = std::path::Path::new("~/Developer/project/src/doc");
+        let parsed = Tree::<Heading>::parse(path);
+        let tree = Tree::<Heading>::construct(parsed.1);
+        Tree::<Heading>::preorder_proof(&tree.root);
+    ```
+
+    Methods:
+     - fn add_child(&mut self, ancestor: Pos<T>, node: Pos<T>)
+     - fn children(&self, node: Pos<Heading>) -> Option<&Vec<Pos<Heading>>>
+     - fn get(&self, node: Pos<Heading>) -> Option<&Heading>
+     - fn parent(&self, node: Pos<Heading>) -> Pos<Heading>
+     - fn is_root(&self, node: &Pos<T>) -> bool
+
+    Associated & Utility Functions:
+     - fn new() -> Tree<Heading>
+     - fn simple_print(title: &String, headings: &Vec<Heading>)
+     - fn parse(root: &Path) -> (String, Vec<Heading>)
+     - fn construct(data: &Vec<Heading>) -> Tree<Heading>
+     - fn pretty_print(name: &str, position: &Pos<Heading>)
+     - fn preorder(position: &Pos<Heading>, prefix: &str)
+     - fn navigator(path: &Path)
+    */
+    #[derive(Debug)]
+    pub struct GenTree<T> {
+        pub root: Pos<T>,
+        size: usize,
+    }
+    impl<T> Tree<T> for GenTree<T> {
+        type Position = Pos<T>;
+
+        fn children(&self, node: Self::Position) -> Option<Vec<Self::Position>> {
+            //let mut children = Vec::new();
+            //if let Some(c) = node {
+            //    unsafe {
+            //        for e in (*c).children.clone() {
+            //            children.push(e)
+            //        }
+            //    }
+            //}
+            //Some(children)
+            if let Some(c) = node {
+                Some(unsafe { (*c).children.clone() })
+            } else {
+                None
+            }
+        }
+
+        fn get(&self, node: &Self::Position) -> Option<&T> {
+            // Imperative approach
+            if let Some(n) = node {
+                unsafe { (*(*n)).data.as_ref() } // Double de-ref for &*mut type
+            } else {
+                None
+            }
+            // Functional approach
+            //node.as_ref().and_then(|n| unsafe { (*(*n)).data.as_ref() })
+        }
+
+        fn parent(&self, node: Self::Position) -> Option<Self::Position> {
+            if let Some(n) = node {
+                unsafe { Some((*n).parent) }
+            } else {
+                None
+            }
+        }
+
+        fn is_root(&self, node: Self::Position) -> bool {
+            node == self.root
+            //std::ptr::eq(node, &self.root)
+            //self.root.as_ref().map_or(false, |root| std::ptr::eq(node, *root))
+        }
+
+        // Additional required methods by type
+
+        fn num_children(&self, node: Self::Position) -> Option<usize> {
+            if let Some(c) = node {
+                unsafe { Some((*c).children.len()) }
+            } else {
+                None
+            }
+        }
+
+        fn is_leaf(&self, node: Self::Position) -> bool {
+            if let Some(n) = node {
+                unsafe { (*n).children.len() == 0 }
+            } else {
+                false
+            }
+        }
+
+        fn depth(&self, node: Self::Position) -> Option<usize> {
+            let mut d = 1;
+            let mut cursor = node;
+            while !self.is_root(cursor) {
+                cursor = self.parent(cursor)?;
+                d += 1;
+            }
+            Some(d)
+        }
+
+        fn height(&self, node: Self::Position) -> Option<usize> {
+            let mut h = 0;
+            if let Some(n) = node {
+                for e in unsafe { &(*n).children } {
+                    h = std::cmp::max(h, self.height(Some(e.expect("uh oh")))?)
                 }
             }
-            self.size += 1;
+            Some(h + 1)
         }
     }
+    impl<T> GenTree<T> {
+        /** Adds a child to a parent's child arena Vec<Pos<T>> */
+        fn add_child(&mut self, ancestor: Pos<T>, node: Pos<T>) {
+            unsafe {
+                if let Some(p) = ancestor {
+                    // Adds the position to the parents arena
+                    (*p).children.push(node);
 
-}
+                    // Links the node's parent Pos<T> to the correct ancestor
+                    if let Some(n) = node {
+                        (*n).parent = ancestor;
+                    }
+                }
+                self.size += 1;
+            }
+        }
+    }
 
     // Associated and utility functions
     ///////////////////////////////////
@@ -279,7 +277,7 @@ impl<T> GenTree<T> {
         // Instantiates a Tree with a generic root and traversal positioning
         let mut tree: GenTree<Heading> = new();
         // TODO: Make this a dynamic argument
-        let mut level_cursor = 0; // Astro content starts at H2, skipping H1 
+        let mut level_cursor = 0; // Astro content starts at H2, skipping H1
         let mut position_cursor: Pos<Heading> = tree.root;
 
         // Constructs tree from Vec<T>
@@ -347,7 +345,7 @@ impl<T> GenTree<T> {
             if node.unwrap().title != "ROOT".to_string() {
                 println!("    {}{}", prefix, node.unwrap().title);
             }
-    
+
             // Gets the node's children
             let children: &Vec<Pos<Heading>> = unsafe { (*(*p)).children.as_ref() };
             for e in children {
@@ -418,7 +416,7 @@ impl<T> GenTree<T> {
                 if node_ptr.is_null() {
                     return;
                 }
-    
+
                 // Dereference the pointer and process its children
                 let node = &mut *node_ptr;
                 for &child_ptr in node.children.iter() {
@@ -426,11 +424,11 @@ impl<T> GenTree<T> {
                         drop_node_recursive(child_ptr);
                     }
                 }
-    
+
                 // Deallocate the current node
                 let _ = Box::from_raw(node_ptr);
             }
-    
+
             unsafe {
                 if let Some(root_ptr) = self.root {
                     drop_node_recursive(root_ptr);
@@ -439,87 +437,84 @@ impl<T> GenTree<T> {
         }
     }
 
+    #[test]
+    fn basic_function_test() {
+        unsafe {
+            use crate::trees::md_toc_gen::toc::Heading;
 
-#[test]
-fn basic_function_test() {
-    unsafe {
-        use crate::trees::md_toc_gen::toc::Heading;
-
-        // Creates a tree with a default ROOT node
-        let mut tree: GenTree<Heading> = new();
-        if let Some(r) = tree.root {
-            let h: Heading = (*r).data.clone().unwrap();
-            assert_eq!(&h.title, "ROOT");
-        }
-
-        // Builds a Heading that simulates an H2, converts it to a Node,
-        // and finally converts it to a position Pos<Heading> as raw pointer "a"
-        let h2 = Heading::new("H2".to_string(), 2);
-        let node_a: Box<Node<Heading>> = Node::build(Some(h2));
-        let node_a_ptr: Pos<Heading> = Some(Box::into_raw(node_a));
-
-        // Adds a to root
-        tree.add_child(tree.root, node_a_ptr);
-
-        // Checks that add_child() assigns correct parent for the node
-        assert_eq!(tree.root, tree.parent(node_a_ptr).expect("No parent"));
-        // Checks that the parent (ROOT) has exactly one child as the "a" node
-        assert_eq!(tree.children(tree.root), vec![node_a_ptr].into());
-        // Checks that the ROOT's children list _contains_ the "a" node
-        assert!(tree.children(tree.root).unwrap().iter().any(|&item| {
-            if let Some(ptr) = item {
-                ptr::eq(ptr, node_a_ptr.unwrap())
-            } else {
-                false
+            // Creates a tree with a default ROOT node
+            let mut tree: GenTree<Heading> = new();
+            if let Some(r) = tree.root {
+                let h: Heading = (*r).data.clone().unwrap();
+                assert_eq!(&h.title, "ROOT");
             }
-        }));
 
-        // At this point there should be one node with one default ROOT node
-        assert_eq!(tree.size, 2);
+            // Builds a Heading that simulates an H2, converts it to a Node,
+            // and finally converts it to a position Pos<Heading> as raw pointer "a"
+            let h2 = Heading::new("H2".to_string(), 2);
+            let node_a: Box<Node<Heading>> = Node::build(Some(h2));
+            let node_a_ptr: Pos<Heading> = Some(Box::into_raw(node_a));
 
-        // Builds a Heading that simulates an H3, converts it to a Node,
-        // and finally converts it to a position Pos<Heading> as raw pointer "b"
-        let h3 = Heading::new("H3".to_string(), 3);
-        let node_b: Box<Node<Heading>> = Node::build(Some(h3));
-        let node_b_ptr: Pos<Heading> = Some(Box::into_raw(node_b));
+            // Adds a to root
+            tree.add_child(tree.root, node_a_ptr);
 
-        // Adds "b" to "a"
-        tree.add_child(node_a_ptr, node_b_ptr);
+            // Checks that add_child() assigns correct parent for the node
+            assert_eq!(tree.root, tree.parent(node_a_ptr).expect("No parent"));
+            // Checks that the parent (ROOT) has exactly one child as the "a" node
+            assert_eq!(tree.children(tree.root), vec![node_a_ptr].into());
+            // Checks that the ROOT's children list _contains_ the "a" node
+            assert!(tree.children(tree.root).unwrap().iter().any(|&item| {
+                if let Some(ptr) = item {
+                    ptr::eq(ptr, node_a_ptr.unwrap())
+                } else {
+                    false
+                }
+            }));
 
-        // Checks the tree's size, height, and depth of "b"
-        // NOTE: size, height, and depth include the ROOT node
-        assert_eq!(tree.size, 3);
-        assert_eq!(tree.height(tree.root), Some(3));
-        assert_eq!(tree.depth(node_b_ptr), Some(3));
+            // At this point there should be one node with one default ROOT node
+            assert_eq!(tree.size, 2);
 
+            // Builds a Heading that simulates an H3, converts it to a Node,
+            // and finally converts it to a position Pos<Heading> as raw pointer "b"
+            let h3 = Heading::new("H3".to_string(), 3);
+            let node_b: Box<Node<Heading>> = Node::build(Some(h3));
+            let node_b_ptr: Pos<Heading> = Some(Box::into_raw(node_b));
+
+            // Adds "b" to "a"
+            tree.add_child(node_a_ptr, node_b_ptr);
+
+            // Checks the tree's size, height, and depth of "b"
+            // NOTE: size, height, and depth include the ROOT node
+            assert_eq!(tree.size, 3);
+            assert_eq!(tree.height(tree.root), Some(3));
+            assert_eq!(tree.depth(node_b_ptr), Some(3));
+        }
     }
-}
 
-#[test]
-/** Creates this tree to test properties
-    [] Lorem Ipsum Test 
-    │    An ordered look at MD parsing
-    │
-    ├── Landlocked
-    │   ├── Switzerland
-    │   │   └── Geneva
-    │   │       └── Old Town
-    │   │           └── Cathédrale Saint-Pierre
-    │   └── Bolivia
-    └── Island
-        ├── Marine
-        │   └── Australiae
-        └── Fresh Water
-*/
-fn n_ary_algorithm_test() {
+    #[test]
+    /** Creates this tree to test properties
+        [] Lorem Ipsum Test
+        │    An ordered look at MD parsing
+        │
+        ├── Landlocked
+        │   ├── Switzerland
+        │   │   └── Geneva
+        │   │       └── Old Town
+        │   │           └── Cathédrale Saint-Pierre
+        │   └── Bolivia
+        └── Island
+          ├── Marine
+          │   └── Australiae
+          └── Fresh Water
+    */
+    fn n_ary_algorithm_test() {
 
         // Checks that the height is 4
 
         // Checks that the depth of the H5 is 4
 
         // Empty doc test
-}
-
+    }
 } // end to toc module
 
 /** Putting it all together */
@@ -560,15 +555,15 @@ pub fn example() {
     toc::pretty_print(&parsed.0, &tree.root);
     println!("");
 
-
     // Final convenience method
-    // 
+    //
     // Does the same thing as the above three steps, but adds the ability to
     // traverse a directory structure recursively and a pretty-printer
     // with proper box drawing components
     //let path = std::path::Path::new("../tech-docs/src/content/docs/cs/dsa/trees.md");
     //toc::navigator(path);
-    toc::navigator(std::path::Path::new("../tech-docs/src/content/docs/cs/dsa/trees.md"));
+    toc::navigator(std::path::Path::new(
+        "../tech-docs/src/content/docs/cs/dsa/trees.md",
+    ));
     toc::navigator(std::path::Path::new("scratch.md"));
-
 }
