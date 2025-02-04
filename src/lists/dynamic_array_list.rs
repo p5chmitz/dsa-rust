@@ -28,9 +28,7 @@ impl<'a> Clone for Entry<'a> {
  - remove(&mut self, n: &str) -> Result<&str, String>
  - clear(&mut self)
  - trim(&mut self) - private, called by remove()
-NOTE: This is mostly just a funsies excuse to illustrate dynamic sizing;
-It was also an excuse to explore interior mutability, which, as you can see,
-it does not need */
+NOTE: This is mostly just a funsies excuse to illustrate dynamic sizing */
 #[derive(Debug)] // Required for list visualization in example function
 pub struct List<'a> {
     data: Vec<Option<Entry<'a>>>,
@@ -40,7 +38,7 @@ impl<'a> List<'a> {
     /** Creates a new generic list with capacity of 1 */
     pub fn new() -> List<'a> {
         List {
-            data: vec![None; 3],
+            data: vec![None; 1],
             size: 0,
         }
     }
