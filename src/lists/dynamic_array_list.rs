@@ -190,7 +190,7 @@ fn basic_function_test() {
     let reference: i32 = list.get("Chester").unwrap();
     assert_eq!(reference, 30);
     assert_eq!(list.size, 1);
-    assert_eq!(list.data.len(), 3);
+    assert_eq!(list.data.len(), 2);
 
     // Tests scoreless inserts and gets -- handling scoreless entries is up to the calling code
     list.insert("Copperpot", None);
@@ -218,14 +218,14 @@ fn basic_function_test() {
     // Tests automatic list re-sizing
     list.insert("Peter", Some(45));
     assert_eq!(list.size, 3);
-    assert_eq!(list.data.len(), 6);
+    assert_eq!(list.data.len(), 4);
 
     // Prep fluf
     list.insert("Brain", Some(45));
     list.insert("Dingus", Some(3));
     list.insert("Dangus", Some(87));
     assert_eq!(list.size, 6);
-    assert_eq!(list.data.len(), 12);
+    assert_eq!(list.data.len(), 8);
 
     // Tests remove on valid and invalid entries
     let name: Result<&str, String> = list.remove("Chester");
@@ -237,7 +237,7 @@ fn basic_function_test() {
     let _ = list.remove("Copperpot");
     list.remove("Dingus").ok(); // More idiomatic way to neglect error handling
     assert_eq!(list.size, 3);
-    assert_eq!(list.data.len(), 6);
+    assert_eq!(list.data.len(), 8);
 }
 
 /** Mostly for print debugging and example usage */
