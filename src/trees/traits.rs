@@ -8,10 +8,10 @@ pub trait Tree<T> {
     // Fundamental methods
     //////////////////////
 
-    /** Returns an iterable collection over the node's children 
+    /** Returns an iterable collection over the node's children
 
     NOTE: To make this iterable into an iterator simply call something like
-    self.children(node).into_iter() */
+    self.children(node).into\_iter() */
     fn children(&self, node: Self::Position) -> Option<Vec<Self::Position>>;
 
     /** Returns an immutable reference to the node's data type */
@@ -46,7 +46,6 @@ pub trait Tree<T> {
     fn num_children(&self, node: Self::Position) -> Option<usize>;
 
     //fn validate(&self, node: &Self::Position) -> bool;
-
 }
 
 /** Abstract interface definition for a binary tree type */
@@ -64,4 +63,12 @@ where
 
     /** Returns the position of the sibling of a given node */
     fn sibling(&self, node: Self::Position) -> Option<Self::Position>;
+
+    //TODO
+    //fn add_root(n)
+    //fn add_left(p, n)
+    //fn add_right(p, n)
+    //fn set(p, n)
+    //fn attach(p, t1, t2)
+    //fn remove(p)
 }
