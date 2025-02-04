@@ -35,9 +35,17 @@ where
     }
 
     // All operations can (and should) require O(1) time
-    fn add_root(&mut self, _node: Node<T>) {}
-    fn add_left(&mut self, _p: Pos<T>, _node: Node<T>) {}
-    fn add_right(&mut self, _p: Pos<T>, _node: Node<T>) {}
+    fn set_root(&mut self, data: T) {
+        self.root.data = Some(data)
+    }
+
+    fn add_left(&mut self, mut ancestor: Pos<T>, node: Pos<T>) {
+        ancestor.left = Some(node);
+    }
+    fn add_right(&mut self, mut ancestor: Pos<T>, node: Pos<T>) {
+        ancestor.right = Some(node);
+    }
+
     fn set(&mut self, _p: Pos<T>, _node: Node<T>) {}
     fn attach(&mut self, _left: Pos<T>, _right: Pos<T>) {}
     fn remove(&mut self, _p: Pos<T>) {}
@@ -54,7 +62,9 @@ where
     fn get<'a>(&'a self, node: &'a Self::Position) -> Option<&'a T> {
         if node.data.is_some() {
             node.data.as_ref()
-        } else { None }
+        } else {
+            None
+        }
     }
 
     // /** Returns the number of nodes in the tree */
@@ -82,7 +92,9 @@ where
         //} else { None }
         if node.parent.is_some() {
             node.parent
-        } else { None }
+        } else {
+            None
+        }
     }
 
     // Descendant methods
@@ -91,13 +103,19 @@ where
     fn num_children(&self, node: Self::Position) -> Option<usize> {
         if let Some(n) = self.children(node) {
             Some(n.len())
-        } else { None }
+        } else {
+            None
+        }
     }
 
     fn children(&self, node: Self::Position) -> Option<Vec<Self::Position>> {
         let mut vec = Vec::with_capacity(2);
-        if let Some(l) = node.left { vec.push(l) };
-        if let Some(r) = node.right { vec.push(r) };
+        if let Some(l) = node.left {
+            vec.push(l)
+        };
+        if let Some(r) = node.right {
+            vec.push(r)
+        };
         Some(vec)
     }
 
@@ -105,8 +123,8 @@ where
     ////////////////
 
     fn is_leaf(&self, node: Self::Position) -> bool {
-        //if self.num_children(node.clone()).is_some() 
-        //    && (*node.clone().unwrap()).left.is_none() 
+        //if self.num_children(node.clone()).is_some()
+        //    && (*node.clone().unwrap()).left.is_none()
         //    && (*node.clone().unwrap()).right.is_none() {
         //    true
         //} else { false }
@@ -137,7 +155,9 @@ where
                 h = std::cmp::max(h, 1 + self.height(p).unwrap())
             }
             Some(h)
-        } else { None }
+        } else {
+            None
+        }
     }
 }
 impl<T> BinaryTree<T> for BinTree<T>
@@ -149,27 +169,32 @@ where
     fn left(&self, node: Self::Position) -> Option<Self::Position> {
         if node.left.is_some() {
             node.left
-        } else { None }
+        } else {
+            None
+        }
     }
 
     fn right(&self, node: Self::Position) -> Option<Self::Position> {
         if node.right.is_some() {
             node.right
-        } else { None }
+        } else {
+            None
+        }
     }
 
     fn sibling(&self, node: Self::Position) -> Option<Self::Position> {
         //if node.parent.is_some() { // Validate that the argument's parent exists
         //    let p = node.clone().parent;
-        //    if p.clone().unwrap().left == Some(node) { 
+        //    if p.clone().unwrap().left == Some(node) {
         //        return p.unwrap().right; // If the argument is left, return right
         //    } else {
         //        return p.unwrap().left; // If the argument is left, return right
         //    }
         //} else { None }
-        if let Some(ref parent) = node.parent { // Checks that node has a parent
+        if let Some(ref parent) = node.parent {
+            // Checks that node has a parent
             // Checks if the argument is left, if so, return right and vice versa
-            if parent.left.as_ref() == Some(&node) { 
+            if parent.left.as_ref() == Some(&node) {
                 parent.right.clone() // Return the right sibling
             } else {
                 parent.left.clone() // Return the left sibling
@@ -179,5 +204,3 @@ where
         }
     }
 }
-
-
