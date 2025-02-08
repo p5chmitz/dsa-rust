@@ -565,5 +565,5 @@ pub fn example() {
     toc::navigator(std::path::Path::new(
         "../tech-docs/src/content/docs/cs/dsa/trees.md",
     ));
-    toc::navigator(std::path::Path::new("scratch.md"));
+    toc::navigator(std::path::Path::new("./mock_data.md"));
 }
