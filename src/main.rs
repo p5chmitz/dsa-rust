@@ -168,7 +168,7 @@ fn main() {
 
     println!("\x1b[1;34mN-ary tree example:\x1b[0m");
     // Paths exist as hard-coded values in example() functions
-    //trees::md_toc_gen::example();
+    trees::unsafe_linked_general_tree::example();
     println!();
 
     //trees::unsafe_linked_general_tree::example();
@@ -177,26 +177,41 @@ fn main() {
     // MAPS
     ///////
  
-    println!("Bit shift example");
+    println!("\x1b[1;34mHashing examples:\x1b[0m");
+    println!("Bit shifting");
     maps::hash_map::bit_shift("Peter");
-    println!("Hash code");
+    println!("\nHash code");
     maps::hash_map::hash_code("Schmitz");
-    println!("Hash code 2");
-    let s = "Carl";
-    let v = maps::hash_map::hash_code_2(s);
-    println!("{} = {}", s, v);
+    println!("\nUsing Rust's default 64-bit hasher");
+    maps::hash_map::hasher_0("TypicalPassword123");
     println!();
-    maps::hash_map::default_hasher();
+    maps::hash_map::hasher_1("TypicalPassword123");
+
+    let slices = vec!["TypicalPassword123", "Hello, World!", "Hashing", "Prime numbers", "Random number generation", "Rust"];
+    let mut hashes: Vec<u64> = Vec::new();
+    for e in slices.iter() {
+        hashes.push(maps::hash_map::hasher_0(e))
+    }
+    let mut compressed: Vec<u64> = Vec::new();
+    for e in hashes.iter() {
+        compressed.push(maps::hash_map::compression_0(e, 10))
+    }
+    println!("Compression:\n\t{:?}\n\t{:?}\n\t{:?}", slices, hashes, compressed);
+
+    let d = 2794168896;
+    let c = maps::hash_map::compression_0(&d, 11);
+    println!("\nUse MAD to compress the digest {d}: {c}");
+
 
     println!("\x1b[1;34mMapped word frequency analysis:\x1b[0m");
     //maps::word_freq::word_freq("../../tech-docs/src/content/docs/cs/dsa/trees.md");
     //match File::open("./maps/word-freq-data.txt") {
 
     println!("B Movie script:");
-    maps::word_freq::word_freq("./maps/word-freq-data-b-movie.txt");
+    maps::word_freq::word_freq("./src/maps/word-freq-data-b-movie.txt", 5);
     println!();
     println!("A Midsummer Night's Dream");
-    maps::word_freq::word_freq("./maps/word-freq-data.txt");
+    maps::word_freq::word_freq("./src/maps/word-freq-data.txt", 5);
     println!();
 
 }
