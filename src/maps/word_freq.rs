@@ -38,7 +38,7 @@ fn parse_words(input: String) -> Vec<String> {
         .collect()
 }
 
-pub fn word_freq(file: &str) {
+pub fn word_freq(file: &str, num: usize) {
     use std::collections::HashMap;
 
     let contents = file_reader(file);
@@ -72,7 +72,7 @@ pub fn word_freq(file: &str) {
     println!("{} total words with {} unique words", parsed.len(), sorted.len());
 
     // Print the top 10 sorted key-value pairs (ensure it doesn't go out of bounds)
-    for (rank, (word, count)) in sorted.iter().take(10).enumerate() {
+    for (rank, (word, count)) in sorted.iter().take(num).enumerate() {
         println!("{}: '{}' appears {} times", rank + 1, word, count);
     }
     println!();
@@ -81,9 +81,8 @@ pub fn word_freq(file: &str) {
     sorted.sort_by_key(|(word, _)| word.len());
 
     // Prints the last X number of entries
-    let x = 30;
     let total = sorted.len();
-    let start = if total > x { total - x } else { 0 }; // Avoid underflow
+    let start = if total > num { total - num } else { 0 }; // Avoid underflow
     
     let mut i = start;
     while i < total {
