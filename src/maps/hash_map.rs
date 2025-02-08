@@ -110,17 +110,28 @@ fn prime_test() {
     assert!(is_prime(50411));
     assert!(is_prime(120569));
     // Not prime
-    assert!(!is_prime(60));
-    assert!(!is_prime(82));
+    assert!(!is_prime(21));
+    assert!(!is_prime(39));
     assert!(!is_prime(98));
     assert!(!is_prime(1208));
     assert!(!is_prime(445));
 }
 
+/** Finds the next prime by brute force in O(n) time */
+//fn next_prime(n: u64) -> u64 {
+//    let mut candidate = n + 1;
+//    while !is_prime(candidate) {
+//        candidate += 1;
+//    }
+//    candidate
+//}
+/** Finds the next prime in O(n/2) time by skipping evens */
 fn next_prime(n: u64) -> u64 {
-    let mut candidate = n + 1;
+    if n < 2 { return 2; }
+    if n == 2 { return 3; }
+    let mut candidate = if n % 2 == 0 { n + 1 } else { n + 2 }; // Ensure candidate is odd
     while !is_prime(candidate) {
-        candidate += 1;
+        candidate += 2; // Skip even numbers
     }
     candidate
 }
@@ -135,7 +146,8 @@ fn next_prime_test() {
 
 use rand::Rng;
 
-// Implements [(ai + b) mod p] mod N
+/** Implements MAD compression as `[(ai + b) mod p] mod N` 
+Relies on `is_prime` and `next_prime` functions */
 pub fn compression_0(key: &u64, len: u64) -> u64 {
     // Finds the next prime >len
     let p = next_prime(len.pow(3));
@@ -155,3 +167,5 @@ pub fn compression_0(key: &u64, len: u64) -> u64 {
 
     wrapped_value
 }
+
+
