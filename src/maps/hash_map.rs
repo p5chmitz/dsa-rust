@@ -17,12 +17,12 @@ pub fn bit_shift(value: &str) {
 }
 
 /** Calculates a bit-shifted hash code;
- * The function initializes a 32-bit hash code integer to 0,
- * then loops over each character in the input string;
- * Each loop adds the next character in the string to the hash code
- * as an integer value with wrapping; This ensures consistency
- * across architectures; The next operation in each loop performs
- * a cyclic bit shift on the hash code, and the process repeats */
+The function initializes a 32-bit hash code integer to 0,
+then loops over each character in the input string;
+Each loop adds the next character in the string to the hash code
+as an integer value with wrapping; This ensures consistency
+across architectures; The next operation in each loop performs
+a cyclic bit shift on the hash code, and the process repeats */
 pub fn hash_code(key: &str) -> u32 {
     let mut h: u32 = 0;
     for v in key.bytes() {
@@ -33,9 +33,8 @@ pub fn hash_code(key: &str) -> u32 {
     }
     h
 }
-
 #[test]
-fn has_code_test() {
+fn hash_code_test() {
     let v = hash_code("Peter");
     assert_eq!(v, 2794168896);
 
@@ -53,7 +52,6 @@ pub fn hasher_0<T: Hash + Debug + ?Sized>(key: &T) -> u64 {
     let mut hasher = DefaultHasher::new();
     key.hash(&mut hasher); // Hash::hash
     let digest = hasher.finish(); // Hasher::finish
-    println!("Hash code for {:?}: {}", key, digest);
     digest
 }
 
@@ -64,18 +62,17 @@ pub fn hasher_1(key: &str) -> u64 {
         hasher.write_u8(e)
     }
     let digest = hasher.finish();
-    println!("Hash code for {:?}: {}", key, digest);
     digest
 }
 
 // COMPRESSION
 //////////////
-/// Implements a way to calculate [(ai + b) mod p] mod N 
-/// where `N` is the capacity of the underlying storage array,
-/// `p` is a prime number \>N, and `a` and `b` are random 
-/// integers from the range [1, p - 1] and 
-/// [0, p - 1] respectively.
 
+/** Super simple division compression as `i mod N`;
+Produces a deterministic output, works best when `n` (len) is prime */
+pub fn compression_0(key: &u64, len: u64) -> u64 {
+    key % len
+}
 
 /** Efficient primality test using the 6k ± 1 rule for numbers >3 by trial */
 fn is_prime(n: u64) -> bool {
@@ -148,7 +145,7 @@ use rand::Rng;
 
 /** Implements MAD compression as `[(ai + b) mod p] mod N` 
 Relies on `is_prime` and `next_prime` functions */
-pub fn compression_0(key: &u64, len: u64) -> u64 {
+pub fn compression_1(key: &u64, len: u64) -> u64 {
     // Finds the next prime >len
     let p = next_prime(len.pow(3));
 

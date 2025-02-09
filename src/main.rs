@@ -180,28 +180,41 @@ fn main() {
     println!("\x1b[1;34mHashing examples:\x1b[0m");
     println!("Bit shifting");
     maps::hash_map::bit_shift("Peter");
-    println!("\nHash code");
+    println!("\nHash code generator");
     maps::hash_map::hash_code("Schmitz");
-    println!("\nUsing Rust's default 64-bit hasher");
-    maps::hash_map::hasher_0("TypicalPassword123");
+    println!("\nHash code generator (with Rust's default 64-bit hasher)");
+    let s = "TypicalPassword123";
+    let v = maps::hash_map::hasher_0(s);
+    println!("Hash code for {s}: {v}");
+    println!("\nHash code generator (feeding individual bytes to Rust's hasher)");
+    let v = maps::hash_map::hasher_1(s);
+    println!("Hash code for {s}: {v}");
     println!();
-    maps::hash_map::hasher_1("TypicalPassword123");
+
+    // Compression comparisons
+    println!("\x1b[1;34mCompression algorithm comparison:\x1b[0m");
 
     let slices = vec!["TypicalPassword123", "Hello, World!", "Hashing", "Prime numbers", "Random number generation", "Rust"];
     let mut hashes: Vec<u64> = Vec::new();
     for e in slices.iter() {
         hashes.push(maps::hash_map::hasher_0(e))
     }
+    println!("Hashed values:\n\t{:?}\n\t{:?}\n", slices, hashes);
+
+    // Simple division compression
     let mut compressed: Vec<u64> = Vec::new();
     for e in hashes.iter() {
-        compressed.push(maps::hash_map::compression_0(e, 10))
+        compressed.push(maps::hash_map::compression_0(e, 11))
     }
-    println!("Compression:\n\t{:?}\n\t{:?}\n\t{:?}", slices, hashes, compressed);
+    println!("Division compression:\n\t{:?}", compressed);
 
-    let d = 2794168896;
-    let c = maps::hash_map::compression_0(&d, 11);
-    println!("\nUse MAD to compress the digest {d}: {c}");
-
+    // MAD compression
+    let mut compressed: Vec<u64> = Vec::new();
+    for e in hashes.iter() {
+        compressed.push(maps::hash_map::compression_1(e, 11))
+    }
+    println!("MAD compression:\n\t{:?}", compressed);
+    println!();
 
     println!("\x1b[1;34mMapped word frequency analysis:\x1b[0m");
     //maps::word_freq::word_freq("../../tech-docs/src/content/docs/cs/dsa/trees.md");
