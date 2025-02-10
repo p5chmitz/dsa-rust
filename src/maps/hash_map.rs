@@ -55,7 +55,8 @@ pub fn hasher_0<T: Hash + Debug + ?Sized>(key: &T) -> u64 {
     digest
 }
 
-/** Does the same thing as hasher_0 but feeds individual bytes which produces a slightly less efficient (and different) digest */
+/** Does the same thing as hasher_0 but feeds individual bytes which produces a 
+slightly less efficient (and different) digest */
 pub fn hasher_1(key: &str) -> u64 {
     let mut hasher = DefaultHasher::new();
     for e in key.bytes() {
@@ -70,12 +71,12 @@ pub fn hasher_1(key: &str) -> u64 {
 
 /** Super simple division compression as `i mod N`;
 Produces a deterministic output, works best when `n` (len) is prime */
-pub fn compression_0(key: &u64, len: u64) -> u64 {
-    key % len
+pub fn compression_0(key: u64, len: usize) -> u64 {
+    key % len as u64
 }
 
 /** Efficient primality test using the 6k ± 1 rule for numbers >3 by trial */
-fn is_prime(n: u64) -> bool {
+fn is_prime(n: usize) -> bool {
     // Only positive numbers >1 need apply
     if n < 2 {
         return false;
@@ -123,7 +124,7 @@ fn prime_test() {
 //    candidate
 //}
 /** Finds the next prime in O(n/2) time by skipping evens */
-fn next_prime(n: u64) -> u64 {
+fn next_prime(n: usize) -> usize {
     if n < 2 { return 2; }
     if n == 2 { return 3; }
     let mut candidate = if n % 2 == 0 { n + 1 } else { n + 2 }; // Ensure candidate is odd
@@ -145,13 +146,13 @@ use rand::Rng;
 
 /** Implements MAD compression as `[(ai + b) mod p] mod N` 
 Relies on `is_prime` and `next_prime` functions */
-pub fn compression_1(key: &u64, len: u64) -> u64 {
+pub fn compression_1(key: u64, len: usize) -> u64 {
     // Finds the next prime >len
-    let p = next_prime(len.pow(3));
+    let p = next_prime(len.pow(3)) as u64;
 
     let mut rng = rand::rng(); // Thread-local RNG
-    let a: u64 = rng.random_range(1..=p - 1);
-    let b: u64 = rng.random_range(0..=p - 1);
+    let a = rng.random_range(1..=p - 1);
+    let b = rng.random_range(0..=p - 1);
 
     // Raw-dogging the algorithm may cause overflow
     //(((key * a) + b) % p) % len
@@ -160,9 +161,72 @@ pub fn compression_1(key: &u64, len: u64) -> u64 {
     let wrapped_value = (key.wrapping_mul(a))
         .wrapping_add(b)
         .wrapping_rem(p)
-        .wrapping_rem(len);
+        .wrapping_rem(len as u64);
 
     wrapped_value
 }
 
+// HASH MAP IMPLEMENTATION
+//////////////////////////
 
+pub struct HashTable<K, V> {
+    data: Vec<Vec<(K, V)>>,
+    size: usize
+}
+impl<K: Hash + Debug + PartialEq, V: PartialEq + Clone> HashTable<K, V> {
+
+    /** Creates a new HashTable */
+    pub fn new() -> HashTable<K, V> {
+        HashTable {
+            data: Vec::new(),
+            size: 0,
+        }
+    }
+
+    /** Returns the number of elements in the HashTable */
+    pub fn size(&self) -> usize {
+        self.size
+    }
+
+    /** Returns a Boolean indicating whether the HashTable is empty */
+    pub fn is_empty(&self) -> bool {
+        if self.size == 0 {
+            true
+        } else { false }
+    }
+
+    /** Returns the value `v` associated with key `k` */
+    // NOTE: Surely we can do better than O(n^2)
+    pub fn get(&self, key: K) -> Option<V> {
+        let k: usize = compression_1(hasher_0(&key), self.data.len()) as usize;
+        if self.data[k].len() > 0 {
+            for e in &self.data[k] {
+                if e.0 == key {
+                    return Some(e.1.clone());
+                }
+            } return None; // If len > 0 but the key doesn't exist in the map
+        } else { return None; } // If len == 0
+    }
+
+    /** Adds entry `(k, v)`, overwriting any value `v` associated with an 
+    existing key `k`, returns old value */
+    pub fn put(&self, _key: K, _value: V) {}
+
+    /**  Removes the entry `(k, v)` associated with key `k` */
+    pub fn remove(&self, _key: K) {}
+
+    /**  Returns an iterable collection of all keys in the map */
+    pub fn key_set() {}
+
+    /**  Returns an iterable collection of all values in the map, including 
+    repeats for multiple key-value associations */
+    pub fn values() {}
+
+    /**  Returns an iterable collection of all `(k, v)` entries in the map */
+    pub fn entry_set() {}
+
+    /**  Returns a Boolean if the map contains _key_ `k`; Used to disambiguate 
+    the presence of a key with a null/None value */
+    pub fn contains(&self, _key: K) {}
+
+}

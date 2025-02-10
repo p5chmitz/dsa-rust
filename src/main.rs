@@ -204,14 +204,14 @@ fn main() {
     // Simple division compression
     let mut compressed: Vec<u64> = Vec::new();
     for e in hashes.iter() {
-        compressed.push(maps::hash_map::compression_0(e, 11))
+        compressed.push(maps::hash_map::compression_0(*e, 11))
     }
     println!("Division compression:\n\t{:?}", compressed);
 
     // MAD compression
     let mut compressed: Vec<u64> = Vec::new();
     for e in hashes.iter() {
-        compressed.push(maps::hash_map::compression_1(e, 11))
+        compressed.push(maps::hash_map::compression_1(*e, 11))
     }
     println!("MAD compression:\n\t{:?}", compressed);
     println!();
