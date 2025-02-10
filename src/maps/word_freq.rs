@@ -3,7 +3,7 @@ use std::fs::File;
 use std::io::Read;
 
 // NOTE: Execute file reads from project root (not /src/),
-// otherwise a file not found error may occur.
+// otherwise a file not found error may occur
 pub fn file_reader(file: &str) -> String {
     let mut file_contents = String::new();
     //match File::open("./maps/word-freq-data.txt") {
@@ -22,6 +22,7 @@ pub fn file_reader(file: &str) -> String {
     file_contents
 }
 
+/** Parses file contents and returns a list of words */
 fn parse_words(input: String) -> Vec<String> {
     let re = Regex::new(r"\b\w+\b").unwrap();
 
@@ -38,6 +39,12 @@ fn parse_words(input: String) -> Vec<String> {
         .collect()
 }
 
+/** Takes a file path as string slice and a number that dictates the size 
+of the final output lists;
+The actual map component processes the list of words and inserts each entry,
+incrementing the count when encountering duplicates;
+The function then outputs the map back to a list that can be sorted for
+different analytical purposes */
 pub fn word_freq(file: &str, num: usize) {
     use std::collections::HashMap;
 
