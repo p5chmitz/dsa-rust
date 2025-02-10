@@ -24,14 +24,14 @@ as an integer value with wrapping; This ensures consistency
 across architectures; The next operation in each loop performs
 a cyclic bit shift on the hash code, and the process repeats */
 pub fn hash_code(key: &str) -> u32 {
-    let mut h: u32 = 0;
-    for v in key.bytes() {
-        print!("{:08b} -> ", v);
-        h = h.wrapping_add(v as u32);
-        h = (h << 5) | (h >> 27); 
-        println!("{:032b}", h);
+    let mut hash: u32 = 0;
+    for word in key.bytes() {
+        print!("{:08b} -> ", word);
+        hash = hash.wrapping_add(word as u32);
+        hash = (hash << 5) | (hash >> 27); 
+        println!("{:032b}", hash);
     }
-    h
+    return hash;
 }
 #[test]
 fn hash_code_test() {
@@ -47,11 +47,11 @@ use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 use std::fmt::Debug;
 
-/** Takes a string slice and prints a 64-bit hash digest */
+/** Takes a reference to a type `T` and uses Rust's default hasher to return a 64-bit digest */
 pub fn hasher_0<T: Hash + Debug + ?Sized>(key: &T) -> u64 {
     let mut hasher = DefaultHasher::new();
-    key.hash(&mut hasher); // Hash::hash
-    let digest = hasher.finish(); // Hasher::finish
+    key.hash(&mut hasher); // Hash::hash()
+    let digest = hasher.finish(); // Hasher::finish()
     digest
 }
 
@@ -147,7 +147,7 @@ use rand::Rng;
 /** Implements MAD compression as `[(ai + b) mod p] mod N` 
 Relies on `is_prime` and `next_prime` functions */
 pub fn compression_1(key: u64, len: usize) -> u64 {
-    // Finds the next prime >len
+    // Finds a prime >len, starting much larger to ensure even spread
     let p = next_prime(len.pow(3)) as u64;
 
     let mut rng = rand::rng(); // Thread-local RNG
