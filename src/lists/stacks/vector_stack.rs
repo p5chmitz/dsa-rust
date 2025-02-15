@@ -50,15 +50,15 @@ mod wrapper {
                     // Checks that all closing symbols have a matching opener,
                     // if it does, the opener is popped
                     if symbols.size == 0 {
-                        panic!("Error: Unexpected closing symbol");
+                        panic!("Error 001: Unexpected closing symbol");
                     } else {
-                        let check = *symbols.peek().expect("Error: No symbols on stack");
+                        let check = *symbols.peek().expect("Error 002: No symbols on stack");
                         if (check == '[' && e == ']')
                             || (check == '{' && e == '}')
                             || (check == '(' && e == ')')
                         {
                             symbols.remove();
-                        }
+                        } else { panic!("Error 003: Unexpected closing symbol") }
                     }
                 }
                 _ => {}
@@ -66,7 +66,7 @@ mod wrapper {
         }
         // Checks that all opening symbols have a matching closer
         if symbols.size > 0 {
-            panic!("Error: Missing closing symbol")
+            panic!("Error 004: Missing closing symbol")
         }
         true
     }
@@ -77,19 +77,19 @@ mod wrapper {
         assert!(balance(input));
     }
     #[test]
-    #[should_panic(expected = "Error: Unexpected closing symbol")]
+    #[should_panic(expected = "Error 001: Unexpected closing symbol")]
     fn mismatched_symbols_fail() {
         let input = "{{{}}{{}}}{{}{}{{{}{}}}}}{{{}{}".to_string(); // Fails somewhere mid-string
         assert!(!balance(input));
     }
     #[test]
-    #[should_panic(expected = "Error: Unexpected closing symbol")]
+    #[should_panic(expected = "Error 001: Unexpected closing symbol")]
     fn illegal_opening_brace_fail() {
         let input = "}{[]}{}".to_string(); // Fails with leading closing symbol
         assert!(!balance(input));
     }
     #[test]
-    #[should_panic(expected = "Error: Missing closing symbol")]
+    #[should_panic(expected = "Error 004: Missing closing symbol")]
     fn open_block_fail() {
         let input = "{[]}{".to_string();
         assert!(!balance(input));
@@ -119,7 +119,7 @@ mod raw {
                             || (check == '(' && e == ')')
                         {
                             symbols.pop();
-                        }
+                        } else { panic!("Error 002: Unexpected closing symbol") }
                     }
                 }
                 _ => {}
@@ -127,7 +127,7 @@ mod raw {
         }
         // Checks that all opening symbols have a matching closer
         if symbols.len() > 0 {
-            panic!("Error: Missing closing symbol")
+            panic!("Error 003: Missing closing symbol")
         }
         true
     }
@@ -135,24 +135,30 @@ mod raw {
     #[test]
     fn success() {
         let input = "{[({[]}[(())]){{{}}{[()()()[{}]]}}]}".to_string();
-        assert!(balance(input));
+        assert_eq!(balance(input), true);
     }
     #[test]
     #[should_panic(expected = "Error: Unexpected closing symbol")]
     fn mismatched_symbols_fail() {
         let input = "{{{}}{{}}}{{}{}{{{}{}}}}}{{{}{}".to_string(); // Fails somewhere mid-string
-        assert!(!balance(input));
+        assert_eq!(balance(input), false);
     }
     #[test]
     #[should_panic(expected = "Error: Unexpected closing symbol")]
     fn illegal_opening_brace_fail() {
         let input = "}{[]}{}".to_string(); // Fails with leading closing symbol
-        assert!(!balance(input));
+        assert_eq!(balance(input), false);
     }
     #[test]
-    #[should_panic(expected = "Error: Missing closing symbol")]
+    #[should_panic(expected = "Error 003: Missing closing symbol")]
     fn open_block_fail() {
         let input = "{[]}{".to_string();
-        assert!(!balance(input));
+        assert_eq!(balance(input), false);
+    }
+    #[test]
+    #[should_panic(expected = "Error 002: Unexpected closing symbol")]
+    fn block_fail() {
+        let input = "(])".to_string();
+        assert_eq!(balance(input), false);
     }
 }
