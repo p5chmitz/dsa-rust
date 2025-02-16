@@ -58,7 +58,9 @@ mod wrapper {
                             || (check == '(' && e == ')')
                         {
                             symbols.remove();
-                        } else { panic!("Error 003: Unexpected closing symbol") }
+                        } else {
+                            panic!("Error 003: Unexpected closing symbol")
+                        }
                     }
                 }
                 _ => {}
@@ -119,7 +121,9 @@ mod raw {
                             || (check == '(' && e == ')')
                         {
                             symbols.pop();
-                        } else { panic!("Error 002: Unexpected closing symbol") }
+                        } else {
+                            panic!("Error 002: Unexpected closing symbol")
+                        }
                     }
                 }
                 _ => {}

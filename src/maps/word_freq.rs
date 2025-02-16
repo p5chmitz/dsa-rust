@@ -39,7 +39,7 @@ fn parse_words(input: String) -> Vec<String> {
         .collect()
 }
 
-/** Takes a file path as string slice and a number that dictates the size 
+/** Takes a file path as string slice and a number that dictates the size
 of the final output lists;
 The actual map component processes the list of words and inserts each entry,
 incrementing the count when encountering duplicates;
@@ -75,8 +75,12 @@ pub fn word_freq(file: &str, num: usize) {
     // Sort the map by value in descending order
     let mut sorted: Vec<(String, u16)> = map.iter().map(|(k, v)| (k.clone(), *v)).collect();
     sorted.sort_by_key(|&(_, v)| std::cmp::Reverse(v));
-    
-    println!("{} total words with {} unique words", parsed.len(), sorted.len());
+
+    println!(
+        "{} total words with {} unique words",
+        parsed.len(),
+        sorted.len()
+    );
 
     // Print the top 10 sorted key-value pairs (ensure it doesn't go out of bounds)
     for (rank, (word, count)) in sorted.iter().take(num).enumerate() {
@@ -90,7 +94,7 @@ pub fn word_freq(file: &str, num: usize) {
     // Prints the last X number of entries
     let total = sorted.len();
     let start = if total > num { total - num } else { 0 }; // Avoid underflow
-    
+
     let mut i = start;
     while i < total {
         println!("{}: '{}' appears {} times", i + 1, sorted[i].0, sorted[i].1);
