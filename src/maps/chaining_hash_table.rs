@@ -17,14 +17,14 @@ impl<K, V> Entry<K, V> {
     }
 }
 #[derive(Debug)]
-pub struct HashMap<K, V> {
+pub struct ChainingHashTable<K, V> {
     data: Vec<Option<Vec<Entry<K, V>>>>,
     size: usize,
 }
-impl<K: Hash + Debug + PartialEq, V: PartialEq + Clone> HashMap<K, V> {
+impl<K: Hash + Debug + PartialEq, V: PartialEq + Clone> ChainingHashTable<K, V> {
     /** Creates a new HashTable */
-    pub fn new() -> HashMap<K, V> {
-        HashMap {
+    pub fn new() -> ChainingHashTable<K, V> {
+        ChainingHashTable {
             data: Vec::with_capacity(2),
             size: 0,
         }
@@ -55,9 +55,12 @@ impl<K: Hash + Debug + PartialEq, V: PartialEq + Clone> HashMap<K, V> {
                     return Some(&e.value);
                 }
             }
-            None
+            // Required because the for loop contains early return statement
+            // but does not return a value when no match is found
+            None 
         } else {
-            None
+            // Required because function returns and if let Some is inexhaustive
+            None 
         }
     }
 
@@ -131,14 +134,32 @@ impl<K: Hash + Debug + PartialEq, V: PartialEq + Clone> HashMap<K, V> {
     }
 
     /**  Returns an iterable collection of all keys in the map */
-    pub fn key_set(&self) {}
+    pub fn key_set(&self) -> Vec<&K> {
+        let mut v = Vec::new();
+        for k in self.iter().keys() {
+            v.push(k)     
+        }
+        v
+    }
 
     /**  Returns an iterable collection of all values in the map, including
     repeats for multiple key-value associations */
-    pub fn values(&self) {}
+    pub fn values(&self) -> Vec<&V> {
+        let mut vec = Vec::new();
+        for v in self.iter().values() {
+            vec.push(v)
+        }
+        vec
+    }
 
     /**  Returns an iterable collection of all `(k, v)` entries in the map */
-    pub fn entry_set() {}
+    pub fn entry_set(&self) -> Vec<&Entry<K, V>> {
+        let mut vec = Vec::new();
+        for e in self.iter() {
+            vec.push(e)
+        }
+        vec
+    }
 
     /**  Returns a Boolean if the map contains _key_ `k`; Used to disambiguate
     the presence of a key with a null/None value */
@@ -151,17 +172,88 @@ impl<K: Hash + Debug + PartialEq, V: PartialEq + Clone> HashMap<K, V> {
                     return true;
                 }
             }
-            false
+            // Required because for loop contains an early return statement
+            // but does not return a value if no match is found
+            false 
         } else {
-            false
+            // Required because function returns and if let Some is inexhaustive
+            false 
         }
+    }
+
+    /** A function that follows the naming convention for iterable collections;
+    Returns struct Iter that tracks iteration state */
+    pub fn iter(&self) -> Iter<K, V> {
+        Iter {
+            outer: self.data.iter(),
+            inner: None,
+        }
+    }
+}
+
+// Create an iterator as a struct to track iteration state
+pub struct Iter<'a, K, V> {
+    outer: std::slice::Iter<'a, Option<Vec<Entry<K, V>>>>,
+    inner: Option<std::slice::Iter<'a, Entry<K, V>>>,
+}
+// Direct implementation for adapter methods
+impl<'a, K, V> Iter<'a, K, V> {
+    /// Adapter method for iterating over the keys of a map;
+    /// Example:
+    /// ``` for k in map.iter().keys() { ... }
+    /// ```
+    pub fn keys(self) -> Keys<'a, K, V> {
+        Keys { iter: self }
+    }
+    /// Adapter method for iterating over the values of a map;
+    /// Example:
+    /// ``` for k in map.iter().values() { ... }
+    /// ```
+    pub fn values(self) -> Values<'a, K, V> {
+        Values { iter: self }
+    }
+}
+// Implement Iterator for the struct
+impl<'a, K, V> Iterator for Iter<'a, K, V> {
+    type Item = &'a Entry<K, V>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        loop {
+            if let Some(ref mut inner) = self.inner {
+                if let Some(entry) = inner.next() {
+                    return Some(entry);
+                }
+            }
+            // Move to the next bucket if available
+            self.inner = self.outer.next()?.as_ref().map(|vec| vec.iter());
+        }
+    }
+}
+pub struct Keys<'a, K, V> {
+    iter: Iter<'a, K, V>,
+}
+impl<'a, K, V> Iterator for Keys<'a, K, V> {
+    type Item = &'a K;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.iter.next().map(|entry| &entry.key)
+    }
+}
+pub struct Values<'a, K, V> {
+    iter: Iter<'a, K, V>,
+}
+impl<'a, K, V> Iterator for Values<'a, K, V> {
+    type Item = &'a V;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.iter.next().map(|entry| &entry.value)
     }
 }
 
 #[test]
 fn hash_map_test() {
     //Creates a new hash map
-    let mut map = HashMap::<&str, u8>::new();
+    let mut map = ChainingHashTable::<&str, u8>::new();
 
     // Illustrates that put() and get() work
     map.put("Peter", 41);
@@ -189,7 +281,7 @@ fn hash_map_test() {
 
 pub fn example() {
     //Creates a new hash map
-    let mut map = HashMap::<&str, u8>::new();
+    let mut map = ChainingHashTable::<&str, u8>::new();
     //Creates several entries
     map.put("Peter", 41);
     map.put("Brain", 39);
@@ -199,9 +291,28 @@ pub fn example() {
     map.put("Dangus", 27);
 
     // Prints a debug version of the map
-    println!("{:#?}", map);
+    println!("Debug print of the whole shebang:\n{:#?}", map);
     let value = map.get("Peter").unwrap();
     println!("map.get(\"Peter\"): {}", value);
+
+    // Its now iterable!!!
+    println!("Iterating over all entries:");
+    for e in map.iter() {
+        println!("\t{:?}", e)
+    }
+    println!("\nNow just the keys:");
+    for k in map.iter().keys() {
+        println!("\t{}", k)
+    }
+    println!("\nNow just the values:");
+    for v in map.iter().values() {
+        println!("\t{}", v)
+    }
+
+    // Does the same thing with public methods
+    let _entries: Vec<&Entry<&str, u8>> = map.entry_set();
+    let _keys: Vec<&&str> = map.key_set();
+    let _values: Vec<&u8> = map.values();
 
     map.remove("Brain");
     map.remove("Remus");
@@ -209,5 +320,5 @@ pub fn example() {
     map.remove("Dingus");
     map.remove("Dangus");
 
-    //println!("{:#?}", map);
+    println!("\nIts all over now:\n{:#?}", map);
 }

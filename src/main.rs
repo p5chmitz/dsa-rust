@@ -171,12 +171,9 @@ fn main() {
     trees::unsafe_linked_general_tree::example();
     println!();
 
-    //trees::unsafe_linked_general_tree::example();
-    //println!();
-
     // MAPS
     ///////
- 
+
     println!("\x1b[1;34mHashing examples:\x1b[0m");
     println!("Bit shifting");
     maps::hash_map::bit_shift("Peter");
@@ -194,7 +191,14 @@ fn main() {
     // Compression comparisons
     println!("\x1b[1;34mCompression algorithm comparison:\x1b[0m");
 
-    let slices = vec!["TypicalPassword123", "Hello, World!", "Hashing", "Prime numbers", "Random number generation", "Rust"];
+    let slices = vec![
+        "TypicalPassword123",
+        "Hello, World!",
+        "Hashing",
+        "Prime numbers",
+        "Random number generation",
+        "Rust",
+    ];
     let mut hashes: Vec<u64> = Vec::new();
     for e in slices.iter() {
         hashes.push(maps::hash_map::hash(e))
@@ -228,7 +232,7 @@ fn main() {
     //println!();
 
     println!("\x1b[1;34mSimple chaining hash map with division compression:\x1b[0m");
-    maps::hash_map::example();
+    maps::chaining_hash_table::example();
 }
 
 #[test]
