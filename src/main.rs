@@ -184,10 +184,10 @@ fn main() {
     maps::hash_map::hash_code("Schmitz");
     println!("\nHash code generator (with Rust's default 64-bit hasher)");
     let s = "TypicalPassword123";
-    let v = maps::hash_map::hasher_0(s);
+    let v = maps::hash_map::hash(s);
     println!("Hash code for {s}: {v}");
     println!("\nHash code generator (feeding individual bytes to Rust's hasher)");
-    let v = maps::hash_map::hasher_1(s);
+    let v = maps::hash_map::hash_1(s);
     println!("Hash code for {s}: {v}");
     println!();
 
@@ -197,21 +197,21 @@ fn main() {
     let slices = vec!["TypicalPassword123", "Hello, World!", "Hashing", "Prime numbers", "Random number generation", "Rust"];
     let mut hashes: Vec<u64> = Vec::new();
     for e in slices.iter() {
-        hashes.push(maps::hash_map::hasher_0(e))
+        hashes.push(maps::hash_map::hash(e))
     }
     println!("Hashed values:\n\t{:?}\n\t{:?}\n", slices, hashes);
 
     // Simple division compression
     let mut compressed: Vec<u64> = Vec::new();
     for e in hashes.iter() {
-        compressed.push(maps::hash_map::compression_0(*e, 11))
+        compressed.push(maps::hash_map::division_compression(*e, 11))
     }
     println!("Division compression:\n\t{:?}", compressed);
 
     // MAD compression
     let mut compressed: Vec<u64> = Vec::new();
     for e in hashes.iter() {
-        compressed.push(maps::hash_map::compression_1(*e, 11))
+        compressed.push(maps::hash_map::mad_compression(*e, 11))
     }
     println!("MAD compression:\n\t{:?}", compressed);
     println!();
@@ -227,6 +227,8 @@ fn main() {
     maps::word_freq::word_freq("./src/maps/word-freq-data.txt", 5);
     println!();
 
+    println!("\x1b[1;34mSimple chaining hash map with division compression test:\x1b[0m");
+    maps::hash_map::example();
 }
 
 #[test]

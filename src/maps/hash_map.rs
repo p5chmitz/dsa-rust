@@ -48,7 +48,7 @@ use std::hash::{Hash, Hasher};
 use std::fmt::Debug;
 
 /** Takes a reference to a type `T` and uses Rust's default hasher to return a 64-bit digest */
-pub fn hasher_0<T: Hash + Debug + ?Sized>(key: &T) -> u64 {
+pub fn hash<T: Hash + Debug + ?Sized>(key: &T) -> u64 {
     let mut hasher = DefaultHasher::new();
     key.hash(&mut hasher); // Hash::hash()
     let digest = hasher.finish(); // Hasher::finish()
@@ -57,7 +57,7 @@ pub fn hasher_0<T: Hash + Debug + ?Sized>(key: &T) -> u64 {
 
 /** Does the same thing as hasher_0 but feeds individual bytes which produces a 
 slightly less efficient (and different) digest */
-pub fn hasher_1(key: &str) -> u64 {
+pub fn hash_1(key: &str) -> u64 {
     let mut hasher = DefaultHasher::new();
     for e in key.bytes() {
         hasher.write_u8(e)
@@ -71,7 +71,7 @@ pub fn hasher_1(key: &str) -> u64 {
 
 /** Super simple division compression as `i mod N`;
 Produces a deterministic output, works best when `n` (len) is prime */
-pub fn compression_0(key: u64, len: usize) -> u64 {
+pub fn division_compression(key: u64, len: usize) -> u64 {
     key % len as u64
 }
 
@@ -118,7 +118,7 @@ fn prime_test() {
 /** Finds the next prime by brute force in O(n) time */
 //fn next_prime(n: u64) -> u64 {
 //    let mut candidate = n + 1;
-//    while !is_prime(candidate) {
+//    while !is_prime(candidate) {e
 //        candidate += 1;
 //    }
 //    candidate
@@ -146,7 +146,7 @@ use rand::Rng;
 
 /** Implements MAD compression as `[(ai + b) mod p] mod N` 
 Relies on `is_prime` and `next_prime` functions */
-pub fn compression_1(key: u64, len: usize) -> u64 {
+pub fn mad_compression(key: u64, len: usize) -> u64 {
     // Finds a prime >len, starting much larger to ensure even spread
     let p = next_prime(len.pow(3)) as u64;
 
@@ -166,19 +166,33 @@ pub fn compression_1(key: u64, len: usize) -> u64 {
     wrapped_value
 }
 
-// HASH MAP IMPLEMENTATION
-//////////////////////////
+// CHAINING HASH TABLE WITH DIVISION COMPRESSION
+////////////////////////////////////////////////
 
-pub struct HashTable<K, V> {
-    data: Vec<Vec<(K, V)>>,
+#[derive(Debug)]
+pub struct Entry<K, V> {
+    key: K,
+    value: V
+}
+impl<K, V> Entry<K, V> {
+    fn new(key: K, value: V) -> Entry<K, V> {
+        Entry {
+            key,
+            value,
+        }
+    }
+}
+#[derive(Debug)]
+pub struct HashMap<K, V> {
+    data: Vec<Option<Vec<Entry<K, V>>>>,
     size: usize
 }
-impl<K: Hash + Debug + PartialEq, V: PartialEq + Clone> HashTable<K, V> {
+impl<K: Hash + Debug + PartialEq, V: PartialEq + Clone> HashMap<K, V> {
 
     /** Creates a new HashTable */
-    pub fn new() -> HashTable<K, V> {
-        HashTable {
-            data: Vec::new(),
+    pub fn new() -> HashMap<K, V> {
+        HashMap {
+            data: Vec::with_capacity(2),
             size: 0,
         }
     }
@@ -197,20 +211,72 @@ impl<K: Hash + Debug + PartialEq, V: PartialEq + Clone> HashTable<K, V> {
 
     /** Returns the value `v` associated with key `k` */
     // NOTE: Surely we can do better than O(n^2)
-    pub fn get(&self, key: K) -> Option<V> {
-        let k: usize = compression_1(hasher_0(&key), self.data.len()) as usize;
-        if self.data[k].len() > 0 {
-            for e in &self.data[k] {
-                if e.0 == key {
-                    return Some(e.1.clone());
+    pub fn get(&self, key: K) -> Option<&V> {
+        let hashed = hash(&key);
+        let location: usize = division_compression(hashed, self.data.len()) as usize;
+        if let Some(bucket) = &self.data[location] {
+            for e in bucket {
+                let chain_key_hash = hash(&e.key);
+                if hashed == chain_key_hash {
+                    return Some(&e.value);
                 }
-            } return None; // If len > 0 but the key doesn't exist in the map
-        } else { return None; } // If len == 0
+            } None
+        } else { None }
     }
 
     /** Adds entry `(k, v)`, overwriting any value `v` associated with an 
-    existing key `k`, returns old value */
-    pub fn put(&self, _key: K, _value: V) {}
+    existing key `k`, returns old value. Resizes the map which the 
+    table encounters a load factor >.75. */
+    pub fn put(&mut self, key: K, value: V) {
+        // Checks if the addition will bring the load factor above threshold
+        if self.size == 0 || self.size / self.data.len() > 1/2 {
+            self.grow()
+        }
+
+        // Finds the correct insertion location
+        let location: usize = division_compression(hash(&key), self.data.len()) as usize;
+
+        // Creates a new Entry
+        let entry = Entry::new(key, value);
+
+        // Inserts the Entry
+        match &mut self.data[location] { 
+            Some(v) => v.push(entry),
+            None => {
+                self.data[location] = Some(vec![entry]);
+            }
+        }
+        self.size += 1;
+    }
+
+    /** Internal function that grows the base vector to the next prime larger than
+    double the length of the original vector, rehashes and compresses hashes 
+    for new distribution */
+    fn grow(&mut self) {
+        // Create a new base vector with_capacity and resize_with to ensure all 
+        // indexes exist, otherwise you could push to an index that doesn't 
+        // exist causing a panic
+        let new_capacity = next_prime(self.data.len() * 2);
+        let mut new_base: Vec<Option<Vec<Entry<K, V>>>> = Vec::with_capacity(new_capacity);
+        new_base.resize_with(new_capacity, || None);
+    
+        // Move entries from self.data into new_base
+        for bucket in self.data.drain(..) {
+            if let Some(mut chain) = bucket {
+                // Vec::drain transfers ownership with no need to clone
+                for entry in chain.drain(..) {
+                    let rehash = division_compression(hash(&entry.key), new_capacity);
+                    match &mut new_base[rehash as usize] {
+                        Some(existing) => existing.push(entry),
+                        None => new_base[rehash as usize] = Some(vec![entry]),
+                    }
+                }
+            }
+        }
+    
+        // Update the struct instance
+        self.data = new_base;
+    }
 
     /**  Removes the entry `(k, v)` associated with key `k` */
     pub fn remove(&self, _key: K) {}
@@ -230,3 +296,42 @@ impl<K: Hash + Debug + PartialEq, V: PartialEq + Clone> HashTable<K, V> {
     pub fn contains(&self, _key: K) {}
 
 }
+
+#[test]
+fn hash_map_test() {
+    //Creates a new hash map
+    let mut map = HashMap::<&str, u8>::new();
+    //Creates several entries
+    map.put("Peter", 41);
+    assert_eq!(map.size, 1);
+    assert_eq!(map.data.len(), 2);
+    let fetch = map.get("Peter").unwrap();
+    assert_eq!(*fetch, 41 as u8);
+
+    map.put("Brain", 39);
+    map.put("Remus", 22);
+    map.put("Bobson", 36);
+    map.put("Dingus", 18);
+    map.put("Dangus", 27);
+
+    assert_eq!(map.size, 6);
+    assert_eq!(map.data.len(), 11);
+}
+
+pub fn example() {
+    //Creates a new hash map
+    let mut map = HashMap::<&str, u8>::new();
+    //Creates several entries
+    map.put("Peter", 41);
+    map.put("Brain", 39);
+    map.put("Remus", 22);
+    map.put("Bobson", 36);
+    map.put("Dingus", 18);
+    map.put("Dangus", 27);
+
+    // Prints a debug version of the map
+    println!("{:?}", map);
+    let value = map.get("Peter").unwrap();
+    println!("map.get(key) where key = \"Peter\": {}", value);
+}
+
