@@ -207,7 +207,7 @@ impl<'a, K, V> Iter<'a, K, V> {
     }
     /// Adapter method for iterating over the values of a map;
     /// Example:
-    /// ``` for k in map.iter().values() { ... }
+    /// ``` for v in map.iter().values() { ... }
     /// ```
     pub fn values(self) -> Values<'a, K, V> {
         Values { iter: self }
