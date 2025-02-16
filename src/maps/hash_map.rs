@@ -210,7 +210,6 @@ impl<K: Hash + Debug + PartialEq, V: PartialEq + Clone> HashMap<K, V> {
     }
 
     /** Returns the value `v` associated with key `k` */
-    // NOTE: Surely we can do better than O(n^2)
     pub fn get(&self, key: K) -> Option<&V> {
         let hashed = hash(&key);
         let location: usize = division_compression(hashed, self.data.len()) as usize;
@@ -279,21 +278,41 @@ impl<K: Hash + Debug + PartialEq, V: PartialEq + Clone> HashMap<K, V> {
     }
 
     /**  Removes the entry `(k, v)` associated with key `k` */
-    pub fn remove(&self, _key: K) {}
+    pub fn remove(&mut self, key: K) {
+        let hashed = hash(&key);
+        let location: usize = division_compression(hashed, self.data.len()) as usize;
+        if let Some(bucket) = &mut self.data[location] {
+            bucket.retain(|e| e.key != key);
+            if bucket.is_empty() {
+                self.data[location] = None; // Replace Some with None for empty buckets
+            }
+        }
+        self.size -= 1;
+    }
 
     /**  Returns an iterable collection of all keys in the map */
-    pub fn key_set() {}
+    pub fn key_set(&self) {}
 
     /**  Returns an iterable collection of all values in the map, including 
     repeats for multiple key-value associations */
-    pub fn values() {}
+    pub fn values(&self) {}
 
     /**  Returns an iterable collection of all `(k, v)` entries in the map */
     pub fn entry_set() {}
 
     /**  Returns a Boolean if the map contains _key_ `k`; Used to disambiguate 
     the presence of a key with a null/None value */
-    pub fn contains(&self, _key: K) {}
+    pub fn contains(&self, key: K) -> bool {
+        let hashed = hash(&key);
+        let location: usize = division_compression(hashed, self.data.len()) as usize;
+        if let Some(bucket) = &self.data[location] {
+            for e in bucket.iter() {
+                if e.key == key {
+                    return true;
+                }
+            } false
+        } else { false }
+    }
 
 }
 
@@ -316,6 +335,17 @@ fn hash_map_test() {
 
     assert_eq!(map.size, 6);
     assert_eq!(map.data.len(), 11);
+
+    map.remove("Dingus");
+    assert_eq!(map.contains("Dingus"), false);
+
+    // Does the exact same thing with the default HashMap
+    let mut map = std::collections::HashMap::<&str, u8>::new();
+    map.insert("Peter", 41);
+    assert_eq!(map.len(), 1);
+    assert_eq!(map.capacity(), 3);
+    let fetch = map.get("Peter").unwrap();
+    assert_eq!(*fetch, 41 as u8);
 }
 
 pub fn example() {
@@ -333,5 +363,14 @@ pub fn example() {
     println!("{:?}", map);
     let value = map.get("Peter").unwrap();
     println!("map.get(key) where key = \"Peter\": {}", value);
+
+    map.remove("Brain");
+    map.remove("Remus");
+    map.remove("Bobson");
+    map.remove("Dingus");
+    map.remove("Dangus");
+
+    println!("{:?}", map);
+
 }
 
