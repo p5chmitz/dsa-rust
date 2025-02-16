@@ -216,18 +216,18 @@ fn main() {
     println!("MAD compression:\n\t{:?}", compressed);
     println!();
 
-    println!("\x1b[1;34mMapped word frequency analysis:\x1b[0m");
-    //maps::word_freq::word_freq("../../tech-docs/src/content/docs/cs/dsa/trees.md");
-    //match File::open("./maps/word-freq-data.txt") {
+    //println!("\x1b[1;34mMapped word frequency analysis:\x1b[0m");
+    ////maps::word_freq::word_freq("../../tech-docs/src/content/docs/cs/dsa/trees.md");
+    ////match File::open("./maps/word-freq-data.txt") {
 
-    println!("B Movie script:");
-    maps::word_freq::word_freq("./src/maps/word-freq-data-b-movie.txt", 5);
-    println!();
-    println!("A Midsummer Night's Dream");
-    maps::word_freq::word_freq("./src/maps/word-freq-data.txt", 5);
-    println!();
+    //println!("B Movie script:");
+    //maps::word_freq::word_freq("./src/maps/word-freq-data-b-movie.txt", 5);
+    //println!();
+    //println!("A Midsummer Night's Dream");
+    //maps::word_freq::word_freq("./src/maps/word-freq-data.txt", 5);
+    //println!();
 
-    println!("\x1b[1;34mSimple chaining hash map with division compression test:\x1b[0m");
+    println!("\x1b[1;34mSimple chaining hash map with division compression:\x1b[0m");
     maps::hash_map::example();
 }
 

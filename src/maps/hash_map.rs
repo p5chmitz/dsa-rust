@@ -228,7 +228,7 @@ impl<K: Hash + Debug + PartialEq, V: PartialEq + Clone> HashMap<K, V> {
     table encounters a load factor >.75. */
     pub fn put(&mut self, key: K, value: V) {
         // Checks if the addition will bring the load factor above threshold
-        if self.size == 0 || self.size / self.data.len() > 1/2 {
+        if self.size == 0 || (self.size + 1) as f64 / self.data.len() as f64 > 0.5 {
             self.grow()
         }
 
@@ -320,32 +320,30 @@ impl<K: Hash + Debug + PartialEq, V: PartialEq + Clone> HashMap<K, V> {
 fn hash_map_test() {
     //Creates a new hash map
     let mut map = HashMap::<&str, u8>::new();
-    //Creates several entries
+
+    // Illustrates that put() and get() work
     map.put("Peter", 41);
     assert_eq!(map.size, 1);
     assert_eq!(map.data.len(), 2);
     let fetch = map.get("Peter").unwrap();
     assert_eq!(*fetch, 41 as u8);
 
-    map.put("Brain", 39);
-    map.put("Remus", 22);
-    map.put("Bobson", 36);
-    map.put("Dingus", 18);
-    map.put("Dangus", 27);
-
-    assert_eq!(map.size, 6);
+    // Illustrates that the map grows correctly
+    map.put("Brain", 39); // Grows the map
+    assert_eq!(map.data.len(), 5);
+    map.put("Remus", 22); 
+    map.put("Bobson", 36); // Grows the map
     assert_eq!(map.data.len(), 11);
+    map.put("Dingus", 18);
+    map.put("Dangus", 27); // Grows the map
+    assert_eq!(map.size, 6);
+    assert_eq!(map.data.len(), 23);
 
+    // Illustrates that remove() works as intended
+    assert_eq!(map.contains("Dingus"), true);
     map.remove("Dingus");
     assert_eq!(map.contains("Dingus"), false);
 
-    // Does the exact same thing with the default HashMap
-    let mut map = std::collections::HashMap::<&str, u8>::new();
-    map.insert("Peter", 41);
-    assert_eq!(map.len(), 1);
-    assert_eq!(map.capacity(), 3);
-    let fetch = map.get("Peter").unwrap();
-    assert_eq!(*fetch, 41 as u8);
 }
 
 pub fn example() {
@@ -360,9 +358,9 @@ pub fn example() {
     map.put("Dangus", 27);
 
     // Prints a debug version of the map
-    println!("{:?}", map);
+    println!("{:#?}", map);
     let value = map.get("Peter").unwrap();
-    println!("map.get(key) where key = \"Peter\": {}", value);
+    println!("map.get(\"Peter\"): {}", value);
 
     map.remove("Brain");
     map.remove("Remus");
@@ -370,7 +368,7 @@ pub fn example() {
     map.remove("Dingus");
     map.remove("Dangus");
 
-    println!("{:?}", map);
+    //println!("{:#?}", map);
 
 }
 
