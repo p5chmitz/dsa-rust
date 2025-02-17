@@ -234,7 +234,7 @@ fn main() {
     println!("\x1b[1;34mSimple chaining hash map with division compression:\x1b[0m");
     maps::chaining_hash_table::example();
 
-    maps::q_probing_hash_table::example();
+    maps::probing_hash_table::example();
 }
 
 #[test]
