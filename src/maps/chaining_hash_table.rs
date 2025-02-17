@@ -189,7 +189,7 @@ impl<K: Hash + Debug + PartialEq, V: PartialEq + Clone> ChainingHashTable<K, V> 
             inner: None,
         }
     }
-}
+} // End of ChainingHashTable implementation
 
 // Create an iterator as a struct to track iteration state
 pub struct Iter<'a, K, V> {
@@ -251,7 +251,7 @@ impl<'a, K, V> Iterator for Values<'a, K, V> {
 }
 
 #[test]
-fn hash_map_test() {
+fn chaining_hash_table_test() {
     //Creates a new hash map
     let mut map = ChainingHashTable::<&str, u8>::new();
 
