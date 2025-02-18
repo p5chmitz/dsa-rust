@@ -231,10 +231,12 @@ fn main() {
     //maps::word_freq::word_freq("./src/maps/word-freq-data.txt", 5);
     //println!();
 
-    println!("\x1b[1;34mSimple chaining hash map with division compression:\x1b[0m");
+    println!("\x1b[1;34mChaining hash map with division compression:\x1b[0m");
     maps::chaining_hash_table::example();
 
+    println!("\x1b[1;34mProbing hash map with MAD compression and quadratic probing:\x1b[0m");
     maps::probing_hash_table::example();
+
 }
 
 #[test]
