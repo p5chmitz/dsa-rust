@@ -2,42 +2,8 @@
 // HASHING & COMPRESSION FUNCTIONS
 //////////////////////////////////
 
-/** Illustrates the concept of bit shifting;
-Takes a string a prints the bit and integer value of each character before
-performing a bit shift operation and printing the result as bit and integer values */
-pub fn bit_shift(value: &str) {
-    for mut v in value.bytes() {
-        print!("{:08b} ({}) -> ", v, v);
-        v = (v << 5) | (v >> 3);
-        println!("{:08b} ({v})", v);
-    }
-}
-
-/** Calculates a bit-shifted hash code;
-The function initializes a 32-bit hash code integer to 0,
-then loops over each character in the input string;
-Each loop adds the next character in the string to the hash code
-as an integer value with wrapping; This ensures consistency
-across architectures; The next operation in each loop performs
-a cyclic bit shift on the hash code, and the process repeats */
-pub fn hash_code(key: &str) -> u32 {
-    let mut hash: u32 = 0;
-    for word in key.bytes() {
-        print!("{:08b} -> ", word);
-        hash = hash.wrapping_add(word as u32);
-        hash = (hash << 5) | (hash >> 27);
-        println!("{:032b}", hash);
-    }
-    return hash;
-}
-#[test]
-fn hash_code_test() {
-    let v = hash_code("Peter");
-    assert_eq!(v, 2794168896);
-
-    //let v = hash_code("This block overflows the value");
-    //assert_eq!(v, 3862340559);
-}
+// STANDARD LIBRARY HASHING
+///////////////////////////
 
 // Explores Rust's default hashing functionality
 use std::collections::hash_map::DefaultHasher;
@@ -45,14 +11,14 @@ use std::fmt::Debug;
 use std::hash::{Hash, Hasher};
 
 /** Takes a reference to a type `T` and uses Rust's default hasher to return a 64-bit digest */
-pub fn hash<T: Hash + Debug + ?Sized>(key: &T) -> u64 {
+pub fn hash<T: Hash + Debug + ?Sized>(key: &T) -> usize {
     let mut hasher = DefaultHasher::new();
     key.hash(&mut hasher); // Hash::hash()
     let digest = hasher.finish(); // Hasher::finish()
-    digest
+    digest as usize
 }
 
-/** Does the same thing as hasher_0 but feeds individual bytes which produces a
+/** Does the same thing as hash() but feeds individual bytes which produces a
 slightly less efficient (and different) digest */
 pub fn hash_1(key: &str) -> u64 {
     let mut hasher = DefaultHasher::new();
@@ -68,8 +34,8 @@ pub fn hash_1(key: &str) -> u64 {
 
 /** Super simple division compression as `i mod N`;
 Produces a deterministic output, works best when `n` (len) is prime */
-pub fn division_compression(key: u64, len: usize) -> u64 {
-    key % len as u64
+pub fn division_compression(key: usize, len: usize) -> usize {
+    key % len as usize
 }
 
 /** Efficient primality test using the 6k ± 1 rule for numbers >3 by trial */
@@ -147,6 +113,7 @@ use rand::Rng;
 
 /** Implements MAD compression as `[(ai + b) mod p] mod N`
 Relies on `is_prime` and `next_prime` functions */
+// `c(h(k)) = ((a * h(k) + b) mod p) mod N`
 pub fn mad_compression(key: u64, len: usize) -> u64 {
     // Finds a prime >len, starting much larger to ensure even spread
     let p = next_prime(len.pow(3)) as u64;
@@ -165,4 +132,10 @@ pub fn mad_compression(key: u64, len: usize) -> u64 {
         .wrapping_rem(len as u64);
 
     wrapped_value
+}
+pub fn mad_compression_1(hash: usize, prime: usize, scale: usize, shift: usize, capacity: usize) -> usize {
+    (hash.wrapping_mul(scale as usize))
+        .wrapping_add(shift)
+        % (prime)
+        % (capacity)
 }
