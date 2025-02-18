@@ -66,12 +66,12 @@ where
         // 3) return a reference to the value associated with the Entry,
         // if it exists in the table
         // 4) Return None if the key does not exist in the table
-        let mut i = 1;
+        let mut i: usize = 1;
         while let Some(v) = &self.data[location] { // 1
             let target = hash_lib::hash(&v.key);
             let query = hash_lib::hash(&key);
             if target != query { // 2
-                location = (location + i^2) % capacity; // Quadratic probe
+                location = (location + i.pow(2)) % capacity; // Quadratic probe
                 //location = (location + i) % capacity; // Linear probe
                 i += 1;
             } else {
@@ -198,12 +198,14 @@ where
         // via hash/compression and insert the entry into new_base[location] 
         for e in &mut self.data {
             if let Some(v) = e.take() {
-                let mut location: usize = hash_lib::mad_compression_1(
-                    hash_lib::hash(&v.key), 
-                    self.prime, 
-                    self.scale, 
-                    self.shift, 
-                    new_capacity) as usize;
+
+                // MAD compression algorithm
+                let mut location: usize = ((hash_lib::hash(&v.key))
+                    .wrapping_mul(self.scale as usize))
+                    .wrapping_add(self.shift)
+                    % (self.prime)
+                    % (new_capacity);
+
                 // Handle potential collisions for new vec insert
                 let mut i: usize = 0;
                 while new_base[location].is_some() {
