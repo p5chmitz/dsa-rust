@@ -82,30 +82,65 @@ where
     }
 
     /** Adds entry `(k, v)`, overwriting any value `v` associated with an
-    existing key `k`, returns old value. Resizes the map which the
-    table encounters a load factor >.75. */
-    pub fn insert(&mut self, key: K, value: V) {
+    existing key `k`, returns old value. If a new addition increases the map's
+    load factor above the designated threshhold of 0.5 the map resizes */
+    pub fn put(&mut self, key: K, value: V) -> Option<Entry<K, V>> {
         // Checks if the addition will bring the load factor above threshold
-        if self.size == 0 || (self.size + 1) as f64 / self.data.len() as f64 > 0.5 {
-            self.grow()
+        if ((self.size) as f64 + 1.0) / self.data.len() as f64 >= 0.5 {
+            self.grow();
         }
 
+        // Hashes the key using Rust's DefaultHasher
+        let hashed = hash_lib::hash(&key);
+
+        // Compresses the hash using the MAD algorithm
+        let bucket: usize = (hashed.wrapping_mul(self.scale as usize))
+            .wrapping_add(self.shift)
+            % (self.prime)
+            % (self.data.len());
+
+
         // Finds the correct insertion location using probing
-        //let location: usize = (&self).linear_probe(&key);
-        let location: usize = (&self).quadratic_probe(&key);
+        // Searches the map for key:
+        // if >= 0, overwrite the location and return the old Entry,
+        // if < 0, insert new entry at that location, return None
+        let location = self.find_index(bucket, &key);
 
-        // Creates a new Entry
+        // Creates a new Entry and inserts it
         let entry = Entry::new(key, value);
-
-        // Inserts the Entry
-        self.data[location] = Some(entry);
-
-        // Increase the size of the table
-        self.size += 1;
+        let mut old_entry: Option<Entry<K, V>> = None;
+        if location >= 0 { // Replace an entry
+            //println!("COLLISION!!!! {:?}", &entry.key);
+            old_entry = self.data[location as usize].take();
+            self.data[location as usize] = Some(entry);
+        } else { // Add a new entry
+            self.data[-(location + 1) as usize] = Some(entry);
+            self.size += 1;
+        };
+        return old_entry;
     }
 
-    // TODO
-    pub fn remove() {}
+    // Hashes/compresses the key and checks the associated index;
+    // if Some, checks the &Entry for equivalent key, 
+    //     if true, returns positive_isize representing the index, 
+    //     if false, loops through the probing logic looking for equivalency,
+    //     fails when the probing lands on None
+    // if None, returns negative_isize representing the first available index
+    fn find_index(&self, mut bucket: usize, key: &K) -> isize {
+        // Quadratic probing logic
+        let mut i: usize = 1;
+        while let Some(entry) = &self.data[bucket] {
+            if entry.key == *key {
+                //println!("Match key!!!");
+                return bucket as isize;
+            } else {
+                bucket = (bucket + i.pow(2)) % self.data.len();
+                i += 1;
+            }
+        }
+        //println!("None: {}", -(bucket as isize));
+        return -(bucket as isize + 1);
+    }
 
     // Doesn't handle probing yet
     pub fn contains(&self, key: K) -> bool {
@@ -117,6 +152,7 @@ where
             % (self.prime)
             % (self.data.len());
 
+        // Quadratic probing logic
         let mut i: usize = 1;
         while let Some(bucket) = &self.data[location] {
             if bucket.key == key {
@@ -127,50 +163,10 @@ where
             }
         } false
     }
-    
-    pub fn iter() {}
 
-    /** Linear probe calculates A[(h(k) + f(i)) mod N] where f(i) == 1 
-    Assumes there is always going to be a valid index */
-    // NOTE: Just for illustration, this module uses quadratic probing
-    fn linear_probe(&self, key: &K) -> usize {
-        let capacity: usize = self.data.len() as usize;
-        let hashed = hash_lib::hash(&key);
-
-        // MAD compression algorithm
-        let mut location: usize = (hashed.wrapping_mul(self.scale as usize))
-            .wrapping_add(self.shift)
-            % (self.prime)
-            % (capacity);
-
-        while self.data[location].is_some() {
-            location = (location + 1) % capacity
-        }
-        location
-    }
-    /** Linear probe calculates A[location] = A[(h(k) + f(i)) mod N], where i > 0 and f(i) == i^2 
-    Assumes there is always going to be a valid index */
-    pub fn quadratic_probe(&self, key: &K) -> usize {
-        let capacity: usize = self.data.len() as usize;
-        let hashed = hash_lib::hash(&key);
-
-        // MAD compression algorithm
-        let mut location: usize = (hashed.wrapping_mul(self.scale as usize))
-            .wrapping_add(self.shift)
-            % (self.prime)
-            % (capacity);
-
-        let mut i: usize = 1;
-        while self.data[location].is_some() {
-            location = (location + i.pow(2)) % capacity;
-            i += 1;
-        }
-        location
-    }
-
-    /** Returns the  */
     // TODO
-    fn find_slot(&self,) {}
+    pub fn remove() {}
+    pub fn iter() {}
 
     /** Internal function that grows the base (storage) vector to the next prime 
     larger than double the length of the original vector, rehashes and compresses 
@@ -226,28 +222,35 @@ fn probing_hash_table_test() {
     //Creates a new hash map
     let mut map = ProbingHashTable::<&str, u8>::new();
 
-    // Illustrates that insert() and get() work
-    map.insert("Peter", 41);
+    // Illustrates that put() and get() work
+    map.put("Peter", 40);
     assert_eq!(map.size, 1);
     assert_eq!(map.data.len(), 2);
     let fetch = map.get("Peter").unwrap();
-    assert_eq!(*fetch, 41 as u8);
+    assert_eq!(*fetch, 40 as u8);
 
     // Illustrates that the map grows correctly
-    map.insert("Brain", 39); // Grows the map
+    map.put("Brain", 39); // Grows the map
     assert_eq!(map.data.len(), 5);
-    map.insert("Remus", 22);
-    map.insert("Bobson", 36); // Grows the map
+    map.put("Remus", 22);
+    map.put("Bobson", 36); // Grows the map
     assert_eq!(map.data.len(), 11);
-    map.insert("Dingus", 18);
-    map.insert("Dangus", 27); // Grows the map
+    map.put("Dingus", 18);
+    map.put("Dangus", 27); // Grows the map
     assert_eq!(map.size, 6);
     assert_eq!(map.data.len(), 23);
     
-    // Illustrates that remove() works as intended
+    // Illustrates that contains() works as intended
     assert_eq!(map.contains("Dingus"), true);
-    let fetch = map.get("Peter").unwrap();
-    assert_eq!(*fetch, 41 as u8);
+
+    // Illustrates that put() returns old values and 
+    // overwrites existing values upon collision...
+    let collision = map.put("Peter", 41).unwrap();
+    assert_eq!(collision.value, 40 as u8);
+    let new_val = map.get("Peter").unwrap();
+    assert_eq!(*new_val, 41 as u8);
+    // Without increasing the list size
+    assert_eq!(map.size, 6);
 
 }
 
@@ -255,33 +258,27 @@ pub fn example() {
     //Creates a new hash map
     let mut map = ProbingHashTable::<&str, u8>::new();
     //Creates several entries
-    map.insert("Peter", 41);
-    map.insert("Brain", 39);
-    map.insert("Remus", 22);
-    map.insert("Bobson", 36);
-    map.insert("Dingus", 18);
-    map.insert("Dangus", 27);
-
-    // Prints a debug version of the map
-    //println!("{:#?}", map);
-    println!("prime: {}\nscale: {}\nshift: {}\ncapacity: {}\nsize: {}", 
-        map.prime, 
-        map.scale, 
-        map.shift, 
-        map.data.len(), 
-        map.size);
+    map.put("Peter", 39);
+    map.put("Brain", 37);
+    map.put("Remus", 22);
+    map.put("Bobson", 36);
+    map.put("Dingus", 18);
+    map.put("Dangus", 27);
 
     if map.contains("Peter") == false { panic!() };
+    //let val = map.get("Peter").unwrap();
+    //println!("Peter is: {val}");
 
-    if let Some(value) = map.get("1Peter") {
-        println!("map.get(\"1Peter\"): {}", value)
-    };
+    let new = 41;
+    let old = map.put("Peter", new).unwrap().value;
+    println!("Peter's age increased from {old} to {new}");
 
-    // Its now iterable!!!
+    println!("List size: {}, capacity {}", map.size, map.data.len());
     println!("Iterating over all entries:");
     for e in map.data.iter() {
         println!("\t{:?}", e)
     }
+
     //println!("\nNow just the keys:");
     //for k in map.iter().keys() {
     //    println!("\t{}", k)

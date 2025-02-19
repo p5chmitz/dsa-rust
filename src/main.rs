@@ -235,7 +235,10 @@ fn main() {
     maps::chaining_hash_table::example();
 
     println!("\x1b[1;34mProbing hash map with MAD compression and quadratic probing:\x1b[0m");
-    maps::probing_hash_table::example();
+    for i in 1..=3 {
+        println!("Iteration #{i}...");
+        maps::probing_hash_table::example();
+    }
 
 }
 
