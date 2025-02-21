@@ -291,9 +291,13 @@ pub fn example() {
     map.put("Dangus", 27);
 
     // Prints a debug version of the map
-    println!("Debug print of the whole shebang:\n{:#?}", map);
+    println!("Debug print of the whole shebang:\n");
+    for e in map.iter() {
+        println!("{:?}", e)
+    }
+
     let value = map.get("Peter").unwrap();
-    println!("map.get(\"Peter\"): {}", value);
+    println!("\nmap.get(\"Peter\"): {}", value);
 
     // Its now iterable!!!
     println!("Iterating over all entries:");
@@ -320,5 +324,9 @@ pub fn example() {
     map.remove("Dingus");
     map.remove("Dangus");
 
-    println!("\nIts all over now:\n{:#?}", map);
+    println!("\nIts all over now:");
+    for e in map.iter() {
+        println!("{:?}", e)
+    }
+
 }

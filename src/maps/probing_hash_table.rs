@@ -141,7 +141,7 @@ where
             // as None which breaks probing logic
             entry = self.data[location as usize].clone();
             //entry = self.data[location as usize].take();
-            self.ctrl[location as usize] = 0x80; // Mark with tombstone
+            self.ctrl[location as usize] = 0xBB; // Mark with tombstone
         }
         self.entries -= 1;
         entry
@@ -297,7 +297,7 @@ pub fn example() {
     //Creates a new hash map
     let mut map = ProbingHashTable::<&str, u8>::new();
 
-    let s = format!("Map stats: size: {} capacity: {} active entries: {}", map.size, map.data.len(), map.entries);
+    let s = format!("Map stats: size: {}, capacity: {}, active entries: {}", map.size, map.data.len(), map.entries);
     let l = "=".repeat(s.len());
     println!("{l}\n{s}");
 
@@ -320,13 +320,12 @@ pub fn example() {
     let old = map.put("Peter", new).unwrap().value;
     println!("[Peter's age increased from {old} to {new}]");
     let val = map.get("Peter").unwrap();
-    println!("Uhhhh, I meant Peter is {val}");
+    println!("Uhhhhh, I meant Peter is {val}");
 
     // Shows the map and its data
-    println!("\nMap stats: size: {} capacity: {} active entries: {}", map.size, map.data.len(), map.entries);
-    println!("Iterating over all entries:");
-    for e in map.data.iter() {
-        println!("\t{:?}", e)
+    println!("\nMap stats: size: {}, capacity: {}, active entries: {}", map.size, map.data.len(), map.entries);
+    for (e, m) in map.data.iter().zip(map.ctrl.iter()) {
+        println!("\t{:>3}: {:?}", m, e)
     }
 
     // Illustrates removing entries
@@ -337,13 +336,14 @@ pub fn example() {
     }
 
     // The final result
-    for e in map.data.iter() {
-        println!("\t{:?}", e)
-    };
+    let s = format!("\nMap stats: size: {}, capacity: {}, active entries: {}", map.size, map.data.len(), map.entries);
+    println!("{s}");
+    for (e, m) in map.data.iter().zip(map.ctrl.iter()) {
+        println!("\t{:>3}: {:?}", m, e)
+    }
 
-    let s = format!("Map stats: size: {} capacity: {} active entries: {}", map.size, map.data.len(), map.entries);
     let l = "=".repeat(s.len());
-    println!("{s}\n{l}");
+    println!("\n{l}");
 
 }
 
