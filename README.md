@@ -50,8 +50,19 @@ This section also utilizes the structures and approaches established in the List
 
 Building off the lessons learned in the Core Lists module this section contains examples of hierarchical data structures. The content currently combines general trees and search trees. This section is in active development.
 
-- [Unsafe Linked N-ary Tree](): An undirected acyclic graph... err, tree. This exercise illustrates a `tree`-like Markdown parser; This is a labor of love for me as a professional documentarian as it generates a fancy hierarchical rendering of a Markdown document's headings, also known as a table of contents
-- [Linked Binary Search Tree](): Safe and easy; Nice
+- [Unsafe linked N-ary tree](https://github.com/p5chmitz/dsa-rust/blob/main/src/trees/unsafe_linked_general_tree.rs): An undirected acyclic graph... err, tree. This exercise also illustrates a `tree`-like Markdown parser; This is a labor of love for me as a professional documentarian as it generates a fancy hierarchical rendering of a Markdown document's headings, also known as a table of contents
+- [Linked binary search tree](): Safe and easy; Nice
+
+</details>
+
+<details> 
+
+<summary> Maps </summary>
+
+One of the most useful structures in the real world. This section provides two hash table implementations.
+
+- [Chaining hash table](https://github.com/p5chmitz/dsa-rust/blob/main/src/maps/chaining_hash_table.rs): Simple, easy, unsorted fun for the whole family. This implementation uses Vec-based backing and chaining structures with simple division compression.
+- [Probing hash map](https://github.com/p5chmitz/dsa-rust/blob/main/src/maps/probing_hash_table.rs): A little more complex, still unsorted, but arguably more performant by taking advantage of cache locality through a flattened structure. This Vec-based structure uses MAD compression and quadratic probing as well as a fun little secondary byte mask to distinguish available, occupied, and defunct indexes.
 
 </details>
 
