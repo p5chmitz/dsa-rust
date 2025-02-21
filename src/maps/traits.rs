@@ -10,25 +10,49 @@ where
 {
 
     // Core functions
+
+    /** Returns the value associated with the specified key, if the entry exists */
     fn get<Q: ?Sized>(&self, key: &Q) -> Option<&V>
     where 
         K: Borrow<Q>,
         Q: Hash + Debug;
 
+    /** Inserts a key-value pair into the map, if the key already exists
+    the function overwrites and returns the original value */
     fn insert(&mut self, key: K, value: V) -> Option<V>;
+
+    /** Removes the entry associated with the specified key;
+    Only actually removed/cleaned up for chaining solutions,
+    open addressing solutions use "defunct" markers that "leak" data */
     fn remove<Q: ?Sized>(&mut self, key: Q) -> Option<V>
     where 
         K: Borrow<Q>,
         Q: Hash + Debug;
 
+    /** Returns true if the map contains the specified key */
     fn contains<Q: ?Sized>(&self, key: &Q) -> bool
     where 
         K: Borrow<Q>,
         Q: Hash + Debug;
 
+    /** Returns a vector of entries, can be used to implement
+    key_set() and value_set() */
+    fn entry_set();
+
     // Utility functions
     //fn iter(&self) -> Iter<K, V>;
+    
+    /** Grows the backing storage based on a specified load factor */
     fn grow(&mut self);
+
+    /** Used by open addressing schemes;
+    Takes an initially hashed/compressed value as bucket and a key
+    and uses some probing method to find:
+    a) Whether the key exists in the map, returns that 
+    bucket as a positive value
+    b) If the key does not exist, returns a negative value 
+    indicating the next open bucket */
+    fn find_index(&self, bucket: usize, key: &K) -> isize;
 
 }
 
