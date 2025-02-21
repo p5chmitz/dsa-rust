@@ -53,6 +53,7 @@ where
             size: 0,
             entries: 0,
         };
+        // Initialize storage to ensure access
         table.data.resize_with(new_capacity, || None);
         table.ctrl.resize_with(new_capacity, || 0x00);
         table
@@ -146,6 +147,9 @@ where
         entry
     }
 
+    pub fn key() {}
+    pub fn values() {}
+
     // UTILITY FUNCTIONS
 
     // Hashes/compresses the key and checks the associated index;
@@ -154,18 +158,20 @@ where
     //     if false, loops through the probing logic looking for equivalency,
     //     fails when the probing lands on None
     // if None, returns negative_isize representing the first available index
-    fn find_index(&self, mut bucket: usize, key: &K) -> isize {
-        // Quadratic probing logic
+    fn find_index(&self, bucket: usize, key: &K) -> isize {
         let mut i: usize = 1;
-        while let Some(entry) = &self.data[bucket] {
+        let mut current_bucket = bucket;
+        
+        // Quadratic probing logic
+        while let Some(entry) = &self.data[current_bucket] {
             if entry.key == *key {
-                return bucket as isize;
+                return current_bucket as isize;
             } else {
-                bucket = (bucket + i.pow(2)) % self.data.len();
+                current_bucket = (current_bucket + i.pow(2)) % self.data.len();
                 i += 1;
             }
         }
-        return -(bucket as isize + 1);
+        return -(current_bucket as isize + 1);
     }
 
     /** Hashes the key using Rust's DefaultHasher */
@@ -182,44 +188,6 @@ where
             % (self.prime)
             % (self.data.len()) as usize
     }
-
-    // TODO
-    pub fn iter() {}
-    pub fn quadratic_probe() {
-    // from contains()
-    //  let mut i: usize = 1;
-    //  while let Some(bucket) = &self.data[location] {
-    //      if bucket.key == key {
-    //          return true;
-    //      } else {
-    //          location = (location + i.pow(2)) % self.data.len();
-    //          i += 1;
-    //      }
-    //  } false
-    //
-    //  from find_index
-    //  let mut i: usize = 1;
-    //  while let Some(entry) = &self.data[bucket] {
-    //      if entry.key == *key {
-    //          //println!("Match key!!!");
-    //          return bucket as isize;
-    //      } else {
-    //          bucket = (bucket + i.pow(2)) % self.data.len();
-    //          i += 1;
-    //      }
-    //  }
-    //  //println!("None: {}", -(bucket as isize));
-    //  return -(bucket as isize + 1);
-    //
-    //  from grow()
-    //  let mut i: usize = 0;
-    //  while new_base[location].is_some() {
-    //      location = (location + i.pow(2)) % new_capacity;
-    //      i += 1;
-    //  }
-    //  new_base[location] = Some(v);
-    }
-
 
     /** Internal function that grows the base (storage) vector to the next prime 
     larger than double the length of the original vector, rehashes and compresses 
@@ -318,6 +286,7 @@ fn probing_hash_table_test() {
     assert_eq!(map.size, 6);
 
     // Illustrates that removes entries by key and returns the value
+    assert!(map.contains("Dangus"));
     let removed = map.remove("Dangus").unwrap();
     assert_eq!(removed, Entry { key: "Dangus", value: 27});
     assert!(!map.contains("Dangus"));
