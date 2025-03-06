@@ -2,9 +2,12 @@
 /** A horribly unsafe (generic) doubly-linked list */
 /////////////////////////////////////////////////////
 
+use std::ptr::NonNull;
+// Recommended when using raw pointers over generic types
+use std::marker::PhantomData;
+
 // Creates a raw pointer to some Node
 //type Link = Option<*mut Node>;
-use std::ptr::NonNull;
 type Link<T> = Option<NonNull<Node<T>>>;
 
 #[derive(Debug)]
@@ -13,7 +16,9 @@ pub struct Node<T> {
     prev: Link<T>,
     next: Link<T>,
 }
-impl<T> Node<T> {
+impl<T> Node<T> 
+where 
+    T: PartialEq {
     // Creates a new node with a unique, heap-allocated address via Box
     pub fn new(data: T) -> Node<T> {
         Node {
@@ -23,24 +28,51 @@ impl<T> Node<T> {
         }
     }
 }
-/** The List's public API contains the following functions:
+/// List contains operations for a basic, unsorted, doubly-linked 
+/// list that can act as a stack or a queue; Nodes are pushed to the end 
+/// of the list and popped off the front; This implementation also contains 
+/// operations for a positional list for applications that require sorted items;
+/// In this implementation Link<T> is essentially the position of a node
+
+/** The basic list's public API includes the following operations: 
  - new() -> List<T>
- - insert_head(node)
- - insert_tail(node)
- - insert_ith(node, p) / insert_after() / insert_before()
- - remove_head()
- - remove_tail()
- - remove_ith(p) / remove_after() / remove_before()
- - peek_ith(p) (returns the node at position p)
+ - push_head(Node<T>) aka add(k)
+ - push_tail(Node<T>) aka enqueue(k)
+ - pop_head() -> Node<T> aka pop(k)/dequeue(k)
+ - pop_tail() -> Node<T> 
+ - peek_next() -> &Node<T>
+ - peek_prev() -> &Node<T>
+ - contains(&Node<T>) -> bool
+
+ - find(&Node<T>) -> Link<T>
+
+The positional list contains the following operations:
+ - insert_ith(Node<T>, p) 
+ - insert_after(Node<T>, p)
+ - insert_before(Node<T>, p)
+ - set(Node<T>, p) -> Node<T>
+ - remove_ith(p) -> Node<T>
+ - remove_after(p) -> Node<T>
+ - remove_before(p) -> Node<T>
+ - peek_ith(p) -> &Node<T>
+
+All lists contain the following utilities
+ - contains(&Node<T>) -> bool
+ - head() -> Option<&Node<T>>
+ - tail() -> Option<&Node<T>>
+ - len() -> usize
+ - is_empty() -> bool
+ - clear()
  - iter(&self) -> Iter
- - print(&self)
- - print_rev(&self)
-NOTE: To implement a positional list adding nodes return a reference that can be passed to acessor/mutator methods for O(1) operations.
+ - iter_rev(&self) -> Iter
+
+Positional List (Sorted List Support)
 */
 pub struct List<T> {
     head: Link<T>,
     tail: Link<T>,
-    length: usize,
+    len: usize,
+    _phantom: PhantomData<T> // Used to associate T with List<T>
 }
 impl<T> List<T> {
     // Creates a new list
@@ -48,11 +80,14 @@ impl<T> List<T> {
         List {
             head: None,
             tail: None,
-            length: 0,
+            len: 0,
+            _phantom: PhantomData
         }
     }
-    /** Inserts a node, sorted by its score */
-    pub fn insert(&mut self, node: Node<T>, index: usize) {
+
+    /** Inserts a node at the head of the list;
+    Use like a push(k) or add(k) operation for a stack */
+    pub fn push_front(&mut self, node: Node<T>) {
         unsafe {
             // Creates a NonNull wrapper to the (new) unique heap object
             let new_node_wrapper: NonNull<Node<T>> =
@@ -66,246 +101,187 @@ impl<T> List<T> {
 
                 println!("Inserts head");
 
-                // Resets the list's initial head and tail pointers, increments the list size
+                // Resets the list's initial head and tail pointers, increments 
+                // the list size
                 self.head = Some(new_node_wrapper);
                 self.tail = Some(new_node_wrapper);
-                self.length += 1;
+                self.len += 1;
                 return;
             }
-            // Special case for inserting new head node
-            if index == 0 {
-                // Sets the new node's next pointer to the current head
-                (*new_node_wrapper.as_ptr()).next = self.head;
-                // Sets the original head's prev pointer to the new node
-                (*self.head.unwrap().as_ptr()).prev = Some(new_node_wrapper);
+            // Inserts new node at head
+            // Sets the new node's next pointer to the current head
+            (*new_node_wrapper.as_ptr()).next = self.head;
+            // Sets the original head's prev pointer to the new node
+            (*self.head.unwrap().as_ptr()).prev = Some(new_node_wrapper);
 
-                println!("Inserts new head");
-                // Resets the list's head and increments the list size
-                self.head = Some(new_node_wrapper);
-                self.length += 1;
-                return;
-            }
+            println!("Inserts new head");
+            // Resets the list's head and increments the list size
+            self.head = Some(new_node_wrapper);
+            self.len += 1;
+            return;
+        }
+    }
 
-            // Traverse the list to find the correct insertion point by peeking at the next node
-            let mut current = self.head;
-            while let Some(current_ptr) = current {
-                // Gets a raw pointer to the current NonNull<Node<T>> reference
-                let current_node: *mut Node<T> = current_ptr.as_ptr();
-                //let current_node = &mut *current_ptr;
-                // If the next node's score is None or if the next node's score is less than
-                // the new node's score; insert the new node between current and current.next
-                if (*current_node).next.is_none()
-                //|| (*current_node).next.unwrap() == index
-                {
-                    // b.prev -> a
-                    (*new_node_wrapper.as_ptr()).prev = Some(current_ptr);
-                    // b.next -> c
-                    (*new_node_wrapper.as_ptr()).next = (*current_node).next;
-                    // If c exists, c.prev -> b
-                    if let Some(next_node_ptr) = (*current_node).next {
-                        (*next_node_ptr.as_ptr()).prev = Some(new_node_wrapper);
-                    }
-                    // a.next -> b
-                    (*current_node).next = Some(new_node_wrapper);
+    /** Returns an owned value */
+    //TODO: make this work
+    pub fn pop_head(&mut self) -> Option<T> {
+        None
+    }
 
-                    println!("Inserts mid-list or new tail");
-                    // Increments the list size
-                    self.length += 1;
-                    return;
-                }
-                current = (*current_node).next;
+        // Special case for empty list
+
+        // Removes head, resents pointers, returns node
+        //if let Some(node) = self.head {
+        //    let node_ptr = node.as_ptr();
+
+        //    //self.head = self.head.unwrap().as_ptr().next;
+        //    
+        //    // Move without invalidating pointer
+        //    let deref = unsafe { std::ptr::read(&(*node_ptr).data) };
+        //    return Some(deref);
+        //} None
+    //}
+    //pub fn pop_tail() -> Node<T> {}
+    pub fn iter(&self) -> Iter<T> {
+        Iter {
+            next: self.head.as_ref().map(|&ptr| ptr ),
+        }
+    }
+}
+pub struct Iter<T> {
+    next: Option<NonNull<Node<T>>>,
+}
+impl<'a, T> Iterator for Iter<T> {
+    type Item = NonNull<Node<T>>;
+    /** Returns each Node in the list until there are None */
+    fn next(&mut self) -> Option<Self::Item> {
+        // Update the iterator to point to the next node, return the current one,
+        // and if there aren't any left, its done
+        if let Some(current) = self.next {
+            self.next = unsafe { (*current.as_ptr()).next };
+            Some(current)
+        } else {
+            None
+        }
+    }
+}
+impl<T> Drop for List<T> {
+    /** List destructor */
+    fn drop(&mut self) {
+        unsafe {
+            let mut current_node_ptr = self.head;
+            while let Some(ptr) = current_node_ptr {
+                // Store a pointer to the next Node before deallocating the current one
+                let next_node_ptr = (*ptr.as_ptr()).next;
+
+                // Deallocate the current node
+                let _ = Box::from_raw(ptr.as_ptr());
+
+                // Advance the Node pointer
+                current_node_ptr = next_node_ptr;
             }
         }
     }
-    //    /** Removes a node at a provided index */
-    //    pub fn remove(&mut self, index: usize) {
-    //        // Traverses the list looking for the Node to remove
-    //        let mut current = self.head;
-    //        unsafe {
-    //            while let Some(current_ptr) = current {
-    //                let current_node = &mut *current_ptr.as_ptr();
-    //                // Handles edge case in case the removal node is tail
-    //                if let Some(next) = current_node.next {
-    //                    if self.length == index && (*next.as_ptr()).next.is_none() {
-    //                        // Update the current node's next pointer
-    //                        current_node.next = None;
-    //                        println!("Removed tail");
-    //                        self.length -= 1;
-    //                        return;
-    //                    }
-    //                }
-    //                // Handles the edge case if the removal node is head
-    //                if (*current_node).prev.is_none() {
-    //                    if let Some(peek) = current_node.next {
-    //                        (*peek.as_ptr()).prev = None;
-    //                        self.head = Some(peek);
-    //                    } else {
-    //                        // In case there is only one list element
-    //                        self.head = None;
-    //                    }
-    //                    println!("Removed head");
-    //                    // Decrements the list size
-    //                    self.length -= 1;
-    //                    return;
-    //                }
-    //                // Handles removals mid-list
-    //                else if (*current_node.next.unwrap()).name == name {
-    //                    // a.next = c
-    //                    let next: *mut Node<T> = current_node.next.unwrap();
-    //                    (*current_node).next = (*next).next;
-    //                    // c.prev = a
-    //                    (*next).prev = Some(current_node);
-    //                    println!("Removed mid-list");
-    //                    // Decrements the list size
-    //                    self.length -= 1;
-    //                    return;
-    //                }
-    //                current = current_node.next;
-    //            }
-    //        }
-    //    }
-    //    pub fn iter(&self) -> Iter<T> {
-    //        Iter {
-    //            next: self.head.as_ref().map(|&ptr| unsafe { &*ptr }),
-    //        }
-    //    }
-    //    /** Prints the list */
-    //    pub fn print(&self) {
-    //        let mut current = self.head;
-    //        let mut counter = 1;
-    //        unsafe {
-    //            while let Some(node_ptr) = current {
-    //                let node = &*node_ptr;
-    //                println!("{:>2}: {:<8} {:>6}", counter, node.name, node.score);
-    //                current = node.next;
-    //                counter += 1;
-    //            }
-    //        }
-    //        println!("")
-    //    }
 }
-//pub struct Iter<'a, T> {
-//    next: Option<&'a Node<T>>,
-//}
-//impl<'a, T> Iterator for Iter<'a, T> {
-//    type Item = &'a Node<T>;
-//    /** Returns each Node in the list until there are None */
-//    fn next(&mut self) -> Option<Self::Item> {
-//        // Update the iterator to point to the next node, return the current one,
-//        // and if there aren't any left, its done
-//        if let Some(current) = self.next {
-//            self.next = current.next.as_ref().map(|&ptr| unsafe { &*ptr });
-//            Some(current)
-//        } else {
-//            None
-//        }
-//    }
-//}
-//impl<T> Drop for List<T> {
-//    /** List destructor */
-//    fn drop(&mut self) {
-//        unsafe {
-//            let mut current_node_ptr = self.head;
-//            while let Some(ptr) = current_node_ptr {
-//                // Store a pointer to the next Node before deallocating the current one
-//                let next_node_ptr = (*ptr).next;
-//
-//                // Deallocate the current node
-//                let _ = Box::from_raw(ptr);
-//
-//                // Advance the Node pointer
-//                current_node_ptr = next_node_ptr;
-//            }
-//        }
-//    }
-//}
 
-//#[test]
-//fn test() {
-//    // Creates a new doubly-linked list
-//    let mut list = List::new();
-//
-//    // Creates and insert nodes with scores 1000 and 600
-//    let a = Node::new("a".to_string(), 1000);
-//    let c = Node::new("c".to_string(), 600);
-//    list.insert(a);
-//    list.insert(c);
-//
-//    // Creates and insert node b with a score between a and c
-//    let b = Node::new("b".to_string(), 800);
-//    list.insert(b);
-//
-//    unsafe {
-//        // Gets pointer to head/a
-//        let head_ptr: *mut Node = list.head.unwrap();
-//        let a = &mut *head_ptr; // Unsafe de-ref
-//        assert_eq!(a.name, "a");
-//        assert_eq!(a.score, 1000);
-//
-//        // Follows a.next to b, verifies a.next by checking b's data
-//        let b_ptr: *mut Node = a.next.unwrap();
-//        let b = &mut *b_ptr; // Unsafe de-ref
-//        assert_eq!(b.name, "b");
-//        assert_eq!(b.score, 800);
-//
-//        // Checks that b.prev -> a
-//        assert_eq!(b.prev.unwrap(), head_ptr);
-//
-//        // Follows b.next to c, verifies b.next by checking c's data
-//        let c_ptr: *mut Node = b.next.unwrap();
-//        let c = &mut *c_ptr; // Unsafe de-ref
-//        assert_eq!(c.name, "c");
-//        assert_eq!(c.score, 600);
-//
-//        // Checks that c.prev -> b
-//        assert_eq!(c.prev.unwrap(), b_ptr);
-//
-//        // Verifies that c == tail || c.next -> None
-//        assert!(c.next.is_none());
-//    }
-//}
-//
-//pub fn example() {
-//    println!("The infamous (and unsafe) double!!");
-//
-//    //use doubly_linked_list::{List, Node};
-//
-//    let mut list = List::new();
-//    let mut node = Node::new("Peter".to_string(), 1223);
-//    list.insert(node);
-//
-//    node = Node::new("Brain".to_string(), 616);
-//    list.insert(node);
-//
-//    node = Node::new("Remus".to_string(), 1225);
-//    list.insert(node);
-//
-//    node = Node::new("Bobson".to_string(), 69);
-//    list.insert(node);
-//
-//    node = Node::new("Dorkus".to_string(), 412);
-//    list.insert(node);
-//
-//    node = Node::new("Dongus".to_string(), 873);
-//    list.insert(node);
-//
-//    // Removes tail
-//    list.remove("Bobson".to_string());
-//
-//    // Removes head
-//    list.remove("Remus".to_string());
-//
-//    // Removes mid-list
-//    list.remove("Dongus".to_string());
-//
-//    // Print this bih
-//    println!("The final result:");
-//    list.print();
-//
-//    println!("Iter test:");
-//    let mut counter = 1;
-//    for e in list.iter() {
-//        println!("{:>2}: {:<8} {:>6}", counter, e.name, e.score);
-//        counter += 1;
-//    }
-//}
+#[test]
+fn test() {
+    // Creates a new doubly-linked list
+    let mut list = List::new();
+
+    // Creates and insert test nodes
+    let a = Node::new("a");
+    let b = Node::new("b");
+    let c = Node::new("c");
+    list.push_front(a);
+    list.push_front(b);
+    list.push_front(c);
+
+    // Gets pointer to head/c
+    let head_ptr: NonNull<Node<&str>> = list.head.unwrap();
+    let head: &Node<&str> = unsafe { head_ptr.as_ref() }; // Unsafe deref
+    assert_eq!(head.data, "c");
+
+    // Gets pointer to tail/a
+    let tail_ptr: NonNull<Node<&str>> = list.tail.unwrap();
+    let tail: &Node<&str> = unsafe { tail_ptr.as_ref() }; // Unsafe deref
+    assert_eq!(tail.data, "a");
+
+    // Alternative way to get the data
+    let tail_ptr: NonNull<Node<&str>> = list.tail.unwrap();
+    let tail: *mut Node<&str> = tail_ptr.as_ptr();
+    assert_eq!(unsafe { (*tail).data }, "a");
+
+    // Tests the pop_head() method
+    let popped_head: &str = list.pop_head().unwrap();
+    assert_eq!(popped_head, "c")
+
+    // Follows a.next to b, verifies a.next by checking b's data
+    //let b_ptr: *mut Node = a.next.unwrap();
+    //let b = &mut *b_ptr; // Unsafe de-ref
+    //assert_eq!(b.name, "b");
+    //assert_eq!(b.score, 800);
+
+    //// Checks that b.prev -> a
+    //assert_eq!(b.prev.unwrap(), head_ptr);
+
+    //// Follows b.next to c, verifies b.next by checking c's data
+    //let c_ptr: *mut Node = b.next.unwrap();
+    //let c = &mut *c_ptr; // Unsafe de-ref
+    //assert_eq!(c.name, "c");
+    //assert_eq!(c.score, 600);
+
+    //// Checks that c.prev -> b
+    //assert_eq!(c.prev.unwrap(), b_ptr);
+
+    //// Verifies that c == tail || c.next -> None
+    //assert!(c.next.is_none());
+}
+
+#[derive(PartialEq, Debug)]
+pub struct Whatever {
+    name: String,
+    age: usize,
+    notes: String,
+}
+pub fn example() {
+
+    //use doubly_linked_list::{List, Node};
+
+    let mut list = List::new();
+    let mut node = Node::new("Peter");
+    list.push_front(node);
+
+    node = Node::new("Brain");
+    list.push_front(node);
+
+    node = Node::new("Remus");
+    list.push_front(node);
+
+    // Removes tail
+    //list.pop_tail("Bobson".to_string());
+
+    // Removes head
+    //list.pop_front("Remus".to_string());
+
+    println!("Iter test:");
+    let mut counter = 1;
+    for e in list.iter() {
+        println!("{:>2}: {:<8?}", counter, e);
+        counter += 1;
+    }
+
+    let first = Whatever { name: "Peter".to_string(), age: 41, notes: "lol".to_string() };
+    let second = Whatever { name: "Brain".to_string(), age: 39, notes: "homie".to_string() };
+    let mut list = List::new();
+    let first = Node::new(first);
+    let second = Node::new(second);
+    list.push_front(first);
+    list.push_front(second);
+
+    if let Some(node) = list.pop_head() {
+        println!("Node: {:?}", node)
+    };
+
+
+}
