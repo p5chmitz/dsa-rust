@@ -6,3 +6,4 @@ pub mod probing_hash_table;
 pub mod traits;
 pub mod map_concepts;
 pub mod sorted_map;
+pub mod skip_list;

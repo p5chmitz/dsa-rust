@@ -28,7 +28,7 @@ pub fn hash_code(key: &str) -> u32 {
     for word in key.bytes() {
         print!("{:08b} -> ", word);
         hash = hash.wrapping_add(word as u32);
-        hash = (hash << 5) | (hash >> 27); 
+        hash = (hash << 5) | (hash >> 27);
         println!("{:032b}", hash);
     }
     return hash;
@@ -44,8 +44,8 @@ fn hash_code_test() {
 
 // Explores Rust's default hashing functionality
 use std::collections::hash_map::DefaultHasher;
-use std::hash::{Hash, Hasher};
 use std::fmt::Debug;
+use std::hash::{Hash, Hasher};
 
 /** Takes a reference to a type `T` and uses Rust's default hasher to return a 64-bit digest */
 pub fn hash<T: Hash + Debug + ?Sized>(key: &T) -> u64 {
@@ -55,7 +55,7 @@ pub fn hash<T: Hash + Debug + ?Sized>(key: &T) -> u64 {
     digest
 }
 
-/** Does the same thing as hasher_0 but feeds individual bytes which produces a 
+/** Does the same thing as hasher_0 but feeds individual bytes which produces a
 slightly less efficient (and different) digest */
 pub fn hash_1(key: &str) -> u64 {
     let mut hasher = DefaultHasher::new();
@@ -125,8 +125,12 @@ fn prime_test() {
 //}
 /** Finds the next prime in O(n/2) time by skipping evens */
 fn next_prime(n: usize) -> usize {
-    if n < 2 { return 2; }
-    if n == 2 { return 3; }
+    if n < 2 {
+        return 2;
+    }
+    if n == 2 {
+        return 3;
+    }
     let mut candidate = if n % 2 == 0 { n + 1 } else { n + 2 }; // Ensure candidate is odd
     while !is_prime(candidate) {
         candidate += 2; // Skip even numbers
@@ -144,7 +148,7 @@ fn next_prime_test() {
 
 use rand::Rng;
 
-/** Implements MAD compression as `[(ai + b) mod p] mod N` 
+/** Implements MAD compression as `[(ai + b) mod p] mod N`
 Relies on `is_prime` and `next_prime` functions */
 pub fn mad_compression(key: u64, len: usize) -> u64 {
     // Finds a prime >len, starting much larger to ensure even spread
@@ -172,23 +176,19 @@ pub fn mad_compression(key: u64, len: usize) -> u64 {
 #[derive(Debug)]
 pub struct Entry<K, V> {
     key: K,
-    value: V
+    value: V,
 }
 impl<K, V> Entry<K, V> {
     fn new(key: K, value: V) -> Entry<K, V> {
-        Entry {
-            key,
-            value,
-        }
+        Entry { key, value }
     }
 }
 #[derive(Debug)]
 pub struct HashMap<K, V> {
     data: Vec<Option<Vec<Entry<K, V>>>>,
-    size: usize
+    size: usize,
 }
 impl<K: Hash + Debug + PartialEq, V: PartialEq + Clone> HashMap<K, V> {
-
     /** Creates a new HashTable */
     pub fn new() -> HashMap<K, V> {
         HashMap {
@@ -206,7 +206,9 @@ impl<K: Hash + Debug + PartialEq, V: PartialEq + Clone> HashMap<K, V> {
     pub fn is_empty(&self) -> bool {
         if self.size == 0 {
             true
-        } else { false }
+        } else {
+            false
+        }
     }
 
     /** Returns the value `v` associated with key `k` */
@@ -219,12 +221,15 @@ impl<K: Hash + Debug + PartialEq, V: PartialEq + Clone> HashMap<K, V> {
                 if hashed == chain_key_hash {
                     return Some(&e.value);
                 }
-            } None
-        } else { None }
+            }
+            None
+        } else {
+            None
+        }
     }
 
-    /** Adds entry `(k, v)`, overwriting any value `v` associated with an 
-    existing key `k`, returns old value. Resizes the map which the 
+    /** Adds entry `(k, v)`, overwriting any value `v` associated with an
+    existing key `k`, returns old value. Resizes the map which the
     table encounters a load factor >.75. */
     pub fn put(&mut self, key: K, value: V) {
         // Checks if the addition will bring the load factor above threshold
@@ -239,7 +244,7 @@ impl<K: Hash + Debug + PartialEq, V: PartialEq + Clone> HashMap<K, V> {
         let entry = Entry::new(key, value);
 
         // Inserts the Entry
-        match &mut self.data[location] { 
+        match &mut self.data[location] {
             Some(v) => v.push(entry),
             None => {
                 self.data[location] = Some(vec![entry]);
@@ -249,16 +254,16 @@ impl<K: Hash + Debug + PartialEq, V: PartialEq + Clone> HashMap<K, V> {
     }
 
     /** Internal function that grows the base vector to the next prime larger than
-    double the length of the original vector, rehashes and compresses hashes 
+    double the length of the original vector, rehashes and compresses hashes
     for new distribution */
     fn grow(&mut self) {
-        // Create a new base vector with_capacity and resize_with to ensure all 
-        // indexes exist, otherwise you could push to an index that doesn't 
+        // Create a new base vector with_capacity and resize_with to ensure all
+        // indexes exist, otherwise you could push to an index that doesn't
         // exist causing a panic
         let new_capacity = next_prime(self.data.len() * 2);
         let mut new_base: Vec<Option<Vec<Entry<K, V>>>> = Vec::with_capacity(new_capacity);
         new_base.resize_with(new_capacity, || None);
-    
+
         // Move entries from self.data into new_base
         for bucket in self.data.drain(..) {
             if let Some(mut chain) = bucket {
@@ -272,7 +277,7 @@ impl<K: Hash + Debug + PartialEq, V: PartialEq + Clone> HashMap<K, V> {
                 }
             }
         }
-    
+
         // Update the struct instance
         self.data = new_base;
     }
@@ -293,14 +298,14 @@ impl<K: Hash + Debug + PartialEq, V: PartialEq + Clone> HashMap<K, V> {
     /**  Returns an iterable collection of all keys in the map */
     pub fn key_set(&self) {}
 
-    /**  Returns an iterable collection of all values in the map, including 
+    /**  Returns an iterable collection of all values in the map, including
     repeats for multiple key-value associations */
     pub fn values(&self) {}
 
     /**  Returns an iterable collection of all `(k, v)` entries in the map */
     pub fn entry_set() {}
 
-    /**  Returns a Boolean if the map contains _key_ `k`; Used to disambiguate 
+    /**  Returns a Boolean if the map contains _key_ `k`; Used to disambiguate
     the presence of a key with a null/None value */
     pub fn contains(&self, key: K) -> bool {
         let hashed = hash(&key);
@@ -310,10 +315,12 @@ impl<K: Hash + Debug + PartialEq, V: PartialEq + Clone> HashMap<K, V> {
                 if e.key == key {
                     return true;
                 }
-            } false
-        } else { false }
+            }
+            false
+        } else {
+            false
+        }
     }
-
 }
 
 #[test]
@@ -331,7 +338,7 @@ fn hash_map_test() {
     // Illustrates that the map grows correctly
     map.put("Brain", 39); // Grows the map
     assert_eq!(map.data.len(), 5);
-    map.put("Remus", 22); 
+    map.put("Remus", 22);
     map.put("Bobson", 36); // Grows the map
     assert_eq!(map.data.len(), 11);
     map.put("Dingus", 18);
@@ -343,7 +350,6 @@ fn hash_map_test() {
     assert_eq!(map.contains("Dingus"), true);
     map.remove("Dingus");
     assert_eq!(map.contains("Dingus"), false);
-
 }
 
 pub fn example() {
@@ -369,6 +375,4 @@ pub fn example() {
     map.remove("Dangus");
 
     //println!("{:#?}", map);
-
 }
-
