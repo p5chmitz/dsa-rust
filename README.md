@@ -59,7 +59,7 @@ Building off the lessons learned in the Core Lists module this section contains 
 
 <summary> Maps </summary>
 
-One of the most useful structures in the real world. Maps are essentially just lists of key-value pairs. Unlike lists, maps contain efficient query methods outside of direct indexing.
+One of the most useful structures in the real world. Maps are essentially just lists of key-value pairs with potentially better expected asymptotics.
 
 - [Chaining hash table](https://github.com/p5chmitz/dsa-rust/blob/main/src/maps/chaining_hash_table.rs): Simple, easy, unsorted fun for the whole family; This implementation uses Vec-based backing and chaining structures with simple division compression;
 - [Probing hash table](https://github.com/p5chmitz/dsa-rust/blob/main/src/maps/probing_hash_table.rs): A little more complex, still unsorted, but arguably more performant by taking advantage of cache locality through a flattened structure; This Vec-based structure uses MAD compression and quadratic probing as well as a fun little secondary byte mask to distinguish available, occupied, and defunct indexes

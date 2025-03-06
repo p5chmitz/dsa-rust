@@ -233,14 +233,19 @@ fn main() {
 
     println!("\x1b[1;34mChaining hash map with division compression:\x1b[0m");
     maps::chaining_hash_table::example();
+    println!();
 
     println!("\x1b[1;34mProbing hash map with MAD compression and quadratic probing:\x1b[0m");
-    let mut i = 0;
-    for _ in 0..1 {
+    let mut i = 1;
+    for _ in 1..=1 {
         println!("\nIteration: {i}");
         maps::probing_hash_table::example();
         i += 1;
     }
+
+    println!("\x1b[1;34mGeneric linked list:\x1b[0m");
+    lists::generic_doubly_linked_list::example();
+    println!();
 
 }
 
