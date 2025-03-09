@@ -1,19 +1,18 @@
+use rand::Rng;
 use std::borrow::Borrow;
 use std::collections::hash_map::DefaultHasher;
 use std::fmt::Debug;
 use std::hash::{Hash, Hasher};
-use rand::Rng;
 
-pub trait AbstractMap<K, V> 
-where 
-    K: Hash + Debug
+pub trait AbstractMap<K, V>
+where
+    K: Hash + Debug,
 {
-
     // Core functions
 
     /** Returns the value associated with the specified key, if the entry exists */
     fn get<Q: ?Sized>(&self, key: &Q) -> Option<&V>
-    where 
+    where
         K: Borrow<Q>,
         Q: Hash + Debug;
 
@@ -25,13 +24,13 @@ where
     Only actually removed/cleaned up for chaining solutions,
     open addressing solutions use "defunct" markers that "leak" data */
     fn remove<Q: ?Sized>(&mut self, key: Q) -> Option<V>
-    where 
+    where
         K: Borrow<Q>,
         Q: Hash + Debug;
 
     /** Returns true if the map contains the specified key */
     fn contains<Q: ?Sized>(&self, key: &Q) -> bool
-    where 
+    where
         K: Borrow<Q>,
         Q: Hash + Debug;
 
@@ -41,23 +40,21 @@ where
 
     // Utility functions
     //fn iter(&self) -> Iter<K, V>;
-    
+
     /** Grows the backing storage based on a specified load factor */
     fn grow(&mut self);
 
     /** Used by open addressing schemes;
     Takes an initially hashed/compressed value as bucket and a key
     and uses some probing method to find:
-    a) Whether the key exists in the map, returns that 
+    a) Whether the key exists in the map, returns that
     bucket as a positive value
-    b) If the key does not exist, returns a negative value 
+    b) If the key does not exist, returns a negative value
     indicating the next open bucket */
     fn find_index(&self, bucket: usize, key: &K) -> isize;
-
 }
 
 pub trait HashTable {
-
     fn hash<K: Hash + Debug + ?Sized>(key: &K) -> usize {
         let mut hasher = DefaultHasher::new();
         key.hash(&mut hasher); // Hash::hash()
@@ -109,11 +106,13 @@ pub trait HashTable {
 
     fn set_compression_values(&self, prime: usize, scale: usize, shift: usize);
 
-    fn mad_compression(hash: usize, prime: usize, scale: usize, shift: usize, capacity: usize) -> usize {
-        (hash.wrapping_mul(scale as usize))
-            .wrapping_add(shift)
-            % (prime)
-            % (capacity)
+    fn mad_compression(
+        hash: usize,
+        prime: usize,
+        scale: usize,
+        shift: usize,
+        capacity: usize,
+    ) -> usize {
+        (hash.wrapping_mul(scale as usize)).wrapping_add(shift) % (prime) % (capacity)
     }
-
 }

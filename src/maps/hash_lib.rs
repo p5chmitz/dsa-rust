@@ -133,9 +133,12 @@ pub fn mad_compression(key: u64, len: usize) -> u64 {
 
     wrapped_value
 }
-pub fn mad_compression_1(hash: usize, prime: usize, scale: usize, shift: usize, capacity: usize) -> usize {
-    (hash.wrapping_mul(scale as usize))
-        .wrapping_add(shift)
-        % (prime)
-        % (capacity)
+pub fn mad_compression_1(
+    hash: usize,
+    prime: usize,
+    scale: usize,
+    shift: usize,
+    capacity: usize,
+) -> usize {
+    (hash.wrapping_mul(scale as usize)).wrapping_add(shift) % (prime) % (capacity)
 }

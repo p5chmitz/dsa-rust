@@ -1,19 +1,18 @@
 ////////////////////////////////
+use std::cmp::Ordering::{Equal, Greater, Less};
 /** Safe sorted map using Vec */
 ////////////////////////////////
-
 use std::fmt::Debug;
-use std::cmp::Ordering::{Less, Equal, Greater};
 
 #[derive(Debug, PartialEq)]
 pub struct Entry<K, V> {
     key: K,
     value: V,
 }
-impl<K, V> Entry<K, V> 
-where 
-    K: Debug + PartialEq, 
-    V: PartialEq
+impl<K, V> Entry<K, V>
+where
+    K: Debug + PartialEq,
+    V: PartialEq,
 {
     fn new(key: K, value: V) -> Entry<K, V> {
         Entry { key, value }
@@ -22,14 +21,13 @@ where
 #[derive(Debug)]
 pub struct SortedMap<K, V> {
     data: Vec<Option<Entry<K, V>>>,
-    size: usize
+    size: usize,
 }
-impl<K, V> SortedMap<K, V> 
-where 
-    K: Debug + PartialEq + Ord, 
-    V: PartialEq
+impl<K, V> SortedMap<K, V>
+where
+    K: Debug + PartialEq + Ord,
+    V: PartialEq,
 {
-
     /** Every structure needs a constructor */
     pub fn new() -> SortedMap<K, V> {
         SortedMap {
@@ -46,7 +44,12 @@ where
     }
     /** If the tarket is in the list the function returns the index,
     if the target is not in the list the function returns the next appropriate index */
-    fn find_index_rec(data: &Vec<Option<Entry<K, V>>>, key: &K, left: usize, right: usize) -> usize {
+    fn find_index_rec(
+        data: &Vec<Option<Entry<K, V>>>,
+        key: &K,
+        left: usize,
+        right: usize,
+    ) -> usize {
         // Recursive base case returns next viable index when the key is not found
         if left > right {
             return left;
@@ -61,21 +64,21 @@ where
             }
         }
     }
-    
+
     pub fn get(&self, key: K) -> Option<&V> {
         let j: usize = self.find_index(&key);
         if self.data[j].is_some() && self.data[j].as_ref().unwrap().key == key {
             return Some(&self.data[j as usize].as_ref().unwrap().value);
-        } None
+        }
+        None
     }
 
     /** Inserts an entry into the map while maintaining sorted order by key */
     pub fn put(&mut self, key: K, value: V) -> Option<Entry<K, V>> {
-
         // First entry
         if self.data.len() == 0 {
             let new: Entry<K, V> = Entry::new(key, value);
-            self.data.insert(0, Some(new));    
+            self.data.insert(0, Some(new));
             self.size += 1;
             return None;
         }
@@ -102,22 +105,46 @@ where
         if self.data[j].is_some() && self.data[j].as_ref().unwrap().key == key {
             self.size -= 1;
             return self.data[j as usize].take();
-        } None
+        }
+        None
     }
-
 }
 
 #[test]
 fn find_index_test() {
     let list = vec![
-        Some(Entry{key: "Bobson", value: 29}), 
-        Some(Entry{key: "Brain", value: 39}), 
-        Some(Entry{key: "Dangus", value: 34}),
-        Some(Entry{key: "Dingus", value: 34}), 
-        Some(Entry{key: "Peter", value: 41}), 
-        Some(Entry{key: "Pingus", value: 45}),
-        Some(Entry{key: "Remus", value: 27}), 
-        Some(Entry{key: "Romulus", value: 28})
+        Some(Entry {
+            key: "Bobson",
+            value: 29,
+        }),
+        Some(Entry {
+            key: "Brain",
+            value: 39,
+        }),
+        Some(Entry {
+            key: "Dangus",
+            value: 34,
+        }),
+        Some(Entry {
+            key: "Dingus",
+            value: 34,
+        }),
+        Some(Entry {
+            key: "Peter",
+            value: 41,
+        }),
+        Some(Entry {
+            key: "Pingus",
+            value: 45,
+        }),
+        Some(Entry {
+            key: "Remus",
+            value: 27,
+        }),
+        Some(Entry {
+            key: "Romulus",
+            value: 28,
+        }),
     ];
     // Key exists
     let index = SortedMap::find_index_rec(&list, &"Brain", 0, list.len() - 1);
@@ -134,14 +161,14 @@ fn find_index_test() {
 fn general_test() {
     // Establishes a baseline map
     let list = vec![
-        ("Bobson", 29), 
-        ("Brain", 39), 
+        ("Bobson", 29),
+        ("Brain", 39),
         ("Dangus", 34),
-        ("Dingus", 34), 
-        ("Peter", 41), 
+        ("Dingus", 34),
+        ("Peter", 41),
         ("Pingus", 45),
-        ("Remus", 27), 
-        ("Romulus", 28)
+        ("Remus", 27),
+        ("Romulus", 28),
     ];
     let mut map = SortedMap::new();
     assert_eq!(map.data.len(), 0);

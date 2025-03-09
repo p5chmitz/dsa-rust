@@ -42,24 +42,21 @@ fn hash_code_test() {
     //assert_eq!(v, 3862340559);
 }
 
-
 use crate::maps::hash_lib;
 
-/** Linear probe calculates A[(h(k) + f(i)) mod N] where f(i) == 1 
+/** Linear probe calculates A[(h(k) + f(i)) mod N] where f(i) == 1
 Assumes there is always going to be a valid index */
 fn linear_probe(v: &Vec<Option<&str>>, key: &str) -> usize {
     // Example instance values
     let prime = 13;
-    let scale = 4; 
-    let shift = 11; 
+    let scale = 4;
+    let shift = 11;
     let capacity = 7;
     let hash = hash_lib::hash(&key);
 
     // MAD compression logic
-    let mut location = (hash.wrapping_mul(scale as usize))
-        .wrapping_add(shift)
-        % (prime)
-        % (capacity);
+    let mut location =
+        (hash.wrapping_mul(scale as usize)).wrapping_add(shift) % (prime) % (capacity);
 
     assert_eq!(location, 3);
 
@@ -72,21 +69,19 @@ fn linear_probe(v: &Vec<Option<&str>>, key: &str) -> usize {
     }
     location
 }
-/** Linear probe calculates A[location] = A[(h(k) + f(i)) mod N], where i > 0 and f(i) == i^2 
+/** Linear probe calculates A[location] = A[(h(k) + f(i)) mod N], where i > 0 and f(i) == i^2
 Assumes there is always going to be a valid index */
 pub fn quadratic_probe(v: &Vec<Option<&str>>, key: &str) -> usize {
     // Example instance values
     let prime = 13;
-    let scale = 4; 
-    let shift = 11; 
+    let scale = 4;
+    let shift = 11;
     let capacity = 7;
     let hash = hash_lib::hash(&key);
 
     // MAD compression logic
-    let mut location = (hash.wrapping_mul(scale as usize))
-        .wrapping_add(shift)
-        % (prime)
-        % (capacity);
+    let mut location =
+        (hash.wrapping_mul(scale as usize)).wrapping_add(shift) % (prime) % (capacity);
 
     assert_eq!(location, 3);
 
@@ -102,14 +97,22 @@ pub fn quadratic_probe(v: &Vec<Option<&str>>, key: &str) -> usize {
 #[test]
 fn probe_test() {
     // Peter hashes/compresses to 3
-    let vec = vec!(Some("Steve"), Some("Bert"), None, Some("Peter"), Some("Brain"), None, None);
+    let vec = vec![
+        Some("Steve"),
+        Some("Bert"),
+        None,
+        Some("Peter"),
+        Some("Brain"),
+        None,
+        None,
+    ];
 
     // Skips Brain at 4, proceeds to 5
-    assert_eq!(linear_probe(&vec, "Peter"), 5); 
-                                                
+    assert_eq!(linear_probe(&vec, "Peter"), 5);
+
     // Skips 3 + 1 % 7 = 4 because vec[4] is Some("Brain")
     // Skips 4 + 4 % 7 = 1 because vec[1] is Some("Bert")
-    // Skips 1 + 9 % 7 = 3 (back where we started) 
+    // Skips 1 + 9 % 7 = 3 (back where we started)
     // Should be 3 + 16 % 7 = 5 because vec[5] is None
     assert_eq!(quadratic_probe(&vec, "Peter"), 5);
 }

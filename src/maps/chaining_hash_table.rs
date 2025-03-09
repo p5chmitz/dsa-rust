@@ -1,7 +1,6 @@
 /////////////////////////////////////////////////////////
 /** Safe chaining hash table with division compression */
 /////////////////////////////////////////////////////////
-
 use crate::maps::hash_lib;
 use std::fmt::Debug;
 use std::hash::Hash;
@@ -57,10 +56,10 @@ impl<K: Hash + Debug + PartialEq, V: PartialEq + Clone> ChainingHashTable<K, V> 
             }
             // Required because the for loop contains early return statement
             // but does not return a value when no match is found
-            None 
+            None
         } else {
             // Required because function returns and if let Some is inexhaustive
-            None 
+            None
         }
     }
 
@@ -137,7 +136,7 @@ impl<K: Hash + Debug + PartialEq, V: PartialEq + Clone> ChainingHashTable<K, V> 
     pub fn key_set(&self) -> Vec<&K> {
         let mut v = Vec::new();
         for k in self.iter().keys() {
-            v.push(k)     
+            v.push(k)
         }
         v
     }
@@ -174,10 +173,10 @@ impl<K: Hash + Debug + PartialEq, V: PartialEq + Clone> ChainingHashTable<K, V> 
             }
             // Required because for loop contains an early return statement
             // but does not return a value if no match is found
-            false 
+            false
         } else {
             // Required because function returns and if let Some is inexhaustive
-            false 
+            false
         }
     }
 
@@ -328,5 +327,4 @@ pub fn example() {
     for e in map.iter() {
         println!("{:?}", e)
     }
-
 }

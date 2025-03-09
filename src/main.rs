@@ -246,7 +246,6 @@ fn main() {
     println!("\x1b[1;34mGeneric linked list:\x1b[0m");
     lists::generic_doubly_linked_list::example();
     println!();
-
 }
 
 #[test]

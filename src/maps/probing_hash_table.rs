@@ -1,31 +1,30 @@
 /////////////////////////////////////////////////////////////////////////////////
 /** Safe open addressing hash table with MAD compression and quadratic probing */
 /////////////////////////////////////////////////////////////////////////////////
-
 use crate::maps::hash_lib;
+use crate::maps::traits;
+use rand::Rng;
 use std::collections::hash_map::DefaultHasher;
 use std::fmt::Debug;
 use std::hash::{Hash, Hasher};
-use rand::Rng;
-use crate::maps::traits;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Entry<K, V> {
     key: K,
     value: V,
 }
-impl<K, V> Entry<K, V> 
-where 
-    K: Clone + Debug + Hash + PartialEq, 
-    V: Clone + PartialEq
+impl<K, V> Entry<K, V>
+where
+    K: Clone + Debug + Hash + PartialEq,
+    V: Clone + PartialEq,
 {
     fn new(key: K, value: V) -> Entry<K, V> {
         Entry { key, value }
     }
 }
 #[derive(Debug)]
-/** Prime, scale, and shift are used by the MAD compression algorithm and 
-because they are randomly generated they must remain static for the 
+/** Prime, scale, and shift are used by the MAD compression algorithm and
+because they are randomly generated they must remain static for the
 lifetime of the backing structure; The grow() operation changes these values */
 pub struct ProbingHashTable<K, V> {
     data: Vec<Option<Entry<K, V>>>,
@@ -34,12 +33,12 @@ pub struct ProbingHashTable<K, V> {
     scale: usize,
     shift: usize,
     size: usize,
-    entries: usize
+    entries: usize,
 }
-impl<K, V> ProbingHashTable<K, V> 
-where 
-    K: Clone + Debug + Hash + PartialEq, 
-    V: Clone + PartialEq
+impl<K, V> ProbingHashTable<K, V>
+where
+    K: Clone + Debug + Hash + PartialEq,
+    V: Clone + PartialEq,
 {
     /** Constructor for an empty table with a default capacity of 2 */
     pub fn new() -> ProbingHashTable<K, V> {
@@ -61,7 +60,6 @@ where
 
     /** Takes a key and returns a Boolean indicating whether its in the map */
     pub fn contains(&self, key: K) -> bool {
-
         let hash = Self::hash(&key);
         let mut location = self.compress(hash);
 
@@ -74,7 +72,8 @@ where
                 location = (location + i.pow(2)) % self.data.len();
                 i += 1;
             }
-        } false
+        }
+        false
     }
 
     /** Returns the value associated with a key, if the key exists */
@@ -88,7 +87,9 @@ where
         if location >= 0 {
             let value = &self.data[location as usize].as_ref().unwrap().value;
             return Some(value);
-        } else { None }
+        } else {
+            None
+        }
     }
 
     /** Adds entry `(k, v)`, overwriting any value `v` associated with an
@@ -113,11 +114,13 @@ where
         // Creates a new Entry and inserts it
         let entry = Entry::new(key, value);
         let mut old_entry: Option<Entry<K, V>> = None;
-        if location >= 0 { // Replace an entry
+        if location >= 0 {
+            // Replace an entry
             //println!("COLLISION!!!! {:?}", &entry.key);
             old_entry = self.data[location as usize].take();
             self.data[location as usize] = Some(entry);
-        } else { // Add a new entry
+        } else {
+            // Add a new entry
             self.data[-(location + 1) as usize] = Some(entry);
             self.ctrl[-(location + 1) as usize] = 0x01;
             self.size += 1;
@@ -126,8 +129,8 @@ where
         return old_entry;
     }
 
-    /** Removes an entry from the map by key; The secret, though, is that 
-    the data "leaks", meaning its no longer available but it doesn't 
+    /** Removes an entry from the map by key; The secret, though, is that
+    the data "leaks", meaning its no longer available but it doesn't
     technically get removed either ¯\_(ツ)_/¯ */
     pub fn remove(&mut self, key: K) -> Option<Entry<K, V>> {
         let hash = Self::hash(&key);
@@ -153,15 +156,15 @@ where
     // UTILITY FUNCTIONS
 
     // Hashes/compresses the key and checks the associated index;
-    // if Some, checks the &Entry for equivalent key, 
-    //     if true, returns positive_isize representing the index, 
+    // if Some, checks the &Entry for equivalent key,
+    //     if true, returns positive_isize representing the index,
     //     if false, loops through the probing logic looking for equivalency,
     //     fails when the probing lands on None
     // if None, returns negative_isize representing the first available index
     fn find_index(&self, bucket: usize, key: &K) -> isize {
         let mut i: usize = 1;
         let mut current_bucket = bucket;
-        
+
         // Quadratic probing logic
         while let Some(entry) = &self.data[current_bucket] {
             if entry.key == *key {
@@ -183,21 +186,20 @@ where
 
     // Compresses the hash using the MAD algorithm
     fn compress(&self, hash: usize) -> usize {
-        (hash.wrapping_mul(self.scale as usize))
-            .wrapping_add(self.shift)
+        (hash.wrapping_mul(self.scale as usize)).wrapping_add(self.shift)
             % (self.prime)
             % (self.data.len()) as usize
     }
 
-    /** Internal function that grows the base (storage) vector to the next prime 
-    larger than double the length of the original vector, rehashes and compresses 
+    /** Internal function that grows the base (storage) vector to the next prime
+    larger than double the length of the original vector, rehashes and compresses
     hashes for new distribution */
     fn grow(&mut self) {
-        // Create a new base vector with_capacity() and resize_with() to ensure 
+        // Create a new base vector with_capacity() and resize_with() to ensure
         // all indexes exist, otherwise you could push to an index that doesn't
         // exist causing a panic
-        // NOTE: Vec::resize_with() may result in "hidden allocation" despite description 
-        // that indicates that the function resizes "in place", initializes 
+        // NOTE: Vec::resize_with() may result in "hidden allocation" despite description
+        // that indicates that the function resizes "in place", initializes
         // new_base with all None values
         let new_capacity = hash_lib::next_prime(self.data.len() * 2);
         let mut new_base: Vec<Option<Entry<K, V>>> = Vec::with_capacity(new_capacity);
@@ -215,15 +217,14 @@ where
         self.shift = rng.random_range(0..=self.prime - 1);
 
         // Move entries from self.data into new_base
-        // For each Some entry in old table, calculate new location 
-        // via hash/compression and insert the entry into new_base[location] 
+        // For each Some entry in old table, calculate new location
+        // via hash/compression and insert the entry into new_base[location]
         for e in &mut self.data {
             if let Some(v) = e.take() {
-
                 // MAD compression algorithm
                 let mut location: usize = ((hash_lib::hash(&v.key))
                     .wrapping_mul(self.scale as usize))
-                    .wrapping_add(self.shift)
+                .wrapping_add(self.shift)
                     % (self.prime)
                     % (new_capacity);
 
@@ -242,7 +243,6 @@ where
         self.data = new_base;
         self.ctrl = new_ctrl;
     }
-
 }
 
 #[test]
@@ -272,11 +272,11 @@ fn probing_hash_table_test() {
     map.put("Dangus", 27); // Grows the map
     assert_eq!(map.size, 6);
     assert_eq!(map.data.len(), 23);
-    
+
     // Illustrates that contains() works as intended
     assert_eq!(map.contains("Dingus"), true);
 
-    // Illustrates that put() returns old values and 
+    // Illustrates that put() returns old values and
     // overwrites existing values upon collision...
     let collision = map.put("Peter", 41).unwrap();
     assert_eq!(collision.value, 40 as u8);
@@ -288,16 +288,26 @@ fn probing_hash_table_test() {
     // Illustrates that removes entries by key and returns the value
     assert!(map.contains("Dangus"));
     let removed = map.remove("Dangus").unwrap();
-    assert_eq!(removed, Entry { key: "Dangus", value: 27});
+    assert_eq!(
+        removed,
+        Entry {
+            key: "Dangus",
+            value: 27
+        }
+    );
     assert!(!map.contains("Dangus"));
-
 }
 
 pub fn example() {
     //Creates a new hash map
     let mut map = ProbingHashTable::<&str, u8>::new();
 
-    let s = format!("Map stats: size: {}, capacity: {}, active entries: {}", map.size, map.data.len(), map.entries);
+    let s = format!(
+        "Map stats: size: {}, capacity: {}, active entries: {}",
+        map.size,
+        map.data.len(),
+        map.entries
+    );
     let l = "=".repeat(s.len());
     println!("{l}\n{s}");
 
@@ -310,11 +320,13 @@ pub fn example() {
     }
 
     // Checks that the map contains what we'd expect
-    if map.contains("Peter") == false { panic!() };
+    if map.contains("Peter") == false {
+        panic!()
+    };
     let val = map.get("Peter").unwrap();
     println!("Peter is {val}");
 
-    // Replaces a value for a given key and 
+    // Replaces a value for a given key and
     // checks that the new value took
     let new = 41;
     let old = map.put("Peter", new).unwrap().value;
@@ -323,7 +335,12 @@ pub fn example() {
     println!("Uhhhhh, I meant Peter is {val}");
 
     // Shows the map and its data
-    println!("\nMap stats: size: {}, capacity: {}, active entries: {}", map.size, map.data.len(), map.entries);
+    println!(
+        "\nMap stats: size: {}, capacity: {}, active entries: {}",
+        map.size,
+        map.data.len(),
+        map.entries
+    );
     for (e, m) in map.data.iter().zip(map.ctrl.iter()) {
         println!("\t{:>3}: {:?}", m, e)
     }
@@ -336,7 +353,12 @@ pub fn example() {
     }
 
     // The final result
-    let s = format!("\nMap stats: size: {}, capacity: {}, active entries: {}", map.size, map.data.len(), map.entries);
+    let s = format!(
+        "\nMap stats: size: {}, capacity: {}, active entries: {}",
+        map.size,
+        map.data.len(),
+        map.entries
+    );
     println!("{s}");
     for (e, m) in map.data.iter().zip(map.ctrl.iter()) {
         println!("\t{:>3}: {:?}", m, e)
@@ -344,6 +366,4 @@ pub fn example() {
 
     let l = "=".repeat(s.len());
     println!("\n{l}");
-
 }
-
