@@ -343,14 +343,12 @@ impl<'a, T> CursorMut<'a, T> {
     pub fn peek_next(&mut self) -> Option<&mut T> {
         unsafe {
             let next = if let Some(cur) = self.cursor {
-                // Normal case, try to follow the cur node's prev pointer
-                (*cur).prev
+                (*cur).next
             } else {
                 // Ghost case, try to use the list's head pointer
                 self.list.head
             };
-    
-            // Yield the element if the next node exists
+            // Yield the data if the next node exists
             next.map(|node| &mut (*node).data)
         }
     }
@@ -360,14 +358,12 @@ impl<'a, T> CursorMut<'a, T> {
     pub fn peek_prev(&mut self) -> Option<&mut T> {
         unsafe {
             let prev = if let Some(cur) = self.cursor {
-                // Normal case, try to follow the cur node's next pointer
-                (*cur).next
+                (*cur).prev
             } else {
-                // Ghost case, try to use the list's tail pointer
+                // If you're at the sentinel, point to the tail
                 self.list.tail
             };
-    
-            // Yield the element if the prev node exists
+            // Yield the data if the prev node exists
             prev.map(|node| &mut (*node).data)
         }
     }
@@ -524,6 +520,18 @@ mod tests {
         cur.move_prev(); // 2
         assert_eq!(cur.index(), Some(2));
         assert_eq!(cur.current(), Some(&mut "a"));
+
+        // Next is the ghost, but peek doesn't change the current position
+        let peek = cur.peek_next();
+        assert_eq!(peek, None);
+        assert_eq!(cur.index(), Some(2));
+        assert_eq!(cur.current(), Some(&mut "a"));
+
+        let peek = cur.peek_prev();
+        assert_eq!(peek, Some(&mut "b"));
+        assert_eq!(cur.index(), Some(2));
+        assert_eq!(cur.current(), Some(&mut "a"));
+
     }
 
 }
