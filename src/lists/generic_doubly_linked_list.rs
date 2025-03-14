@@ -712,12 +712,6 @@ impl<'a, T> CursorMut<'a, T> {
     }
 }
 
-//TODO: 
-// [X] Organize tests by impl blocks
-// [] Ensure all operations are accounted for
-// [] Combine operations with all necessary pointer assertions
-// [] Compose tests to cover as many use-cases as possible
-
 #[cfg(test)]
 mod list_tests {
     use super::*;
@@ -774,7 +768,6 @@ mod list_tests {
         
         assert_eq!(list.len(), 3);
 
-    
         // Creates a new doubly-linked list 
         // and pushes some elements to it
         let mut list = List::new();
@@ -1059,119 +1052,5 @@ mod list_tests {
         assert_eq!(list.peek_head(), Some(&"E"));
         assert_eq!(list.peek_tail(), Some(&"E"));
 
-    }
-}
-
-/** Uses the List structure to implement a sorted podium list */
-pub mod sorted_list {
-    use crate::generic_doubly_linked_list;
-
-    // Example of a random T
-    #[derive(Debug)]
-    pub struct Entry<'a> {
-        name: &'a str,
-        score: usize,
-        notes: &'a str,
-    }
-    impl<'a> Entry<'a> {
-        pub fn from(name: &'a str, score: usize, notes: &'a str) -> Entry<'a> {
-            Entry { name, score, notes }
-        }
-    }
-    // New struct similar to teh old struct, but sorted, baybeeee
-    pub struct SortedList<Entry> {
-        list: crate::generic_doubly_linked_list::List::<Entry>,
-        size: usize,
-    }
-    impl<'a> SortedList<Entry<'a>> {
-
-        /** Creates a new SortedList of Entry types */
-        pub fn new() -> SortedList<Entry<'a>> {
-            let new_list = generic_doubly_linked_list::List::new();
-            SortedList {
-                list: new_list,
-                size: 0,
-            }
-        }
-        /** Creates an Entry node and inserts it into the list by 
-        score value in O(n) time */
-        pub fn insert(&'a mut self, name: &'a str, score: usize, notes: &'a str) {
-            let entry = Entry { name, score, notes };
-            // If the list is not empty search the list to find 
-            // the correct placement
-            if self.list.head.is_some() {
-                let mut cur = self.list.cursor_mut();
-                cur.move_next(); // Places cursor at the head
-                // Iterates through the entries in the list comparing
-                // the scores to find the correct insert location
-                while cur.is_some() {
-                    if let Some(data) = cur.current() {
-                        if data.score < score {
-                            let _a = cur.current();
-                            break
-                        }
-                    }
-                    cur.move_next();
-                }
-                
-            } 
-            //If the list is empty insert a new head
-            else {
-               self.list.push_head(entry); 
-            }
-        }
-        pub fn set_node(&mut self, _name: &str, _note: &str) -> Option<Entry> {
-            None
-        }
-        pub fn remove(&mut self, _name: &str) -> Option<Entry> {
-            None
-        }
-        pub fn print_list(&self) {}
-    }
-
-
-    pub fn example() {
-        use Entry;
-    
-        // Illustrates the structure with a custom struct Whatever
-        let _first = Entry {
-            name: "Peter",
-            score: 41,
-            notes: "lol",
-        };
-        let _second = Entry {
-            name: "Brain",
-            score: 39,
-            notes: "homie",
-        };
-        let _third = Entry {
-            name: "Nathan",
-            score: 38,
-            notes: "RIP buddy",
-        };
-        let _fourth = Entry {
-            name: "Bobson",
-            score: 23,
-            notes: "Dumbass",
-        };
-        let _fifth = Entry {
-            name: "Remus",
-            score: 45,
-            notes: "Ruler",
-        };
-        let mut _list = SortedList::new();
-    
-        //list.insert(first);
-        //list.insert(second);
-        //list.insert(third);
-        //list.remove();
-        //list.insert(fourth);
-        //list.remove();
-        //list.insert(fifth);
-    
-        //for e in list.iter() {
-        //    println!("{:?}", e)
-        //}
-    
     }
 }
