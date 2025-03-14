@@ -18,42 +18,48 @@ pub struct Node<T> {
     prev: Link<T>,
     next: Link<T>,
 }
-/// The List contains operations for a basic, unsorted, doubly-linked
-/// list that can act as a stack or a queue with operations to insert and remove
-/// from both the front and tail of the list in O(1) time;
-/// The List also supports a cursor which supports operations for a positional list 
-/// to support applications that require a sorted list;
-/** The basic list's API includes the following operations:
- - pub new() -> List<T>
- - pub push_head(T) aka add(k)
- - pub push_tail(T) aka enqueue(k)
- - pub pop_head() -> Option<T> aka pop(k)/dequeue(k)
- - pub pop_tail() -> Option<T>
+/** The List contains operations for a basic, unsorted, doubly-linked
+list that can act as a stack or a queue with operations to insert and remove
+from both the front and tail of the list in O(1) time;
+The basic list's API includes the following operations:
+ 
+Utilities
+ - pub fn new() -> List<T>
+ - pub fn len(&self) -> usize
+ - pub fn is_empty(&self) -> bool
+ - pub fn peek_head(&self) -> Option<&T>
+ - pub fn peek_tail(&self) -> Option<&T>
+ - pub fn iter(&self) -> Iter<T>
+ - pub fn cursor_mut(&mut self) -> CursorMut<T>
 
-The positional list adds the following operations:
- - peek_next() -> &T
- - peek_prev() -> &T
- - find(&T) -> Link<T>
- - insert_ith(Node<T>, p)
- - insert_after(Node<T>, p)
- - insert_before(Node<T>, p)
- - set(Node<T>, p) -> Node<T>
- - remove_ith(p) -> Node<T>
- - remove_after(p) -> Node<T>
- - remove_before(p) -> Node<T>
- - peek_ith(p) -> &Node<T>
+Mutation
+ - pub fn push_head(&mut self, element: T)
+ - pub fn pop_head(&mut self) -> Option<T>
+ - pub fn push_tail(&mut self, element: T)
+ - pub fn pop_tail(&mut self) -> Option<T>
+ - pub fn clear(&mut self)
 
-All lists contain the following non-public utilities
- - contains(&T) -> bool
- - head() -> Option<&T>
- - tail() -> Option<&T>
- - len() -> usize
- - is_empty() -> bool
- - clear()
- - iter() -> Iter
- - iter_rev() -> Iter
+The module includes a CursorMut type that adds positional list functionality 
+with the following operations:
 
-Positional List (Sorted List Support)
+Utilities
+ - pub fn is_some(&self) -> bool
+ - pub fn is_none(&self) -> bool
+ - pub fn index(&self) -> Option<usize>
+
+Navigation
+ - pub fn move_next(&mut self)
+ - pub fn move_prev(&mut self) {
+ - pub fn current(&mut self) -> Option<&mut T>
+ - pub fn peek_prev(&mut self) -> Option<&mut T>
+ - pub fn peek_next(&mut self) -> Option<&mut T>
+
+Mutation
+ - pub fn split_before(&mut self) -> List<T>
+ - pub fn split_after(&mut self) -> List<T>
+ - pub fn splice_before(&mut self, mut input: List<T>)
+ - pub fn splice_after(&mut self, mut input: List<T>)
+ - pub fn remove_current() -> Option<T>
 */
 #[derive(Debug)]
 pub struct List<T> {
@@ -103,6 +109,26 @@ impl<T> List<T> {
             self.head = Some(new_node_wrapper);
             self.len += 1;
             return;
+        }
+    }
+
+    /** Returns a reference to the data at the list's head, if any */
+    pub fn peek_head(&self) -> Option<&T> {
+        unsafe {
+            if let Some(node_ptr) = self.head {
+                let node = &(*node_ptr).data;
+                return Some(node);
+            } else { None }
+        }
+    }
+
+    /** Returns a reference to the data at the list's tail, if any */
+    pub fn peek_tail(&self) -> Option<&T> {
+        unsafe {
+            if let Some(node_ptr) = self.tail {
+                let node = &(*node_ptr).data;
+                return Some(node);
+            } else { None }
         }
     }
 
@@ -266,7 +292,6 @@ impl<T> Drop for List<T> {
 }
 
 /** Its the great cursor, Charlie Brown! */
-// Just a reminder: Link<T> = Option<*mut Node<T>>
 pub struct CursorMut<'a, T> {
     cursor: Link<T>,
     list: &'a mut List<T>,
@@ -371,26 +396,86 @@ impl<'a, T> CursorMut<'a, T> {
         }
     }
 
-    //pub fn remove_current() -> T {}
+    /** Removes and returns the data under the cursor's current position
+    and moves the cursor back one position
+    Precondition: 
+
+        self.head -> A <-> B <-> C <-> D <- self.tail
+                                 ^
+                              cursor
+    Postcondition:
+    
+        self.head -> A <-> B <-> D <- self.tail
+                           ^
+                        cursor
+    */
+    pub fn remove_current(&mut self) -> Option<T> {
+        unsafe {
+            // Case 1) You're at the sentinel, do nothing
+            if self.current().is_none() { return None; }
+
+            // Case 2) You're in a non-empty list
+            let node_data = if let Some(node_ptr) = self.cursor {
+                // 2.1 You're at the head
+                if (*node_ptr).prev == None {
+                    // Reset the head and its pointers
+                    if let Some(next_node) = (*node_ptr).next {
+                        (*next_node).prev = None;
+                        self.list.head = (*node_ptr).next;
+                    }
+                }
+
+                // 2.2 You're at the tail
+                else if (*node_ptr).next == None {
+                    // Reset the head and its pointers
+                    if let Some(next_node) = (*node_ptr).prev {
+                        (*next_node).next = None;
+                        self.list.tail = (*node_ptr).prev;
+                    }
+
+                // 2.3 You're somewhere mid-list
+                } else { 
+                    // Reset the previous node's next
+                    if let Some(prev_node) = (*node_ptr).prev {
+                        (*prev_node).next = (*node_ptr).next;
+                    }
+                    // Resent the next node's prev
+                    if let Some(next_node) = (*node_ptr).next {
+                        (*next_node).prev = (*node_ptr).prev;
+                    }
+                };
+                // For all non-empty list cases,
+                // take the cursor's underlying raw pointer data 
+                // and adjust the cursor's position
+                self.move_prev(); // handles index placement too
+                let data: Box<Node<T>> = Box::from_raw(node_ptr);
+                Some(data.data)
+
+            } else { None }; // Just in case self.cursor is None
+            // Decrement the underlying list's length and return
+            self.list.len -= 1;
+            node_data
+        }
+    }
+
+    //pub fn insert_before()
+    //pub fn set_current() -> Option<T>
 
     /** Returns a new list containint all nodes before the cursor,
-    modifying self to become all nodes after (and including) the cursor */
-    pub fn split_before(&mut self) -> List<T> {
-        // Precondition:
-        //
-        //     list.front -> A <-> B <-> C <-> D <- list.back
-        //                               ^
-        //                              cur
-        //
-        // Postcondition:
-        //
-        //     list.front -> C <-> D <- list.back
-        //                   ^
-        //                  cur
-        //
-        //    return.front -> A <-> B <- return.back
-        //
+    modifying `self` to become all nodes after (and including) the cursor 
+    Precondition: 
 
+        self.head -> A <-> B <-> C <-> D <- self.tail
+                                 ^
+                              cursor
+    Postcondition:
+    
+        self.head -> C <-> D <- self.tail
+                     ^
+                  cursor
+    
+        return.head -> A <-> B <- return.tail */
+    pub fn split_before(&mut self) -> List<T> {
         // If the cursor is on an element of a non-empty list
         if let Some(node_ptr) = self.cursor {
             unsafe {
@@ -438,22 +523,22 @@ impl<'a, T> CursorMut<'a, T> {
     }
 
     /** Returns a new list that includes all nodes after the cursor, 
-    modifying self to become all nodes before (and including) the cursor */
+    modifying self to become all nodes before (and including) the cursor 
+    Precondition:
+    
+        self.head -> A <-> B <-> C <-> D <- self.tail
+                           ^
+                         cursor
+    
+    Postcondition:
+    
+        self.head -> A <-> B <- self.tail
+                           ^
+                         cursor
+    
+        return.head -> C <-> D <- return.tail 
+    */
     pub fn split_after(&mut self) -> List<T> {
-        // Precondition:
-        //
-        //     list.front -> A <-> B <-> C <-> D <- list.back
-        //                         ^
-        //                        cur
-        //
-        // Postcondition:
-        //
-        //     list.front -> A <-> B <- list.back
-        //                         ^
-        //                        cur
-        //
-        //    return.front -> C <-> D <- return.back
-        
         // If the cursor is not on a sentinel node
         if let Some(node_ptr) = self.cursor {
             unsafe {
@@ -500,21 +585,22 @@ impl<'a, T> CursorMut<'a, T> {
         }
     }
 
-    /** Splices in a new list between the cursor node and the previous node */
+    /** Splices in a new list between the cursor node and the previous node 
+    Precondition:
+    
+        self.head -> A <-> B <-> C <- self.tail
+                           ^
+                         cursor
+
+        input.head -> 1 <-> 2 <- input.tail
+
+    Postcondition: 
+    
+        self.head -> A <-> 1 <-> 2 <-> B <-> C <- self.back
+                                       ^
+                                     cursor 
+    */
     pub fn splice_before(&mut self, mut input: List<T>) {
-        // Precondition:
-        //
-        // input.front -> 1 <-> 2 <- input.back
-        //
-        // list.front -> A <-> B <-> C <- list.back
-        //                     ^
-        //                    cur
-        // Postcondition: 
-        //
-        // list.front -> A <-> 1 <-> 2 <-> B <-> C <- list.back
-        //                                 ^
-        //                                cur
-        //
         unsafe {
             // Per the Too Many Linked Lists Book:
             // We can either `take` the input's pointers or `mem::forget`
@@ -564,21 +650,22 @@ impl<'a, T> CursorMut<'a, T> {
         }
     }
 
+    /** Splices in a new list between the cursor node and the next node 
+    Precondition
+    
+        self.head -> A <-> B <-> C <- self.tail
+                           ^
+                        cursor
+
+        input.head -> 1 <-> 2 <- input.tail
+
+    Postcondition
+    
+        self.head -> A <-> B <-> 1 <-> 2 <-> C <- self.tail
+                           ^
+                        cursor 
+    */
     pub fn splice_after(&mut self, mut input: List<T>) {
-        // Precondition
-        //
-        // input.front -> 1 <-> 2 <- input.back
-        //
-        // list.front -> A <-> B <-> C <- list.back
-        //                     ^
-        //                    cur
-        //
-        // Postcondition
-        //
-        // list.front -> A <-> B <-> 1 <-> 2 <-> C <- list.back
-        //                     ^
-        //                    cur
-        //
         unsafe {
             // From the Too Many Linked List books
             // We can either `take` the input's pointers or `mem::forget`
@@ -625,15 +712,22 @@ impl<'a, T> CursorMut<'a, T> {
     }
 }
 
+//TODO: 
+// [X] Organize tests by impl blocks
+// [] Ensure all operations are accounted for
+// [] Combine operations with all necessary pointer assertions
+// [] Compose tests to cover as many use-cases as possible
+
 #[cfg(test)]
-mod tests {
+mod list_tests {
     use super::*;
 
     #[test]
-    fn basic_operations_test() {
+    fn list_test() {
     
         use crate::lists::generic_doubly_linked_list::{List, CursorMut};
     
+        // Operational tests
         // Creates a new doubly-linked list 
         // and pushes some elements to it
         let mut list = List::new();
@@ -679,12 +773,7 @@ mod tests {
         // Postcondition: [c, b, a]
         
         assert_eq!(list.len(), 3);
-    }
 
-    #[test]
-    fn pointer_test() {
-
-        use crate::lists::generic_doubly_linked_list::{List, CursorMut};
     
         // Creates a new doubly-linked list 
         // and pushes some elements to it
@@ -785,10 +874,10 @@ mod tests {
     }
 
     #[test]
-    fn split_after_test() {
+    fn split_after() {
 
         use crate::lists::generic_doubly_linked_list::{List, CursorMut};
-    
+
         // Creates a new doubly-linked list 
         // and pushes some elements to it
         let mut list = List::new();
@@ -817,10 +906,10 @@ mod tests {
     }
 
     #[test]
-    fn split_before_test() {
+    fn split_before() {
 
         use crate::lists::generic_doubly_linked_list::{List, CursorMut};
-    
+
         // Creates a new doubly-linked list 
         // and pushes some elements to it
         let mut list = List::new();
@@ -849,10 +938,10 @@ mod tests {
     }
 
     #[test]
-    fn splice_before_test() {
+    fn splice_before() {
 
         use crate::lists::generic_doubly_linked_list::{List, CursorMut};
-    
+
         // Creates a new doubly-linked list 
         // and pushes some elements to it
         let mut list = List::<&str>::new();
@@ -884,10 +973,8 @@ mod tests {
     }
 
     #[test]
-    fn splice_after_test() {
+    fn splice_after() {
 
-        use crate::lists::generic_doubly_linked_list::{List, CursorMut};
-    
         // Creates a new doubly-linked list 
         // and pushes some elements to it
         let mut list = List::<&str>::new();
@@ -914,6 +1001,63 @@ mod tests {
         assert_eq!(tail, Some("2"));
         tail = list.pop_tail();
         assert_eq!(tail, Some("b"));
+
+    }
+
+    #[test]
+    fn remove_current() {
+
+        use crate::lists::generic_doubly_linked_list::{List, CursorMut};
+
+        // Creates a new doubly-linked list 
+        // and pushes some elements to it
+        let mut list = List::<&str>::new();
+        list.push_tail("a");
+        list.push_tail("b");
+        list.push_tail("c"); // Postcondition: [a, b, c]
+        assert_eq!(list.len(), 3);
+
+        let mut cur = list.cursor_mut();
+        cur.move_next(); // a
+        assert_eq!(cur.index, Some(0));
+        cur.move_next(); // b
+        assert_eq!(cur.index, Some(1));
+
+        // Remove the node
+        cur.remove_current(); // Postcondition: [a, c]
+
+        // Tests that the remove operation backs 
+        // the cursor up and decrements the list length
+        assert_eq!(cur.index, Some(0));
+        assert_eq!(list.len(), 2);
+
+        let mut head = list.pop_head();
+        assert_eq!(head, Some("a"));
+        head = list.pop_head();
+        assert_eq!(head, Some("c"));
+        head = list.pop_head();
+        assert_eq!(head, None);
+
+        // New list test
+        let mut list = List::<&str>::new();
+        list.push_tail("P");
+        list.push_tail("E");
+        list.push_tail("T");
+        list.push_tail("E");
+        list.push_tail("R"); // Postcondition [P, E, T, E, R]
+                             
+        let mut cur = list.cursor_mut();
+        cur.move_prev(); // 4
+        // Removes tail
+        let r = cur.remove_current().unwrap(); // Postcondition [P, E, T, E]
+        assert_eq!(r, "R");
+        cur.move_next(); // boo! 👻
+        cur.move_next(); // 0
+        // Removes head
+        let p = cur.remove_current().unwrap(); // Postcondition [E, T, E]
+        assert_eq!(p, "P");
+        assert_eq!(list.peek_head(), Some(&"E"));
+        assert_eq!(list.peek_tail(), Some(&"E"));
 
     }
 }
