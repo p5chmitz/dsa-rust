@@ -278,7 +278,8 @@ impl<T> Drop for List<T> {
         //unsafe {
         //    let mut current_node_ptr = self.head;
         //    while let Some(ptr) = current_node_ptr {
-        //        // Store a pointer to the next Node before deallocating the current one
+        //        // Store a pointer to the next Node before deallocating the 
+        //        // current one
         //        let next_node_ptr = (*ptr.as_ptr()).next;
 
         //        // Deallocate the current node
@@ -308,8 +309,8 @@ impl<'a, T> CursorMut<'a, T> {
     }
 
     /** Returns the "index" to the current list node in a zero-indexed list;
-    The cursor technically sits _between_ nodes, so this references the "next" (current)
-    node's position */
+    The cursor technically sits _between_ nodes, so this references the 
+    "next" (current) node's position */
     pub fn index(&self) -> Option<usize> {
         self.index
     }
@@ -328,7 +329,8 @@ impl<'a, T> CursorMut<'a, T> {
                 }
             }
         } else if !self.list.is_empty() {
-            // The cursor is at the "ghost" sentinel, and theres nowhere else to go but to the head
+            // The cursor is at the "ghost" sentinel, and theres nowhere else 
+            // to go but to the head
             self.cursor = self.list.head;
             self.index = Some(0)
         } else {
@@ -350,7 +352,8 @@ impl<'a, T> CursorMut<'a, T> {
                 }
             }
         } else if !self.list.is_empty() {
-            // The cursor is at the "ghost" sentinel, and theres nowhere else to go but to the tail
+            // The cursor is at the "ghost" sentinel, and theres nowhere else 
+            // to go but to the tail
             self.cursor = self.list.tail;
             self.index = Some(self.list.len - 1)
         } else {
@@ -359,7 +362,8 @@ impl<'a, T> CursorMut<'a, T> {
     }
 
     /** Returns a mutable reference to the data at the current position;
-    It is necessary to return a _mutable_ reference to retain the elision rule checks */
+    It is necessary to return a _mutable_ reference to retain the elision 
+    rule checks */
     pub fn current(&mut self) -> Option<&mut T> {
         unsafe {
             self.cursor.map(|node| &mut (*node).data)
@@ -367,7 +371,8 @@ impl<'a, T> CursorMut<'a, T> {
     }
     
     /** Returns a mutable reference to the data at the next node's position;
-    It is necessary to return a _mutable_ reference to retain the elision rule checks */
+    It is necessary to return a _mutable_ reference to retain the elision 
+    rule checks */
     pub fn peek_next(&mut self) -> Option<&mut T> {
         unsafe {
             let next = if let Some(cur) = self.cursor {
@@ -382,7 +387,8 @@ impl<'a, T> CursorMut<'a, T> {
     }
     
     /** Returns a mutable reference to the data at the previous node's position;
-    It is necessary to return a _mutable_ reference to retain the elision rule checks */
+    It is necessary to return a _mutable_ reference to retain the elision 
+    rule checks */
     pub fn peek_prev(&mut self) -> Option<&mut T> {
         unsafe {
             let prev = if let Some(cur) = self.cursor {
@@ -394,6 +400,115 @@ impl<'a, T> CursorMut<'a, T> {
             // Yield the data if the prev node exists
             prev.map(|node| &mut (*node).data)
         }
+    }
+
+    /** Inserts a node before the cursor; 
+    - If the cursor is on the sentinel node of an empty list, 
+    the new node becomes the new head and tail;
+    - If the cursor is on the sentinel node of a non-empty list,
+    the new node becomes the new tail;
+    - If the cursor is on the head, the new node is the new head;
+
+    Precondition: 
+
+        self.head -> A <-> C <- self.tail
+                           ^
+                        cursor
+    Postcondition:
+    
+        self.head -> A <-> B <-> C <- self.tail
+                                 ^
+                              cursor
+
+     * */
+    pub fn insert_before(&mut self, element: T) {
+        let new_node_wrapper: *mut Node<T> =
+            Box::into_raw(Box::new(Node {
+                data: element,
+                prev: None,
+                next: None,
+            }));
+
+        // Case 1) The cursor is at the sentinel of an empty list; 
+        // new head/tail
+        if self.cursor == None && self.list.head.is_none() {
+            self.list.head = Some(new_node_wrapper);
+            self.list.tail = Some(new_node_wrapper);
+        }
+
+        // Case 2) The cursor is at the sentinel of a non-empty list; new tail
+        else if self.cursor == None && self.list.head.is_some() {
+            // Update the old tails next pointer
+            let old_tail = self.list.tail.unwrap();
+            unsafe { (*old_tail).next = Some(new_node_wrapper) };
+            
+            // Update the new node's prev pointer
+            unsafe { (*new_node_wrapper).prev = Some(old_tail) };
+
+            // Update the list's tail
+            self.list.tail = Some(new_node_wrapper);
+        }
+
+        // Case 3) The cursor is at the head of a non-empty list; new head
+        else if self.cursor == self.list.head && self.list.head.is_some() {
+            // Update the old head's prev pointer
+            let old_head = self.list.head.unwrap();
+            unsafe { (*old_head).prev = Some(new_node_wrapper) };
+            
+            // Update the new node's next pointer
+            unsafe { (*new_node_wrapper).next = Some(old_head) };
+
+            // Update the list.head pointer
+            self.list.tail = Some(new_node_wrapper);
+            
+        }
+
+        // Case 4) The cursor is somewhere between head+1 and tail of 
+        // a non-empty list; swap all four pointers
+        else {
+            unsafe {
+                // Capture the node prior to the cursor node
+                // and start orgy of pointer swapping
+                let cursor_node = self.cursor.unwrap();
+                let old_prev = (*cursor_node).prev.unwrap();
+                (*old_prev).next = Some(new_node_wrapper);
+                (*new_node_wrapper).prev = Some(old_prev);
+                (*new_node_wrapper).next = Some(cursor_node);
+                (*cursor_node).prev = Some(new_node_wrapper);
+            }
+        }
+        
+        // All cases
+        // - Adjust the cursor's index
+        // - Increment list len
+        if self.index.is_some() {
+            let mut new_index = self.index.unwrap();
+            new_index += 1;
+            self.index = Some(new_index);
+        } else { self.index = Some(0) };
+        self.list.len += 1;
+    }
+
+    /** Inserts a node after the node the cursor is on */
+    pub fn insert_after(&mut self, element: T) {
+        // Case 1) The cursor is at the sentinel of an empty list; 
+        // new head/tail
+            let _new_node_wrapper: *mut Node<T> =
+                Box::into_raw(Box::new(Node {
+                    data: element,
+                    prev: None,
+                    next: None,
+                })); // Unsafe
+
+        // Case 2) The cursor is at the sentinel of a non-empty list; new head
+
+        // Case 3) The cursor is at the tail of a non-empty list; new tail
+
+        // Case 4) The cursor is somewhere between head and tail-1 of 
+        // a non-empty list
+        
+        // All cases
+        // - Increment list len
     }
 
     /** Removes and returns the data under the cursor's current position
@@ -412,7 +527,7 @@ impl<'a, T> CursorMut<'a, T> {
     pub fn remove_current(&mut self) -> Option<T> {
         unsafe {
             // Case 1) You're at the sentinel, do nothing
-            if self.current().is_none() { return None; }
+            //if self.current().is_none() { return None; }
 
             // Case 2) You're in a non-empty list
             let node_data = if let Some(node_ptr) = self.cursor {
@@ -451,7 +566,8 @@ impl<'a, T> CursorMut<'a, T> {
                 let data: Box<Node<T>> = Box::from_raw(node_ptr);
                 Some(data.data)
 
-            } else { None }; // Just in case self.cursor is None
+            // Just in case self.cursor is None (sentinel)
+            } else { None }; 
             // Decrement the underlying list's length and return
             self.list.len -= 1;
             node_data
@@ -476,7 +592,7 @@ impl<'a, T> CursorMut<'a, T> {
     
         return.head -> A <-> B <- return.tail */
     pub fn split_before(&mut self) -> List<T> {
-        // If the cursor is on an element of a non-empty list
+        // Case 1) The cursor is on an element of a non-empty list
         if let Some(node_ptr) = self.cursor {
             unsafe {
                 // Captures current state of self
@@ -516,7 +632,9 @@ impl<'a, T> CursorMut<'a, T> {
                     //_marker: PhantomData,
                 }
             }
-        // If the cursor is on the sentinel replace the list with an empty one
+
+        // Case 2) The cursor is on the sentinel node;
+        // replace self with an empty list, return the original list
         } else {
             std::mem::replace(self.list, List::new())
         }
@@ -539,7 +657,7 @@ impl<'a, T> CursorMut<'a, T> {
         return.head -> C <-> D <- return.tail 
     */
     pub fn split_after(&mut self) -> List<T> {
-        // If the cursor is not on a sentinel node
+        // Case 1) The cursor is not on the sentinel node
         if let Some(node_ptr) = self.cursor {
             unsafe {
                 // Captures current state of self
@@ -579,7 +697,9 @@ impl<'a, T> CursorMut<'a, T> {
                     //_marker: PhantomData,
                 }
             }
-        // If the cursor is on the sentinel replace the list with an empty one
+
+        // Case 2) The cursor is on the sentinel node;
+        // replace self with an empty list, return the original list
         } else {
             std::mem::replace(self.list, List::new())
         }
@@ -602,25 +722,28 @@ impl<'a, T> CursorMut<'a, T> {
     */
     pub fn splice_before(&mut self, mut input: List<T>) {
         unsafe {
-            // Per the Too Many Linked Lists Book:
-            // We can either `take` the input's pointers or `mem::forget`
-            // it. Using `take` is more responsible in case we ever do custom
-            // allocators or something that also needs to be cleaned up!
-            if input.is_empty() {
-                // Input is an empty list, easy!
-            } else if let Some(cur) = self.cursor {
-                // Both lists are non-empty
+            // Case 1) Input list is empty; do nothing. Easy!
+            if input.is_empty() {} 
+
+            // Case 2) Self is non-empty
+            else if let Some(cur) = self.cursor {
+                // Per the Too Many Linked Lists Book:
+                // We can either `take` the input's pointers or `mem::forget`
+                // it [sic]. Using `take` is more responsible in case we ever 
+                // do custom allocators or something that also needs to be 
+                // cleaned up!
                 let input_head = input.head.take().unwrap();
                 let input_tail = input.tail.take().unwrap();
 
-                // If the cursor doesn't point to self.head
-                // 1) General case, puttin a list inside another list
+                // 2.1) Cursor is somewhere inside a non-empty self;
+                // puttin a list inside another list
                 if let Some(prev) = (*cur).prev {
                     (*prev).next = Some(input_head);
                     (*input_head).prev = Some(prev);
                     (*cur).prev = Some(input_tail);
                     (*input_tail).next = Some(cur);
-                // 2) At head, prepend self with input list
+
+                // 2.2) Cursor is at self.head, prepend self with input list
                 } else {
                     (*cur).prev = Some(input_tail);
                     (*input_tail).next = Some(cur);
@@ -628,25 +751,22 @@ impl<'a, T> CursorMut<'a, T> {
                 }
                 // Index moves forward by input length
                 *self.index.as_mut().unwrap() += input.len;
-            // 3) On the marker for a non-empty list, append self with input
+
+            // Case 3) Cursor is on the sentinel for a non-empty list, 
+            // prepend self with input
             } else if let Some(_back) = self.list.tail {
                 let input_head = input.head.take().unwrap();
                 let input_tail = input.tail.take().unwrap();
-
-                //(*back).prev = Some(input_head);
-                //(*in_front).next = Some(back);
                 self.list.head = Some(input_head);
                 self.list.tail = Some(input_tail);
             } else {
-                // We're empty, become the input, remain on the ghost
+                // Self is empty, swap in the input list, remain on the sentinel
                 std::mem::swap(self.list, &mut input);
             }
 
             self.list.len += input.len;
             // Not necessary but Polite To Do
-            input.len = 0;
-
-            // Input dropped here
+            input.len = 0; // Input dropped at end of block
         }
     }
 
@@ -667,47 +787,48 @@ impl<'a, T> CursorMut<'a, T> {
     */
     pub fn splice_after(&mut self, mut input: List<T>) {
         unsafe {
-            // From the Too Many Linked List books
-            // We can either `take` the input's pointers or `mem::forget`
-            // it. Using `take` is more responsible in case we ever do custom
-            // allocators or something that also needs to be cleaned up!
-            if input.is_empty() {
-                // Input list is empty, easy!
-            // If both lists are non-empty
-            } else if let Some(cur) = self.cursor {
+            // Case 1) Input list is empty, do nothing! Easy.
+            if input.is_empty() {} 
+
+            // Case 2) Self is non-empty
+            else if let Some(cur) = self.cursor {
+                // From the Too Many Linked List book:
+                // We can either `take` the input's pointers or `mem::forget`
+                // it [sic]. Using `take` is more responsible in case we ever 
+                // do custom allocators or something that also needs to be 
+                // cleaned up!
                 let input_head = input.head.take().unwrap();
                 let input_tail = input.tail.take().unwrap();
 
-                // 1) General case; swappin pointers ;)
+                // 2.1) Cursor is somewhere in a non-empty list; swap pointers ;)
                 if let Some(next) = (*cur).next {
                     (*next).prev = Some(input_tail);
                     (*input_tail).next = Some(next);
                     (*cur).next = Some(input_head);
                     (*input_head).prev = Some(cur);
-                // 2) Cursor is at tail, append self
+
+                // 2.2) Cursor is at tail, append self
                 } else {
                     (*cur).next = Some(input_head);
                     (*input_head).prev = Some(cur);
                     self.list.tail = Some(input_tail);
                 }
-            // Index doesn't change
+
+            // Case 3) Cursor is at the sentinel of a non-empty self, prepend self
             } else if let Some(head) = self.list.head {
-                // 3) Cursor is at the sentinel of a non-empty self, prepend self
                 let input_head = input.head.take().unwrap();
                 let input_tail = input.tail.take().unwrap();
 
                 (*head).next = Some(input_tail);
                 (*input_tail).prev = Some(head);
                 self.list.head = Some(input_head);
-            // At the sentinel for an empty self, do a swaperoo
+
+            // Case 4) Cursor is at the sentinel for an empty self, do a swaperoo
             } else {
                 std::mem::swap(self.list, &mut input);
             }
-
+            // Increase the list's lenth value
             self.list.len += input.len;
-            input.len = 0; // Unnecessasry but polite gesture
-
-            // Input dropped at end of block
         }
     }
 }
@@ -1052,5 +1173,65 @@ mod list_tests {
         assert_eq!(list.peek_head(), Some(&"E"));
         assert_eq!(list.peek_tail(), Some(&"E"));
 
+    }
+
+    #[test]
+    fn insert_before() {
+
+        use crate::lists::generic_doubly_linked_list::{List, CursorMut};
+
+        // Creates a new doubly-linked list 
+        // and pushes some elements to it
+        let mut list = List::<&str>::new();
+        list.push_tail("a");
+        list.push_tail("c"); // Postcondition: [a, c]
+        assert_eq!(list.len(), 2);
+
+        let mut cur = list.cursor_mut();
+        cur.move_next(); // a
+        assert_eq!(cur.index, Some(0));
+        cur.move_next(); // b
+        assert_eq!(cur.index, Some(1));
+
+        // Insert a node
+        cur.insert_before("b"); // Postcondition: [a, b, c]
+
+        // Tests that the insert operation increments 
+        // the cursor's index and list length
+        assert_eq!(cur.index, Some(2));
+        assert_eq!(list.len(), 3);
+
+        // Pointer tests
+        // Checks that head -> a
+        let head_ptr: *mut Node<&str> = list.head.unwrap();
+        let head: &str = unsafe { (*head_ptr).data }; // Unsafe deref
+        assert_eq!(head, "a");
+    
+        // Checks that head.next -> b
+        let next_ptr: *mut Node<&str> = unsafe { 
+            (*list.head.unwrap()).next.unwrap() 
+        };
+        let next: &str = unsafe { (*next_ptr).data }; // Unsafe deref
+        assert_eq!(next, "b");
+
+        // Checks that b.next -> c
+        let next_ptr: *mut Node<&str> = unsafe { 
+            (*next_ptr).next.unwrap() 
+        };
+        let next: &str = unsafe { (*next_ptr).data }; // Unsafe deref
+        assert_eq!(next, "c");
+
+        // Checks that b.next -> tail
+        let tail_ptr = list.tail.unwrap();
+        let tail_data = unsafe { (*tail_ptr).data };
+        assert_eq!(next, tail_data);
+
+        // Functional tests
+        let mut head = list.pop_head();
+        assert_eq!(head, Some("a"));
+        head = list.pop_head();
+        assert_eq!(head, Some("b"));
+        head = list.pop_head();
+        assert_eq!(head, Some("c"));
     }
 }
