@@ -420,7 +420,7 @@ impl<'a, T> CursorMut<'a, T> {
                                  ^
                               cursor
 
-     * */
+    */
     pub fn insert_before(&mut self, element: T) {
         let new_node_wrapper: *mut Node<T> =
             Box::into_raw(Box::new(Node {
@@ -438,12 +438,12 @@ impl<'a, T> CursorMut<'a, T> {
 
         // Case 2) The cursor is at the sentinel of a non-empty list; new tail
         else if self.cursor == None && self.list.head.is_some() {
-            // Update the old tails next pointer
+            // Update the old tail's next pointer
             let old_tail = self.list.tail.unwrap();
-            unsafe { (*old_tail).next = Some(new_node_wrapper) };
+            unsafe { (*old_tail).next = Some(new_node_wrapper); }
             
             // Update the new node's prev pointer
-            unsafe { (*new_node_wrapper).prev = Some(old_tail) };
+            unsafe { (*new_node_wrapper).prev = Some(old_tail); }
 
             // Update the list's tail
             self.list.tail = Some(new_node_wrapper);
@@ -453,10 +453,10 @@ impl<'a, T> CursorMut<'a, T> {
         else if self.cursor == self.list.head && self.list.head.is_some() {
             // Update the old head's prev pointer
             let old_head = self.list.head.unwrap();
-            unsafe { (*old_head).prev = Some(new_node_wrapper) };
+            unsafe { (*old_head).prev = Some(new_node_wrapper); }
             
             // Update the new node's next pointer
-            unsafe { (*new_node_wrapper).next = Some(old_head) };
+            unsafe { (*new_node_wrapper).next = Some(old_head); }
 
             // Update the list.head pointer
             self.list.tail = Some(new_node_wrapper);
@@ -464,7 +464,7 @@ impl<'a, T> CursorMut<'a, T> {
         }
 
         // Case 4) The cursor is somewhere between head+1 and tail of 
-        // a non-empty list; swap all four pointers
+        // a non-empty list; reset all four pointers
         else {
             unsafe {
                 // Capture the node prior to the cursor node
@@ -489,26 +489,91 @@ impl<'a, T> CursorMut<'a, T> {
         self.list.len += 1;
     }
 
-    /** Inserts a node after the node the cursor is on */
+    /** Inserts a node after the cursor; 
+    - If the cursor is on the sentinel node of an empty list, 
+    the new node becomes the new head and tail;
+    - If the cursor is on the sentinel node of a non-empty list,
+    the new node becomes the new head;
+    - If the cursor is on the tail, the new node is the new tail;
+
+    Precondition: 
+
+        self.head -> A <-> C <- self.tail
+                     ^
+                  cursor
+    Postcondition:
+    
+        self.head -> A <-> B <-> C <- self.tail
+                     ^
+                  cursor
+
+    */
     pub fn insert_after(&mut self, element: T) {
+        let new_node_wrapper: *mut Node<T> =
+            Box::into_raw(Box::new(Node {
+                data: element,
+                prev: None,
+                next: None,
+            }));
+
         // Case 1) The cursor is at the sentinel of an empty list; 
         // new head/tail
-            let _new_node_wrapper: *mut Node<T> =
-                Box::into_raw(Box::new(Node {
-                    data: element,
-                    prev: None,
-                    next: None,
-                })); // Unsafe
+        if self.cursor == None && self.list.head.is_none() {
+            self.list.head = Some(new_node_wrapper);
+            self.list.tail = Some(new_node_wrapper);
+        }
 
         // Case 2) The cursor is at the sentinel of a non-empty list; new head
+        else if self.cursor == None && self.list.head.is_some() {
+            
+            // Capture the old head node
+            let old_head = self.list.head.unwrap();
+
+            // Update the old_head.prev to new node
+            unsafe { (*old_head).prev = Some(new_node_wrapper); }
+
+            // Update the new node.next to old_head
+            unsafe { (*new_node_wrapper).next = Some(old_head); }
+
+            // Update the list's head
+            self.list.head = Some(new_node_wrapper);
+
+        }
 
         // Case 3) The cursor is at the tail of a non-empty list; new tail
+        else if self.cursor == self.list.tail && self.list.tail.is_some() {
+            // Capture the old tail
+            let old_tail = self.list.tail.unwrap();
+
+            // Update the old_tail.next to the new_node
+            unsafe { (*old_tail).next = Some(new_node_wrapper); }
+
+            // Update the new_node.prev to old_tail
+            unsafe { (*new_node_wrapper).prev = Some(old_tail); }
+
+            // Update the list.tail
+            self.list.tail = Some(new_node_wrapper);
+
+        }
 
         // Case 4) The cursor is somewhere between head and tail-1 of 
         // a non-empty list
+        else {
+            unsafe {
+                // Capture the node after the current cursor node
+                // and start orgy of pointer swapping
+                let cursor_node = self.cursor.unwrap();
+                let old_next = (*cursor_node).next.unwrap();
+                (*old_next).prev = Some(new_node_wrapper);
+                (*new_node_wrapper).prev = Some(cursor_node);
+                (*new_node_wrapper).next = Some(old_next);
+                (*cursor_node).next = Some(new_node_wrapper);
+            }
+        }
         
         // All cases
         // - Increment list len
+        self.list.len += 1;
     }
 
     /** Removes and returns the data under the cursor's current position
@@ -1234,4 +1299,64 @@ mod list_tests {
         head = list.pop_head();
         assert_eq!(head, Some("c"));
     }
+
+    #[test]
+    fn insert_after() {
+
+        use crate::lists::generic_doubly_linked_list::{List, CursorMut};
+
+        // Creates a new doubly-linked list 
+        // and pushes some elements to it
+        let mut list = List::<&str>::new();
+        list.push_tail("a");
+        list.push_tail("c"); // Postcondition: [a, c]
+        assert_eq!(list.len(), 2);
+
+        let mut cur = list.cursor_mut();
+        cur.move_next(); // a
+        assert_eq!(cur.index, Some(0));
+
+        // Insert a node
+        cur.insert_after("b"); // Postcondition: [a, b, c]
+
+        // Tests that the insert operation does NOT 
+        // increment the cursor's index, but does increment
+        // the list length
+        assert_eq!(cur.index, Some(0));
+        assert_eq!(list.len(), 3);
+
+        // Pointer tests
+        // Checks that head -> a
+        let head_ptr: *mut Node<&str> = list.head.unwrap();
+        let head: &str = unsafe { (*head_ptr).data }; // Unsafe deref
+        assert_eq!(head, "a");
+    
+        // Checks that head.next -> b
+        let next_ptr: *mut Node<&str> = unsafe { 
+            (*list.head.unwrap()).next.unwrap() 
+        };
+        let next: &str = unsafe { (*next_ptr).data }; // Unsafe deref
+        assert_eq!(next, "b");
+
+        // Checks that b.next -> c
+        let next_ptr: *mut Node<&str> = unsafe { 
+            (*next_ptr).next.unwrap() 
+        };
+        let next: &str = unsafe { (*next_ptr).data }; // Unsafe deref
+        assert_eq!(next, "c");
+
+        // Checks that b.next -> tail
+        let tail_ptr = list.tail.unwrap();
+        let tail_data = unsafe { (*tail_ptr).data };
+        assert_eq!(next, tail_data);
+
+        // Functional tests
+        let mut head = list.pop_head();
+        assert_eq!(head, Some("a"));
+        head = list.pop_head();
+        assert_eq!(head, Some("b"));
+        head = list.pop_head();
+        assert_eq!(head, Some("c"));
+    }
+
 }
