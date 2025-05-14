@@ -1,14 +1,84 @@
-/////////////////////////////////////////////////////////////////////////////////
-/** Safe open addressing hash table with MAD compression and quadratic probing */
-/////////////////////////////////////////////////////////////////////////////////
+/*! Safe open addressing hash table with MAD compression and quadratic probing 
+
+```rust
+
+    use dsa_rust::maps::probing_hash_table::ProbingHashTable;
+
+    //Creates a new hash map with str keys and u8 values
+    let mut map = ProbingHashTable::<&str, u8>::new();
+
+    println!("Map stats: size: {}, capacity: {}, active entries: {}",
+        map.size(),
+        map.len(),
+        map.entries()
+    );
+
+    // Puts some entries into the map
+    println!("Building the map...");
+    let mut names: Vec<&str> = vec!["Peter", "Brain", "Remus", "Bobson", "Dingus", "Dangus"];
+    let values: Vec<u8> = vec![39, 37, 22, 36, 18, 27];
+    for (k, v) in names.iter().zip(values.into_iter()) {
+        map.put(k, v);
+    }
+
+    // Checks that the map contains what we'd expect
+    if map.contains("Peter") == false {
+        panic!()
+    };
+    let val = map.get("Peter").unwrap();
+    println!("Peter is {val}");
+
+    // Replaces a value for a given key and
+    // checks that the new value took
+    let new = 41;
+
+    //let old = map.put("Peter", new).unwrap().value;
+    let old = map.get("Peter").unwrap().clone();
+    map.put("Peter", new);
+
+    println!("[Peter's age increased from {old} to {new}]");
+    let val = map.get("Peter").unwrap();
+    println!("Uhhhhh, I meant Peter is {val}");
+
+    // Shows the map and its data
+    println!(
+        "\nMap stats: size: {}, capacity: {}, active entries: {}",
+        map.size(),
+        map.len(),
+        map.entries()
+    );
+    map.contents();
+
+    // Illustrates removing entries
+    println!("\nThere can be only one!");
+    names.remove(0);
+    for e in names {
+        let removed = map.remove(e);
+        if let Some(entry) = removed {
+            println!("Remove: {}", entry.key());
+        }
+    }
+
+    // The final result
+    println!("\nMap stats: size: {}, capacity: {}, active entries: {}",
+        map.size(),
+        map.len(),
+        map.entries()
+    );
+    map.contents();
+```
+
+*/
+
 use crate::maps::hash_lib;
-use crate::maps::traits;
+//use crate::maps::traits;
 use rand::Rng;
 use std::collections::hash_map::DefaultHasher;
 use std::fmt::Debug;
 use std::hash::{Hash, Hasher};
 
 #[derive(Clone, Debug, PartialEq)]
+/// Contains the actual (generic) key:value pair
 pub struct Entry<K, V> {
     key: K,
     value: V,
@@ -18,9 +88,21 @@ where
     K: Clone + Debug + Hash + PartialEq,
     V: Clone + PartialEq,
 {
+    /// Constructs a new Entry
     fn new(key: K, value: V) -> Entry<K, V> {
         Entry { key, value }
     }
+
+    /// Returns the key from an Entry
+    pub fn key(&self) -> &K {
+        &self.key
+    }
+
+    /// Returns the value from an Entry
+    pub fn value(&self) -> &V {
+        &self.value
+    }
+
 }
 #[derive(Debug)]
 /** Prime, scale, and shift are used by the MAD compression algorithm and
@@ -38,9 +120,9 @@ pub struct ProbingHashTable<K, V> {
 impl<K, V> ProbingHashTable<K, V>
 where
     K: Clone + Debug + Hash + PartialEq,
-    V: Clone + PartialEq,
+    V: Clone + PartialEq  + std::fmt::Debug,
 {
-    /** Constructor for an empty table with a default capacity of 2 */
+    /// Constructor for an empty table with a default capacity of 2
     pub fn new() -> ProbingHashTable<K, V> {
         let new_capacity = 2;
         let mut table = ProbingHashTable {
@@ -58,7 +140,29 @@ where
         table
     }
 
-    /** Takes a key and returns a Boolean indicating whether its in the map */
+    /// Returns the total number of entries in the map minus the "deleted" entries
+    pub fn size(&self) -> usize {
+        self.size
+    }
+
+    /// Returns the capacity of the map
+    pub fn len(&self) -> usize {
+        self.data.len()
+    }
+
+    /// Returns the current number of active entires in the map
+    pub fn entries(&self) -> usize {
+        self.entries
+    }
+
+    /// Pretty-prints the map's contents
+    pub fn contents(&self) {
+        for (e, m) in self.data.iter().zip(self.ctrl.iter()) {
+            println!("\t{:>3}: {:?}", m, e)
+        }
+    }
+    
+    /// Takes a key and returns a Boolean indicating whether its in the map
     pub fn contains(&self, key: K) -> bool {
         let hash = Self::hash(&key);
         let mut location = self.compress(hash);
@@ -76,7 +180,7 @@ where
         false
     }
 
-    /** Returns the value associated with a key, if the key exists */
+    /// Returns the value associated with a key, if the key exists
     pub fn get(&self, key: K) -> Option<&V> {
         // Hashes and compresses key to get the initial bucket
         let hash = Self::hash(&key);
@@ -150,8 +254,12 @@ where
         entry
     }
 
+    /// Warning: Unimplemented
     pub fn key() {}
-    pub fn values() {}
+
+    /// Warning: Unimplemented
+    /// Returns the value for a given key
+    pub fn value(&self) {}
 
     // UTILITY FUNCTIONS
 
