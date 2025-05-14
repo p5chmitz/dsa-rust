@@ -1,40 +1,59 @@
-///////////////////////////////////////
-/** A VecDeque-based queue (wrapper) */
-///////////////////////////////////////
+/*! A VecDeque-based queue (wrapper) 
+
+This is a simple std::VecDeque wrapper
+
+```rust
+use crate::lists::queue::vecdeque_wrapper;
+
+let mut queue = Queue::new();
+queue.enqueue('a');
+queue.enqueue('b');
+queue.enqueue('c');
+queue.enqueue('d');
+let first: Queue<char> = queue!('a', 'b', 'c', 'd');
+assert_eq!(first, queue);
+
+queue.dequeue();
+queue.dequeue();
+queue.enqueue('z');
+let second: Queue<char> = queue!('c', 'd', 'z');
+assert_eq!(second, queue);
+```
+
+*/
 
 /** VecDeque is a more efficient implementation than Vec */
 mod vecdeque_wrapper {
     use std::collections::VecDeque;
 
     /** The Queue's API contains the following functions:
-    - new() -> Queue<T>
-    - enqueue(&mut self, s: T)
-    - peek(&self) -> Option<&T>
-    - dequeue(&mut self) -> Option<T>
     NOTE: All methods run in O(1) time */
     #[derive(Debug, PartialEq)] // Used for declarative macro & testing operations
     pub struct Queue<T> {
         data: VecDeque<T>,
         size: usize,
     }
+    #[allow(unused)] // Not actually used anywhere, just an illustration :(
     impl<T> Queue<T> {
-        fn new() -> Queue<T> {
+        /// Creates a new Queue wrapper with VecDeque backing structure and independent size
+        /// variable
+        pub fn new() -> Queue<T> {
             Queue {
                 data: VecDeque::new(),
                 size: 0,
             }
         }
         /** Adds an element to the queue */
-        fn enqueue(&mut self, e: T) {
+        pub fn enqueue(&mut self, e: T) {
             self.size += 1;
             self.data.push_back(e)
         }
         /** Peeks at the top of the list without deleting the element */
-        fn peek(&self) -> Option<&T> {
+        pub fn peek(&self) -> Option<&T> {
             self.data.front()
         }
         /** Returns and deletes the top of the queue */
-        fn dequeue(&mut self) -> Option<T> {
+        pub fn dequeue(&mut self) -> Option<T> {
             self.size -= 1;
             self.data.pop_front()
         }
@@ -77,6 +96,7 @@ mod vecdeque_wrapper {
 /** Illustrates how VecDeque can be used as a queue without a silly wrapper */
 pub mod vec_deque {
 
+    #[allow(unused_imports)] // Not actually used anywhere, just an illustration :(
     use std::collections::VecDeque;
 
     #[test]
