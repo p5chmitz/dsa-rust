@@ -1,6 +1,5 @@
-/////////////////////////////////////////////////////////
-/** Safe chaining hash table with division compression */
-/////////////////////////////////////////////////////////
+/*! Safe chaining hash table with division compression */
+
 use crate::maps::hash_lib;
 use std::fmt::Debug;
 use std::hash::Hash;
@@ -199,14 +198,16 @@ pub struct Iter<'a, K, V> {
 impl<'a, K, V> Iter<'a, K, V> {
     /// Adapter method for iterating over the keys of a map;
     /// Example:
-    /// ``` for k in map.iter().keys() { ... }
+    /// ```example
+    ///     for k in map.iter().keys() { ... }
     /// ```
     pub fn keys(self) -> Keys<'a, K, V> {
         Keys { iter: self }
     }
     /// Adapter method for iterating over the values of a map;
     /// Example:
-    /// ``` for v in map.iter().values() { ... }
+    /// ```example 
+    ///     for v in map.iter().values() { ... }
     /// ```
     pub fn values(self) -> Values<'a, K, V> {
         Values { iter: self }
