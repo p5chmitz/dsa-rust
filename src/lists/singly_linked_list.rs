@@ -1,184 +1,286 @@
-/////////////////////////////////
-/** A safe, singly-linked list */
-/////////////////////////////////
+/*! A safe, owned, singly-linked list
 
-pub struct Node<'a> {
-    name: &'a str,
-    score: Option<i32>,
-    next: Option<Box<Node<'a>>>,
+# About
+The primary goal with this implementation is to offer a simple linked list with no `unsafe` code. The list does this with `Box`-type pointers to owned, heap-allocated objects.
+
+#### Design
+This exceedingly simple, safe, singly-linked list consists of one primary [LinkedList] struct that contains stack and queue operations. 
+
+The list operates on a single, private `Node` struct that contains only a `data` field (generic over `T`) and a `next` pointer as `Option<Box<Node<T>>>`. Due to the owned nature of the pointers and safe-code-only design restriction, _it is not possible to sort this list in place_. 
+
+#### Iterators
+This list does not have any positional implementation, meaning that you cannot get pointers to arbitrary nodes within the list. The list _does_ provide an `iter()` method that yields an iterator over immutable references to `Node` data, consistent with Rust naming convention. Providing an `iter_mut()` that yields mutable references to the underlying `Node` data in safe Rust is currently beyond the scope of this structure. See the [doubly-linked variant](crate::lists::doubly_linked_list) which uses a `CursorMut` API for mutable references to `Node` data.
+
+**TODO**: 
+- Implement add/remove operations at arbitrary "indexes" (non-positional)
+
+# Examples
+
+This example illustrates stack (FILO) operations
+```rust
+    use dsa_rust::lists::singly_linked_list::LinkedList;
+
+    let mut list: LinkedList<char> = LinkedList::new();
+
+    list.push('c');
+    list.push('b');
+    list.push('a'); // list: a, b, c
+
+    for e in list.iter() {
+        println!("{e}")
+    }
+
+    // Tests that the head is really the head
+    assert_eq!(list.peek().unwrap(), &'a');
+    assert_eq!(list.pop().unwrap(), 'a'); // list: b, c
+
+    list.push('d'); // list: d, b, c
+
+    list.pop(); // list: b, c
+    list.pop(); // list: c
+    assert_eq!(list.peek().unwrap(), &'c');
+    assert_eq!(list.pop().unwrap(), 'c'); // list: None
+
+    assert_eq!(list.peek(), None); // Looks like theres None left
+    assert_eq!(list.pop(), None); // dont wanna unwrap() on None!
+```
+
+<br>
+
+This example illustrates queue (FIFO) operations
+```rust
+    use dsa_rust::lists::singly_linked_list::LinkedList;
+
+    let mut list: LinkedList<char> = LinkedList::new();
+
+    list.enqueue('a');
+    list.enqueue('b');
+    list.enqueue('c'); // list: a, b, c
+
+    // Tests that the head is really the head
+    assert_eq!(list.peek().unwrap(), &'a');
+    assert_eq!(list.dequeue().unwrap(), 'a'); // list: b, c
+
+    list.enqueue('d'); // list: b, c, d
+
+    list.dequeue(); // list: c, d
+    list.dequeue(); // list: d
+    assert_eq!(list.peek().unwrap(), &'d');
+    assert_eq!(list.dequeue().unwrap(), 'd'); // list: None
+
+    assert_eq!(list.peek(), None); // Looks like theres None left
+    assert_eq!(list.dequeue(), None); // dont wanna unwrap() on None!
+                            
+```
+
+<br>
+
+This example illustrates a sorting workaround
+```rust
+    use dsa_rust::lists::singly_linked_list::LinkedList;
+
+    // 1) Create a new list of u8 values
+    let mut list: LinkedList<u8> = LinkedList::new();
+
+    // 2) (Add elements to the list)
+
+    // 3) Push the list to an easily-sortable structure
+    let mut data: Vec<_> = list.iter().cloned().collect();
+
+    // 4) Sort the Vec in O(n log n) time
+    data.sort();
+    
+    // 5) Reconstruct the list as a sorted variant
+    let mut sorted_list = LinkedList::new();
+    for node in data {
+        // 
+        // Use push() to create list in descending order
+        // Use enqueue() to create list in ascending order
+        sorted_list.enqueue(node);
+    }
+```
+*/
+
+struct Node<T> {
+    data: T,
+    next: Option<Box<Node<T>>>,
 }
-impl<'a> Node<'a> {
-    // Creates a new node
-    pub fn new(name: &'a str, score: Option<i32>) -> Node<'a> {
-        Node {
-            name,
-            score,
-            next: None,
-        }
+impl<T> Node<T> {
+
+    // Creates a new Node with an optional next pointer
+    fn new(data: T, next: Option<Box<Node<T>>>) -> Node<T> {
+        Node { data, next }
+    }
+
+    // Returns owned data from the node
+    fn take(self) -> T {
+        self.data
+    }
+
+    // Returns a reference to the data in a node
+    fn _peek(&self) -> &T {
+        &self.data
+    }
+
+    // Returns a reference to the data at the node's next pointer, if Some
+    fn _peek_next(&self) -> Option<&T> {
+        let next = &self.next;
+        if let Some(node) = next {
+            Some(&node.data)
+        } else { None }
     }
 }
-/** The List's public API includes the following functions:
- - new() -> List<'a>
- - insert(&mut self, node: Node<'a>)
- - remove(&mut self, index: u32)
- - print_list(&mut self)
-*/
-pub struct List<'a> {
-    head: Option<Box<Node<'a>>>, // Adding an extra box just in case things get wild
+
+/** The ❤️ of the module */
+pub struct LinkedList<T> {
+    head: Option<Box<Node<T>>>,
     length: usize,
 }
-impl<'a> List<'a> {
-    // Creates a new list
-    pub fn new() -> List<'a> {
-        List {
+impl<T: Clone> LinkedList<T> {
+
+    /// Creates a new list
+    pub fn new() -> LinkedList<T> {
+        LinkedList {
             head: None,
             length: 0,
         }
     }
-    /** Inserts a node, sorted by its score */
-    pub fn insert(&mut self, node: Node<'a>) {
-        // Handle the special case of inserting a new head node
-        if self.head.is_none() || self.head.as_ref().unwrap().score <= node.score {
-            let mut new_head = Box::new(node);
-            println!("A new star {} emerges", &new_head.name);
-            new_head.next = self.head.take();
-            self.head = Some(new_head);
-            self.length += 1;
-            return;
-        }
 
-        // Traverse the list to find the proper insertion point
-        let mut iter_node = &mut self.head;
-        while let Some(ref mut peek) = iter_node {
-            if peek.next.is_none() || peek.next.as_ref().unwrap().score <= node.score {
-                let mut new_node = Box::new(node);
-                new_node.next = peek.next.take();
-                peek.next = Some(new_node);
-                self.length += 1;
-                return;
-            }
-            iter_node = &mut peek.next;
-        }
+    /** Adds a node to the head of the list/stack */
+    pub fn push(&mut self, data: T) {
+
+        // Create a new Node
+        let new_node = Node::new(data, self.head.take());
+
+        // Set the list's head to the new node
+        self.head = Some(Box::from(new_node));
+
+        // Increase the list's length
+        self.length += 1;
     }
 
-    //TODO: This
-    pub fn set_score() {}
+    /** Removes/returns the head of the list/stack (if Some) in O(1) time */
+    pub fn pop(&mut self) -> Option<T> {
+        Self::remove_front(self)
+    }
 
-    /** Removes a node at a provided index */
-    pub fn remove(&mut self, index: u32) {
-        // Basic logic checks
+    /** Adds a node to the tail of the list/queue in O(n) time;
+
+    TODO: Safely implement a way to store a reference to the last node in the 
+    list for O(1) enqueue operations */
+    pub fn enqueue(&mut self, data: T) {
+
+        // Wraps the data in an Option<Box<Node>>
+        let new_node = Some(Box::from(Node::new(data, None)));
+
+        // If the queue is empty, set `self.head` to the new node;
+        // Otherwise, traverse to the end of the queue and add the new node
         if self.head.is_none() {
-            println!("Cannot remove elements from an empty list");
-            return;
-        }
-        if index > self.length as u32 {
-            println!("Illegal operation; index {} is out of bounds", index);
-            return;
-        }
-
-        // Handle the special case of removing at the head, also ignoring empty lists
-        if index == 0 && self.head.is_some() {
-            let next = self.head.as_mut().unwrap().next.take();
-            self.head = next;
-            self.length -= 1;
-            return;
-        }
-
-        // Locate and remove the node
-        let mut iter_node_ref: &mut Option<Box<Node>> = &mut self.head;
-        let mut counter: u32 = 0;
-        // Traverses the list, stopping just before the removal node as index - 1;
-        // Without a previous pointer this prevents traversing the list twice;
-        // peek requres Some(ref mut) to get it to match iter_node's type
-        while let Some(ref mut node) = iter_node_ref {
-            if counter == index - 1 {
-                // Check if the node intended for removal exists;
-                // If so, assigns the current node's next to the removal node's next
-                // and decreases the list's node counter
-                if let Some(mut node_to_remove) = node.next.take() {
-                    node.next = node_to_remove.next.take();
-                    self.length -= 1;
+            self.head = new_node;
+        } else {
+            let mut iter_node = &mut self.head;
+            while let Some(ref mut peek) = iter_node {
+                if peek.next.is_none() {
+                    peek.next = new_node;
+                    break;
                 }
-                return;
+                iter_node = &mut peek.next;
             }
-            counter += 1;
-            // Advances the iterator node
-            iter_node_ref = &mut node.next;
+        }
+        self.length += 1;
+    }
+
+    /** Removes/returns the head of the list (if Some) in O(1) time */
+    //pub fn dequeue(&mut self) -> Option<Node<T>> {
+    pub fn dequeue(&mut self) -> Option<T> {
+        Self::remove_front(self)
+    }
+
+    /** Returns a reference to the head of the list (if Some) in O(1) time */
+    pub fn peek(&self) -> Option<&T> {
+        //if let Some(s) = &(*self).head {
+        //    Some(&s.data)
+        //} else {
+        //    None
+        //}
+        self.head.as_ref().map(|node| &node.data)
+    }
+
+    /** The meat and potatoes behind both pop() and dequeue() */
+    fn remove_front(&mut self) -> Option<T> {
+        if let Some(mut boxed_node) = self.head.take() {
+            self.head = boxed_node.next.take();
+            self.length -= 1;
+            let n = *boxed_node;
+            Some(n.take())
+        } else {
+            None
         }
     }
-    /** Prints the whole list and nothing but the list */
-    pub fn print_list(&mut self) {
-        println!("Singly inked list contains {} elements:", self.length);
-        let mut current = &self.head;
-        let mut c = 0;
-        while let Some(node) = current {
-            println!(
-                "{:>2}: {:<8} {:>6}",
-                c + 1,
-                node.name,
-                node.score
-                    .map_or("".to_string(), |_| node.score.unwrap().to_string())
-            );
-            current = &node.next;
-            c += 1;
+
+    /** Returns an iterator of references to data in the list's nodes */
+    pub fn iter(&self) -> Iter<'_, T> {
+        Iter {
+            next: self.head.as_deref(),
         }
     }
 }
 
-// Not a lot here to test aside from the list's length and the fact that opertions dont error
+pub struct Iter<'a, T> {
+    next: Option<&'a Node<T>>,
+}
+impl<'a, T> Iterator for Iter<'a, T> {
+    type Item = &'a T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if let Some(current) = self.next {
+                self.next = current.next.as_deref(); // Move to next node
+                Some(&current.data) // Return reference to data
+        } else {
+            None
+        }
+    }
+}
+
 #[test]
-fn basic_funciton_test() {
-    let mut list = List::new();
-    list.insert(Node::new("Peter", Some(1223)));
+fn singly_linked_list_sort() {
+    
+    let mut list: LinkedList<u8> = LinkedList::new();
 
-    assert_eq!(list.length, 1);
+    // Creates a list by pushing elements to the head
+    list.push(4);
+    list.push(34); 
+    list.push(46);
+    list.push(196);
+    list.push(98);
+    list.push(3); 
+    list.push(77);
+    list.push(163); // Current head
 
-    list.insert(Node::new("Dingus", Some(12)));
-    list.insert(Node::new("Dangus", Some(23)));
-    list.remove(0);
+    // Pushes the list to a sortable structure
+    let mut data: Vec<_> = list.iter().cloned().collect();
+    data.sort(); // Defaults to ascending order
+    
+    // Reconstructs the list as a sorted variant
+    let mut sorted_list = LinkedList::new();
+    for node in data {
+        // Use push() to create list in descending order
+        // Use enqueue() to create list in ascending order
+        sorted_list.enqueue(node);
+    }
 
-    assert_eq!(list.length, 2);
-}
+    // Print debug blocks
+    print!("unsorted list: ");
+    for e in list.iter() {
+        eprint!("{e}, ")
+    }
+    print!("\nsorted list: ");
+    for e in sorted_list.iter() {
+        eprint!("{e}, ")
+    }
+    //assert!(false); // Uncomment for cheap print debug trigger
 
-pub fn example() {
-    // Creates a new (empty list)
-    let mut podium: List = List::new();
-    println!("Created a new list!");
+    assert_eq!(list.peek().unwrap(), &163); // head of unsorted list
+    assert_eq!(sorted_list.peek().unwrap(), &3); // head of sorted list
 
-    // Proves that remove is safe on an empty list
-    podium.remove(0);
-
-    // Basic list insertion
-    let node = Node::new("Peter", Some(1223));
-    podium.insert(node);
-
-    // Streamlined list insertions
-    podium.insert(Node::new("Dangus", None));
-    podium.insert(Node::new("Remus", Some(8234)));
-    podium.insert(Node::new("Dingus", Some(602)));
-    podium.insert(Node::new("Brain", Some(616)));
-
-    println!("After all list insertions:");
-    podium.print_list();
-
-    // Removing items
-    let mut i = 0;
-    println!("Deleting list index {}", i);
-    podium.remove(i);
-
-    // Proves that remove is index safe
-    i = 23;
-    println!("Deleting list index {}", i);
-    podium.remove(i);
-
-    i = 2;
-    println!("Deleting list index {}", i);
-    podium.remove(i);
-
-    podium.insert(Node::new("Romulus", Some(12837)));
-    podium.insert(Node::new("Bobson", Some(42069)));
-
-    println!("Final list:");
-    podium.print_list();
-    println!("")
 }
