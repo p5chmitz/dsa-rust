@@ -1,6 +1,8 @@
-//////////////////////////////////
-// HASHING & COMPRESSION FUNCTIONS
-//////////////////////////////////
+/*! Hashing & compression functions
+
+The utility functions in this module can be used to implement various hashing and compression algorithms
+
+*/
 
 // STANDARD LIBRARY HASHING
 ///////////////////////////
