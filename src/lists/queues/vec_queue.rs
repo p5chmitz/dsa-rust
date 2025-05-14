@@ -1,13 +1,11 @@
-/////////////////////////////////////
-/** A Vector-based queue (wrapper) */
-/////////////////////////////////////
+/*! A Vector-based queue (wrapper) 
+
+This is a simple Vec wrapper
+
+*/
 
 pub mod vec_wrapper {
     /** The Queue's API contains the following functions:
-    - new() -> Queue<T>
-    - push(&mut self, s: T)
-    - peek(&self) -> Option<&T>
-    - remove(&mut self) -> Option<T>
     NOTE: All methods run in O(1) time except remove() which runs in O(n). For more efficient operations
     use the VecDeque type. */
     #[derive(Debug, PartialEq)]
