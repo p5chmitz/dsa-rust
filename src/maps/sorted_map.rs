@@ -1,7 +1,57 @@
-////////////////////////////////
-use std::cmp::Ordering::{Equal, Greater, Less};
-/** Safe sorted map using Vec */
-////////////////////////////////
+/*! Safe sorted map using Vec
+
+# About
+
+ ```rust
+    use dsa_rust::maps::sorted_map::SortedMap;
+
+    // Establishes a baseline map
+    let list = vec![
+        ("Bobson", 29),
+        ("Brain", 39),
+        ("Dangus", 34),
+        ("Dingus", 34),
+        ("Peter", 41),
+        ("Pingus", 45),
+        ("Remus", 27),
+        ("Romulus", 28),
+    ];
+    let mut map = SortedMap::new();
+
+    assert_eq!(map.cap(), 0);
+    assert_eq!(map.entries(), 0);
+    for e in list {
+        eprintln!("Inserting {}", &e.0);
+        map.put(e.0, e.1);
+    }
+    assert_eq!(map.cap(), 8);
+    assert_eq!(map.entries(), 8);
+
+    // Tests the get function
+    let age = map.get("Peter");
+    assert!(age.is_some());
+    assert_eq!(age.unwrap(), &41);
+
+    // Tests replacing a value for an existing key
+    let old = map.put("Peter", 42);
+    assert_eq!(*old.unwrap().value(), 41);
+    let age = map.get("Peter");
+    assert!(age.is_some());
+    assert_eq!(age.unwrap(), &42);
+    assert_eq!(map.entries(), 8);
+
+    // Tests the remove function
+    let removed = map.remove("Pingus");
+    assert!(removed.is_some());
+    assert_eq!(*removed.unwrap().value(), 45);
+    assert_eq!(map.entries(), 7);
+    
+ ```
+*/
+
+
+//use std::cmp::Ordering::{Equal, Greater, Less};
+
 use std::fmt::Debug;
 
 #[derive(Debug, PartialEq)]
@@ -14,8 +64,19 @@ where
     K: Debug + PartialEq,
     V: PartialEq,
 {
+    /// Constructs a new Entry
     fn new(key: K, value: V) -> Entry<K, V> {
         Entry { key, value }
+    }
+
+    /// Returns the key for an Entry
+    pub fn key(&self) -> &K {
+        &self.key
+    }
+
+    /// Returns the value for an Entry
+    pub fn value(&self) -> &V {
+        &self.value
     }
 }
 #[derive(Debug)]
@@ -34,6 +95,16 @@ where
             data: Vec::new(),
             size: 0,
         }
+    }
+
+    /// Returns the capacity of the map
+    pub fn cap(&self) -> usize {
+        self.data.len()
+    }
+
+    /// Returns the number of entries in the map
+    pub fn entries(&self) -> usize {
+        self.size
     }
 
     /** Convenience wrapper for busy recursive signature method that does all the real work;
