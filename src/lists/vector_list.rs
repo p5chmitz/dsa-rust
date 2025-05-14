@@ -16,18 +16,7 @@ impl Clone for PodiumEntry {
         }
     }
 }
-/** The Podium's public interface contains the following functions:
- - new() -> Podium
- - add(&mut self, name: String, score: Option<i32>)
- - set_score(&mut self, index: usize, score: Option<i32>) -> Result<(), String>
- - remove(&mut self, index: usize) -> Option<String>
- - print_full(&self, print_all: bool)
-
-Podium also contains the following utility functions:
- - build(name: String, score: Option<i32>) -> PodiumEntry
- - format(&self, entry: &PodiumEntry) -> (String, String)
-
-NOTE: Seriously, just use Vec */
+/// NOTE: Seriously, just use `Vec`
 pub struct Podium {
     data: Vec<PodiumEntry>,
     size: usize,
