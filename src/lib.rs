@@ -2,48 +2,13 @@
 The purpose of this crate is to explore building  classical data structures and algorithms in Rust.
 
 # Core Lists
-This is a basic exploration of foundational, sequence-based structures. The concepts
-illustrated here can be used for more advanced data structures.
+These structures/modules represent a basic exploration of foundational, sequence-based structures. The concepts illustrated here can be used for more advanced data structures. I originally wrote 9+ lists, but have only decided to include three in this library due to overlapping utility. All lists still exist in the repo for historical reference purposes. The [array-based list](https://github.com/p5chmitz/dsa-rust/blob/main/src/lists/array_list.rs) gets a special mention as an example of how to use arrays in Rust, due to the necessity of compile-time sizing.
 
-- [Array-based list](crate::lists::array_list): Contiguous data structures like arrays utilize cache locality for optimized 
-storage and access; This module provides a basic introduction to lists (and arrays)
+- [Singly-linked list](crate::lists::singly_linked_list): A safe, owned, singly-linked structure to illustrate `Box`. This implementation contains operations for simple stack and queue structures as well.
 
-- [Vector-based list](crate::lists::vector_list): Vectors are Rust's dynamic array implementation; Vectors are often 
-much more convenient than arrays with no operational downsides aside from periodic `O(n)` resize operations; 
-Most of the time you'll want to use a `Vec` for a contiguous, sequential backing structure
+- [Doubly-linked list](crate::lists::doubly_linked_list): An unsafe doubly-linked list implementation with an added cursor to create a positional list that provides list splitting/splicing and supports in-place sorting with a merge sort algorithm (if you really wanna write a sorted list on top of it)
 
-- [Dynamic array list](crate::lists::dynamic_array_list): This module explores geometric re-sizing logic on top of 
-`Vec` while maintaining a sorted invariant to illustrate the dynamic array structure
-
-- [Singly-linked list](crate::lists::singly_linked_list): A safe, singly-linked implementation of a map-like (podium) 
-structure to illustrate `Box`
-
-- [Unsafe generic doubly-linked list](crate::lists::doubly_linked_list): A basic, unsorted, doubly-linked list 
-implementation with an added cursor to create a positional list that provides list splitting/splicing and supports in-place 
-sorting with a merge sort algorithm (if you really wanna write a sorted list on top of it)
-
-## Stacks
-Builds on the core lists by providing some fun stack-based explorations, including a symbol
-balancer to check that an input string contains proper opening and closing symbols.
-
-- [Singly-linked stack](crate::lists::stacks::safe_linked_stack): This module implements a stack-based symbol balancer for 
-funsies using a home-rolled singly-linked list; `Vec` is more robust and takes advantage of cache locality
-- [Unsafe singly-linked stack](crate::lists::stacks::unsafe_linked_stack): Just because its possible and we somehow thrive 
-on making things more difficult than they have to be
-
-## Queues
-
-This section also utilizes the structures and approaches established in the Lists section. This section gets a little 
-more fun with the idea of a circular queue and presents the final boss of linked-lists; an unsafe, doubly-linked deque 
-that can be used as a stack, a queue, or some other generic linked list.
-
-- [Vector-based circular queue](crate::lists::queues::vec_circ_queue): Probably the second most useful of all of these 
-horridly useless lists; A little more fun/interesting, but it's still just a `Vec` with capacity constraints and wrapping logic
-
-- [A simple linked-list queue](crate::lists::queues::singly_linked_queue): Kind of a busted implementation because 
-`enqueue()` runs in O(n); It was a fun exercise though!
-
-- [Unsafe doubly-linked queue]() This is the end of my lists, I swear; Why aren't you using `Vec` or `VecDeque` yet?!
+- [Vector-based circular queue](crate::lists::queues::vec_circ_queue): This structure was included simply because its fun, but it's still just a `Vec` with capacity constraints and wrapping logic
 
 # Trees
 Building off the lessons learned in the Core Lists module this section contains examples of hierarchical data structures. 
@@ -87,7 +52,7 @@ pub mod lists{
     pub mod singly_linked_list; // ✔️
     pub mod doubly_linked_list; // ✔️
     pub mod stacks{
-        pub mod safe_linked_stack; // ✔️
+        pub mod safe_linked_stack; 
         pub mod unsafe_linked_stack;
     }
     pub mod queues{
