@@ -5,10 +5,11 @@
 mod toc {
     use crate::trees::traits::Tree;
 
-    use std::fs::File; // Used by parse()
-    use std::io::{self, BufRead, BufReader}; // Used by parse()
+    //use std::fs::File; // Used by parse()
+    //use std::io::{self, BufRead, BufReader}; // Used by parse()
+    use std::io::{BufRead, BufReader}; // Used by parse()
     use std::path::Path; // Used by example()
-    use std::ptr;
+    //use std::ptr;
 
     use regex::Regex; // Used by parse()
 
@@ -36,10 +37,7 @@ mod toc {
     /** A position in the tree as raw pointer to a Node, generic over T */
     type Pos<T> = Option<*mut Node<T>>;
 
-    /** Represents a general tree with a collection of children
-     - fn build(data: Option<T>) -> Pos<T> {
-     - fn get<'a>(position: &'a Pos<T>) -> Option<&'a T>
-    */
+    /// Represents a general tree with a collection of children
     #[derive(PartialEq)]
     pub struct Node<T> {
         parent: Pos<T>,
@@ -70,36 +68,19 @@ mod toc {
         }
     }
 
-    /** The Tree struct represents a positional, linked-based general
-    tree structure with a root node that contains a single raw pointer
-    to the root node and the structure's size.
-    The genericity of the struct means you'll have to explicitly
-    type associated functions.
+    /// The Tree struct represents a positional, linked-based general
+    /// tree structure with a root node that contains a single raw pointer
+    /// to the root node and the structure's size.
+    /// The genericity of the struct means you'll have to explicitly
+    /// type associated functions.
 
-    Example:
-    ```
-        let path = std::path::Path::new("~/Developer/project/src/doc");
-        let parsed = Tree::<Heading>::parse(path);
-        let tree = Tree::<Heading>::construct(parsed.1);
-        Tree::<Heading>::preorder_proof(&tree.root);
-    ```
-
-    Methods:
-     - fn add_child(&mut self, ancestor: Pos<T>, node: Pos<T>)
-     - fn children(&self, node: Pos<Heading>) -> Option<&Vec<Pos<Heading>>>
-     - fn get(&self, node: Pos<Heading>) -> Option<&Heading>
-     - fn parent(&self, node: Pos<Heading>) -> Pos<Heading>
-     - fn is_root(&self, node: &Pos<T>) -> bool
-
-    Associated & Utility Functions:
-     - fn new() -> Tree<Heading>
-     - fn simple_print(title: &String, headings: &Vec<Heading>)
-     - fn parse(root: &Path) -> (String, Vec<Heading>)
-     - fn construct(data: &Vec<Heading>) -> Tree<Heading>
-     - fn pretty_print(name: &str, position: &Pos<Heading>)
-     - fn preorder(position: &Pos<Heading>, prefix: &str)
-     - fn navigator(path: &Path)
-    */
+    /// Example:
+    /// ```example
+    ///     let path = std::path::Path::new("~/Developer/project/src/doc");
+    ///     let parsed = Tree::<Heading>::parse(path);
+    ///     let tree = Tree::<Heading>::construct(parsed.1);
+    ///     Tree::<Heading>::preorder_proof(&tree.root);
+    /// ```
     #[derive(Debug)]
     pub struct GenTree<T> {
         pub root: Pos<T>,
@@ -189,7 +170,7 @@ mod toc {
         }
     }
     impl<T> GenTree<T> {
-        /** Adds a child to a parent's child arena Vec<Pos<T>> */
+        /// Adds a child to a parent's child arena `Vec<Pos<T>>`
         fn add_child(&mut self, ancestor: Pos<T>, node: Pos<T>) {
             unsafe {
                 if let Some(p) = ancestor {
@@ -465,7 +446,7 @@ mod toc {
             // Checks that the ROOT's children list _contains_ the "a" node
             assert!(tree.children(tree.root).unwrap().iter().any(|&item| {
                 if let Some(ptr) = item {
-                    ptr::eq(ptr, node_a_ptr.unwrap())
+                    std::ptr::eq(ptr, node_a_ptr.unwrap())
                 } else {
                     false
                 }
