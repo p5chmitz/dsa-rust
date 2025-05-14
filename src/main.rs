@@ -8,7 +8,7 @@ mod trees;
 
 use crate::lists::queues::{singly_linked_queue, vec_circ_queue, vec_queue, vecdeque_queue};
 use crate::lists::stacks::{safe_linked_stack, unsafe_linked_stack, vector_stack};
-use crate::lists::{array_list, doubly_linked_list_2, generic_doubly_linked_list, vector_list};
+use crate::lists::{array_list, doubly_linked_list_2, doubly_linked_list, vector_list};
 
 use crate::tgg::{tgg_04, tgg_05};
 
@@ -125,7 +125,7 @@ fn main() {
 
     // Static array list implementation
     println!("\x1b[1;34mStatic array list:\x1b[0m");
-    array_list::example();
+    //array_list::example();
     println!();
 
     // Vector list implementation
@@ -141,7 +141,7 @@ fn main() {
 
     // Singly linked list
     println!("\x1b[1;34mSingly-linked list:\x1b[0m");
-    lists::singly_linked_list::example();
+    //lists::singly_linked_list::example();
 
     // Doubly linked list
     println!("\x1b[1;34mDoubly-linked list:\x1b[0m");
@@ -244,7 +244,7 @@ fn main() {
     }
 
     println!("\x1b[1;34mGeneric linked list:\x1b[0m");
-    lists::generic_doubly_linked_list::sorted_list::example();
+    lists::doubly_linked_list::example();
     println!();
 }
 
