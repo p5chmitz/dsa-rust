@@ -1,3 +1,6 @@
+#![allow(dead_code)]
+#![allow(unused)]
+
 use crate::trees::traits::{BinaryTree, Tree};
 
 /** Owned non-null pointer to Node; Functions as a position */
