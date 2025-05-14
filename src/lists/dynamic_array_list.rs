@@ -19,16 +19,7 @@ impl<'a> Clone for Entry<'a> {
         }
     }
 }
-/** The List's API contains the following functions:
- - new() -> List<'a>
- - is_empty(self) -> bool
- - insert(&mut self, name: &'a str, score: Option<i32>)
- - set_score(&mut self, name: &'a str, score: Option<i32>) -> Result<(), String>
- - get(&self, name: &str) -> Result<i32, &str>
- - remove(&mut self, n: &str) -> Result<&str, String>
- - clear(&mut self)
- - trim(&mut self) - private, called by remove()
-NOTE: This is mostly just a funsies excuse to illustrate dynamic sizing */
+/// NOTE: This is mostly just a funsies excuse to illustrate dynamic sizing
 #[derive(Debug)] // Required for list visualization in example function
 pub struct List<'a> {
     data: Vec<Option<Entry<'a>>>,
