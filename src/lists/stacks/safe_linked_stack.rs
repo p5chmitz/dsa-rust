@@ -1,6 +1,27 @@
-//////////////////////////////////
-/** A safe, singly-linked stack */
-//////////////////////////////////
+/*! A safe, singly-linked stack 
+
+# About
+This simple, `Box`-based stack contains a rudimentary set of operations.
+
+```rust
+use dsa_rust::lists::stacks::safe_linked_stack::Stack;
+
+// Creates a stack
+let mut stack = Stack::new();
+
+stack.push("Peter");
+stack.push("Paul");
+stack.push("Mary");
+
+assert_eq!(stack.pop().unwrap(), "Mary");
+assert_eq!(stack.pop().unwrap(), "Paul");
+
+stack.push("John");
+
+assert_eq!(stack.pop().unwrap(), "John");
+
+```
+*/
 
 pub struct Node<T> {
     data: T,
@@ -12,31 +33,32 @@ impl<T> Node<T> {
         Node { data, next: None }
     }
 }
-/** The Stack API includes
- - new() -> Stack<T>
- - push(&mut self, frame: Box<Node<T>>)
- - peek(&self) -> Option<&T>
- - pop(&mut self) -> Option<Node<T>>
-*/
+/// The Stack API
 pub struct Stack<T> {
     head: Option<Box<Node<T>>>, // Adding an extra box just in case things get wild
     length: usize,
 }
 impl<T> Stack<T> {
-    // Creates a new list
+
+    /// Creates a new stack
     pub fn new() -> Stack<T> {
         Stack {
             head: None,
             length: 0,
         }
     }
-    pub fn push(&mut self, frame: Box<Node<T>>) {
-        let mut new_head = frame;
+
+    /// Pushes a type generic over T to the stack
+    pub fn push(&mut self, input: T) {
+        let ptr = Box::new(Node::new(input));
+        let mut new_head = ptr;
         new_head.next = self.head.take();
         self.head = Some(new_head);
         self.length += 1;
         return;
     }
+
+    /// Returns a reference to the data at the head of the stack, if Some
     pub fn peek(&self) -> Option<&T> {
         if let Some(s) = &(*self).head {
             Some(&s.data)
@@ -44,11 +66,13 @@ impl<T> Stack<T> {
             None
         }
     }
-    pub fn pop(&mut self) -> Option<Node<T>> {
+
+    /// Returns the owned data at the head of the stack, if Some
+    pub fn pop(&mut self) -> Option<T> {
         if let Some(mut boxed_frame) = self.head.take() {
             self.head = boxed_frame.next.take();
             self.length -= 1;
-            Some(*boxed_frame)
+            Some(boxed_frame.data)
         } else {
             None
         }
@@ -56,7 +80,8 @@ impl<T> Stack<T> {
 }
 
 pub mod safe_stack {
-    use super::{Node, Stack};
+    //use super::{Node, Stack};
+    use super::Stack;
 
     /** Example funciton that uses the stack to check if a String contains balanced sets of braces */
     pub fn balance(string: String) -> bool {
@@ -64,10 +89,11 @@ pub mod safe_stack {
 
         for element in string.chars() {
             // Heap-allocates a Node containing an individual char from s
-            let node: Box<Node<char>> = Box::new(Node::new(element));
+            //let node: Box<Node<char>> = Box::new(Node::new(element));
             match element {
                 '[' | '{' | '(' => {
-                    symbols.push(node);
+                    //symbols.push(node);
+                    symbols.push(element);
                 }
                 ']' | '}' | ')' => {
                     // Error if there is a closer with an empty list
