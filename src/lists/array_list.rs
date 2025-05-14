@@ -1,8 +1,51 @@
-////////////////////////////////
-/** A simple array-based list */
-////////////////////////////////
+/*! A simple array-based list illustration
 
-// Sets list size with indexes from 0 to (PODIUM_SIZE - 1)
+# About
+This is a map-like list used to explore how arrays work in Rust. This concept is 
+to use array primitives to construct a simple list of names with associated scores.
+
+The list maintains a sorted invariant. It is actually more efficient to periodically 
+run a `O(n log n)` sorting function on an unsorted list structure that simply 
+appends entries in `O(1)` time, but that approach sacrifices the convenience of 
+the sorted invariant. 
+
+ ```rust
+    use dsa_rust::lists::array_list::Podium;
+    
+    let mut podium = Podium::new();
+
+    // Adds placeholders
+    podium.add("Bobson", None);
+    podium.add("Dingus", None);
+    podium.add("Dorkus", Some(12));
+    podium.print_full(false);
+    assert_eq!(podium.size(), 3);
+     
+    let guess = podium.remove(2); // Removes by index
+    assert_eq!(guess.unwrap(), "Dingus".to_string());
+    podium.print_full(false);
+    
+    // Add scores to placeholders
+    podium.add("Brain", Some(616));
+    podium.add("Peter", Some(1223));
+    podium.add("Dangus", Some(420));
+    podium.print_full(false);
+    
+    // Remove and print Entry
+    let removed = podium.remove(4).unwrap();
+    println!("Removing an entry: \n\t{removed}");
+    
+    // Attempting to remove data from an empty index is an error
+    let msg = podium.remove(5);
+    assert_eq!(msg, Err("No data at index".to_string()));
+
+    // Attempting to remove data from out-of-bounds indexes is an error
+    let msg = podium.remove(10);
+    assert_eq!(msg, Err("Index out of bounds: 10 is out of the range 0..=9".to_string()));
+ ```
+*/
+
+/** Sets list size with indexes from 0 to (PODIUM_SIZE - 1) */
 const PODIUM_SIZE: usize = 10;
 
 #[derive(Debug)]
@@ -20,32 +63,27 @@ impl Clone for Entry {
     }
 }
 
-/** The Podium's public API contains the following functions:
- - new() -> Podium
- - add<'a>(&mut self, name: &'a str, new_score: Option<usize>)
- - set_score(&mut self, index: usize, score: Option<usize>) -> Result<(), String>
- - remove(&mut self, cheater: usize)
- - print_full(&self, print_all: bool)
-
- The Podium also as the following private funcitons:
- - entry(name: String, score: Option<usize>) -> Entry
- - format(e: &Entry) -> (String, String)
-
-NOTE: Rust requires array initializations to happen at compile time; For implementations where the
-same value is used across several functions in a module you need to use a constant */
+/** NOTE: Rust requires array initializations to happen at compile time; For 
+implementations where the same value is used across several functions in a module 
+you need to use a constant */
 #[derive(Default)] // Required for generic array initialization
 pub struct Podium {
     data: [Option<Entry>; PODIUM_SIZE],
     size: usize,
 }
 impl Podium {
-    /** Creates a list that contains `const PODIUM_SIZE` number of elements with indexes
-    from 0 to (PODIUM_SIZE - 1) */
+    /** Creates a list that contains `const PODIUM_SIZE` number of elements with 
+    indexes from 0 to (PODIUM_SIZE - 1) */
     pub fn new() -> Podium {
         Podium {
             data: [const { None }; PODIUM_SIZE],
             size: 0,
         }
+    }
+
+    /** Returns the number of Entrys in the Podium */
+    pub fn size (&self) -> usize {
+        self.size
     }
 
     /** Adds entry to list by score to maintain a sorted list in O(n) time;
@@ -69,18 +107,18 @@ impl Podium {
             let new_entry = Self::entry(name.to_string(), new_score);
             self.data[index] = Some(new_entry);
         }
+        // Increase the size of the podium
+        self.size += 1;
     }
 
-    /** Attempts to write new score data to an index; Returns an error if there is no
-     * data at the specified index, or if the index is out of bounds by
-     * using recycled logic and propagated errors from remove()
-     *
-     * NOTE: There is probably a better way to write directly to the underlying
-     * node instead of overwriting it, but then you'd have to write another set
-     * of logical assertions */
+    /** Attempts to write new score data to an index; Returns an error if there 
+    is no data at the specified index, or if the index is out of bounds by
+    using recycled logic and propagated errors from remove()
+    
+    NOTE: There is probably a better way to write directly to the underlying
+    node instead of overwriting it, but then you'd have to write another set
+    of logical assertions */
     pub fn set_score(&mut self, index: usize, score: Option<usize>) -> Result<(), String> {
-        // Or, if you're good at Rust
-        //
         // Remove and rewrite data to the entry at the index,
         // propagate the error if it fails
         let name = self.remove(index)?;
@@ -110,8 +148,6 @@ impl Podium {
         Ok(entry.name)
     }
 
-    // Private utility funcitons
-
     /** Constructs a new Podium entry */
     fn entry(name: String, score: Option<usize>) -> Entry {
         let score = match score {
@@ -125,7 +161,7 @@ impl Podium {
     }
 
     /** Formats Podium instances for output */
-    fn format(e: &Entry) -> (String, String) {
+    fn _format(e: &Entry) -> (String, String) {
         let name = e.name.to_owned();
         // Required mapping for entries without scores yet
         let score = match e.score {
@@ -170,63 +206,29 @@ impl Podium {
 
 #[test]
 pub fn array_list_test() {
-    use crate::array_list::Podium;
+    //use crate::array_list::Podium;
 
     // Creates a new list and adds some entries
-    let mut pod = Podium::new();
-    pod.add("Bobson", None);
-    pod.add("Peter", Some(1223));
-    pod.add("Brain", None);
+    let mut podium = Podium::new();
+    podium.add("Bobson", None);
+    podium.add("Peter", Some(1223));
+    podium.add("Brain", None);
 
     // Tests that the None score is below the only Some score in the list
-    assert_eq!("Bobson", &pod.remove(1).unwrap());
+    assert_eq!("Bobson", &podium.remove(1).unwrap());
 
     // Tests the set_score function, then shifts its position and checks it
-    pod.set_score(1, Some(616)).ok();
-    pod.add("Remus", Some(899));
-    assert_eq!("Brain", &pod.remove(2).unwrap());
+    podium.set_score(1, Some(616)).ok();
+    podium.add("Remus", Some(899));
+    assert_eq!("Brain", &podium.remove(2).unwrap());
 
     // Tests removal on an empty index
-    assert_eq!("No data at index", &pod.remove(7).unwrap_err());
+    assert_eq!("No data at index", &podium.remove(7).unwrap_err());
 
     // Tests OOB logic with some random usize > (PODIUM_SIZE - 1)
     let oob = 10;
     assert_eq!(
         format!("Index out of bounds: {} is out of the range 0..=9", oob),
-        pod.remove(oob).unwrap_err()
+        podium.remove(oob).unwrap_err()
     );
-}
-
-/** Silly little visual test to see all the silly little operations */
-pub fn example() {
-    use crate::array_list::Podium;
-
-    let mut pod = Podium::new();
-    pod.add("Bobson", None);
-    pod.add("Dingus", None);
-    pod.add("Dorkus", None);
-    pod.print_full(false);
-
-    let _ = pod.remove(2);
-    pod.print_full(false);
-
-    pod.add("Brain", Some(616));
-    pod.print_full(false);
-
-    pod.add("Peter", Some(1223));
-    pod.print_full(false);
-
-    pod.add("Dangus", Some(420));
-    pod.print_full(false);
-
-    let success = pod.remove(4).unwrap();
-    println!("Removing an entry: \n\t{success}");
-
-    if let Err(msg) = pod.remove(5) {
-        println!("Attempting to remove an empty index: {msg}");
-    }
-
-    if let Err(msg) = pod.remove(10) {
-        println!("Attempting to remove an OOB index: {msg}");
-    }
 }
