@@ -14,11 +14,11 @@ These structures/modules represent a basic exploration of foundational, sequence
 Building off the lessons learned in the Core Lists module this section contains examples of hierarchical data structures. 
 The content currently combines general trees and search trees. This section is in active development.
 
-- [Unsafe linked N-ary tree](): An undirected acyclic graph... err, tree. This 
+- [Unsafe linked N-ary tree](crate::trees::unsafe_linked_general_tree): An undirected acyclic graph... err, tree. This 
 exercise also illustrates a `tree`-like Markdown parser; This is a labor of love for me as a professional documentarian as 
 it generates a fancy hierarchical rendering of a Markdown document's headings, also known as a table of contents
 
-- [Linked binary search tree](): Safe and easy; Nice
+- [Linked binary search tree](crate::trees::linked_bst): Safe and easy; Nice
 
 # Maps
 One of the most useful structures in the real world. Maps are essentially just lists of key-value pairs with potentially 
@@ -61,8 +61,9 @@ pub mod lists{
     }
 }
 pub mod trees{
-    //pub mod unsafe_linked_general_tree; // ✔️
-    //pub mod linked_bst; // ✔️
+    pub mod unsafe_linked_general_tree; // ✔️
+    pub mod traits; // Necessary for gen tree
+    pub mod linked_bst; // ✔️
 }
 pub mod maps{
     pub mod chaining_hash_table; // ✔️

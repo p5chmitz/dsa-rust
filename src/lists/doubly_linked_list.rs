@@ -51,7 +51,7 @@ type Link<T> = Option<*mut Node<T>>;
 
 #[derive(Debug)]
 pub struct Node<T> {
-    pub data: T,
+    data: T,
     prev: Link<T>,
     next: Link<T>,
 }

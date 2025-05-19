@@ -6,9 +6,24 @@ mod maw;
 mod tgg;
 mod trees;
 
-use crate::lists::queues::{singly_linked_queue, vec_circ_queue, vec_queue, vecdeque_queue};
-use crate::lists::stacks::{safe_linked_stack, unsafe_linked_stack, vector_stack};
-use crate::lists::{array_list, doubly_linked_list_2, doubly_linked_list, vector_list};
+use crate::lists::queues::{
+    singly_linked_queue, 
+    vec_circ_queue, 
+    vec_queue, 
+    vecdeque_queue
+};
+use crate::lists::stacks::{
+    safe_linked_stack, 
+    unsafe_linked_stack, 
+    vector_stack
+};
+use crate::lists::{
+    array_list, 
+    doubly_linked_list_2, 
+    doubly_linked_list, 
+    vector_list
+};
+use crate::trees::unsafe_linked_general_tree;
 
 use crate::tgg::{tgg_04, tgg_05};
 
@@ -161,14 +176,13 @@ fn main() {
     // TREES
     ////////
 
-    //let path = std::path::Path::new("../tech-docs/src/content/docs/cs");
     let path = std::path::Path::new("src");
     trees::file_tree::disk_usage(path);
     println!("");
 
     println!("\x1b[1;34mN-ary tree example:\x1b[0m");
-    // Paths exist as hard-coded values in example() functions
-    trees::unsafe_linked_general_tree::example();
+    let path = std::path::Path::new("./src/trees");
+    trees::unsafe_linked_general_tree::builder::navigator(0, path);
     println!();
 
     // MAPS
