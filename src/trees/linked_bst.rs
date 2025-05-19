@@ -1,5 +1,7 @@
-#![allow(dead_code)]
-#![allow(unused)]
+/*! A safe, linked binary search tree (BST) 
+
+# About
+*/
 
 use crate::trees::traits::{BinaryTree, Tree};
 
@@ -15,16 +17,19 @@ pub struct Node<T: std::cmp::PartialEq> {
     data: Option<T>,
 }
 
+/** The BinTree struct contains operations specific to binary trees.
+ 
+NOTE: Requires the PartialEq trait bounds for binary tree operations */
 pub struct BinTree<T: std::cmp::PartialEq> {
-    root: Box<Node<T>>, // Needs Option for empty trees
+    root: Box<Node<T>>, // No Option because 
     size: usize,
 }
 impl<T> BinTree<T>
 where
     T: std::cmp::PartialEq,
 {
-    // Creates a new char tree
-    fn new() -> BinTree<T> {
+    /** Creates a new generic binary tree */
+    pub fn new() -> BinTree<T> {
         let node: Node<T> = Node {
             parent: None,
             left: None,
@@ -37,23 +42,51 @@ where
         }
     }
 
-    // All operations can (and should) require O(1) time
-    fn set_root(&mut self, data: T) {
-        self.root.data = Some(data)
-    }
+    /** Sets the root of the tree */
+    //pub fn set_root(&mut self, data: T) {
+    //    self.root.data = Some(data)
+    //}
 
-    fn add_left(&mut self, mut ancestor: Pos<T>, node: Pos<T>) {
+    /** Adds a left node to a parent */
+    pub fn add_left(&mut self, mut ancestor: Pos<T>, node: Pos<T>) {
         ancestor.left = Some(node);
     }
-    fn add_right(&mut self, mut ancestor: Pos<T>, node: Pos<T>) {
+
+    /** Adds a right node to a parent */
+    pub fn add_right(&mut self, mut ancestor: Pos<T>, node: Pos<T>) {
         ancestor.right = Some(node);
     }
 
-    fn set(&mut self, _p: Pos<T>, _node: Node<T>) {}
-    fn attach(&mut self, _left: Pos<T>, _right: Pos<T>) {}
-    fn remove(&mut self, _p: Pos<T>) {}
+    /** WARNNING: Unimplemented 
+
+    Overwrites the data at a given node (position) */
+    pub fn set(&mut self, _p: Pos<T>, _node: T) -> Result<(), String> {
+        Ok(())
+    }
+
+    /** WARNNING: Unimplemented */
+    pub fn attach(&mut self, _left: Pos<T>, _right: Pos<T>) {}
+
+    /** WARNNING: Unimplemented */
+    pub fn remove(&mut self, _p: Pos<T>) {}
+
+    /** Returns the number of nodes in the tree */
+    pub fn size(&self) -> usize {
+        self.size
+    }
+
+    /** Returns true if the tree contains no nodes */
+    pub fn is_empty(&self) -> bool {
+        //if self.size > 0 { false } else { true }
+        self.size == 0
+    }
+
+    /** Returns an immutable reference to the root of the tree */
+    pub fn root(&self) -> Option<&Pos<T>> {
+        Some(&self.root)
+    }
+
 }
-// NOTE: Requires the PartialEq trait bounds for binary tree operations
 //impl<T> Tree<Pos<T>, T> for BinTree<T>
 impl<T> Tree<T> for BinTree<T>
 where
@@ -70,24 +103,6 @@ where
         }
     }
 
-    // /** Returns the number of nodes in the tree */
-    // fn size(&self) -> usize {
-    //     self.size
-    // }
-    // /** Returns true if the tree contains no nodes */
-    // fn is_empty(&self) -> bool {
-    //     //if self.size > 0 { false } else { true }
-    //     self.size() == 0
-    // }
-
-    // Ancestor methods
-    ///////////////////
-
-    // /** Returns an immutable reference to the root of the tree */
-    // fn root(&self) -> Option<&Pos<T>> {
-    //     Some(&self.root)
-    // }
-
     /** Returns an immutable reference to the parent of the given node */
     fn parent(&self, node: Self::Position) -> Option<Self::Position> {
         //if self.validate(&node) {
@@ -100,9 +115,7 @@ where
         }
     }
 
-    // Descendant methods
-    ///////////////////
-
+    /** Returns the number of children for a given node */
     fn num_children(&self, node: Self::Position) -> Option<usize> {
         if let Some(n) = self.children(node) {
             Some(n.len())
@@ -111,6 +124,7 @@ where
         }
     }
 
+    /** Returns a collection of the node's children */
     fn children(&self, node: Self::Position) -> Option<Vec<Self::Position>> {
         let mut vec = Vec::with_capacity(2);
         if let Some(l) = node.left {
@@ -122,9 +136,7 @@ where
         Some(vec)
     }
 
-    // Query methods
-    ////////////////
-
+    /** Returns true if the provided node has no children */
     fn is_leaf(&self, node: Self::Position) -> bool {
         //if self.num_children(node.clone()).is_some()
         //    && (*node.clone().unwrap()).left.is_none()
@@ -134,13 +146,12 @@ where
         node.left.is_none() && node.right.is_none()
     }
 
+    /** Returns true if the node is the root */
     fn is_root(&self, node: Self::Position) -> bool {
         node == self.root
     }
 
-    // Derived methods
-    //////////////////
-
+    /**  */
     fn depth(&self, node: Self::Position) -> Option<usize> {
         let mut d = 1;
         let mut cursor = node.clone();
@@ -151,6 +162,7 @@ where
         Some(d)
     }
 
+    /**  */
     fn height(&self, node: Self::Position) -> Option<usize> {
         let mut h = 0;
         if let Some(c) = self.children(node) {
