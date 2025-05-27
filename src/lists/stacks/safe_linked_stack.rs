@@ -1,4 +1,4 @@
-/*! A safe, singly-linked stack 
+/*! A safe, singly-linked stack
 
 # About
 This simple, `Box`-based stack contains a rudimentary set of operations.
@@ -39,7 +39,6 @@ pub struct Stack<T> {
     length: usize,
 }
 impl<T> Stack<T> {
-
     /// Creates a new stack
     pub fn new() -> Stack<T> {
         Stack {

@@ -1,6 +1,6 @@
-/*! A safe, singly-linked queue 
+/*! A safe, singly-linked queue
 
-An inefficient but safe singly-linked queue implementation. The `enqueue()` operation runs 
+An inefficient but safe singly-linked queue implementation. The `enqueue()` operation runs
 in linear (`O(n)`) time because I didn't feel like trying to safely reference the tail Node.
 
 ```rust
@@ -43,7 +43,6 @@ pub struct Queue<T> {
     length: usize,
 }
 impl<T> Queue<T> {
-
     /// Creates a new list
     pub fn new() -> Queue<T> {
         Queue {

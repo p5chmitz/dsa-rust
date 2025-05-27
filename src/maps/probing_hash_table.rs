@@ -1,4 +1,4 @@
-/*! Safe open addressing hash table with MAD compression and quadratic probing 
+/*! Safe open addressing hash table with MAD compression and quadratic probing
 
 ```rust
 
@@ -102,7 +102,6 @@ where
     pub fn value(&self) -> &V {
         &self.value
     }
-
 }
 #[derive(Debug)]
 /** Prime, scale, and shift are used by the MAD compression algorithm and
@@ -120,7 +119,7 @@ pub struct ProbingHashTable<K, V> {
 impl<K, V> ProbingHashTable<K, V>
 where
     K: Clone + Debug + Hash + PartialEq,
-    V: Clone + PartialEq  + std::fmt::Debug,
+    V: Clone + PartialEq + std::fmt::Debug,
 {
     /// Constructor for an empty table with a default capacity of 2
     pub fn new() -> ProbingHashTable<K, V> {
@@ -161,7 +160,7 @@ where
             println!("\t{:>3}: {:?}", m, e)
         }
     }
-    
+
     /// Takes a key and returns a Boolean indicating whether its in the map
     pub fn contains(&self, key: K) -> bool {
         let hash = Self::hash(&key);

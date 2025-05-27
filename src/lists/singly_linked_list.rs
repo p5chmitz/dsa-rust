@@ -4,14 +4,14 @@
 The primary goal with this implementation is to offer a simple linked list with no `unsafe` code. The list does this with `Box`-type pointers to owned, heap-allocated objects.
 
 #### Design
-This exceedingly simple, safe, singly-linked list consists of one primary [LinkedList] struct that contains stack and queue operations. 
+This exceedingly simple, safe, singly-linked list consists of one primary [LinkedList] struct that contains stack and queue operations.
 
-The list operates on a single, private `Node` struct that contains only a `data` field (generic over `T`) and a `next` pointer as `Option<Box<Node<T>>>`. Due to the owned nature of the pointers and safe-code-only design restriction, _it is not possible to sort this list in place_. 
+The list operates on a single, private `Node` struct that contains only a `data` field (generic over `T`) and a `next` pointer as `Option<Box<Node<T>>>`. Due to the owned nature of the pointers and safe-code-only design restriction, _it is not possible to sort this list in place_.
 
 #### Iterators
 This list does not have any positional implementation, meaning that you cannot get pointers to arbitrary nodes within the list. The list _does_ provide an `iter()` method that yields an iterator over immutable references to `Node` data, consistent with Rust naming convention. Providing an `iter_mut()` that yields mutable references to the underlying `Node` data in safe Rust is currently beyond the scope of this structure. See the [doubly-linked variant](crate::lists::doubly_linked_list) which uses a `CursorMut` API for mutable references to `Node` data.
 
-**TODO**: 
+**TODO**:
 - Implement add/remove operations at arbitrary "indexes" (non-positional)
 
 # Examples
@@ -70,7 +70,7 @@ This example illustrates queue (FIFO) operations
 
     assert_eq!(list.peek(), None); // Looks like theres None left
     assert_eq!(list.dequeue(), None); // dont wanna unwrap() on None!
-                            
+
 ```
 
 <br>
@@ -89,11 +89,11 @@ This example illustrates a sorting workaround
 
     // 4) Sort the Vec in O(n log n) time
     data.sort();
-    
+
     // 5) Reconstruct the list as a sorted variant
     let mut sorted_list = LinkedList::new();
     for node in data {
-        // 
+        //
         // Use push() to create list in descending order
         // Use enqueue() to create list in ascending order
         sorted_list.enqueue(node);
@@ -106,7 +106,6 @@ struct Node<T> {
     next: Option<Box<Node<T>>>,
 }
 impl<T> Node<T> {
-
     // Creates a new Node with an optional next pointer
     fn new(data: T, next: Option<Box<Node<T>>>) -> Node<T> {
         Node { data, next }
@@ -127,7 +126,9 @@ impl<T> Node<T> {
         let next = &self.next;
         if let Some(node) = next {
             Some(&node.data)
-        } else { None }
+        } else {
+            None
+        }
     }
 }
 
@@ -137,7 +138,6 @@ pub struct LinkedList<T> {
     length: usize,
 }
 impl<T: Clone> LinkedList<T> {
-
     /// Creates a new list
     pub fn new() -> LinkedList<T> {
         LinkedList {
@@ -148,7 +148,6 @@ impl<T: Clone> LinkedList<T> {
 
     /** Adds a node to the head of the list/stack */
     pub fn push(&mut self, data: T) {
-
         // Create a new Node
         let new_node = Node::new(data, self.head.take());
 
@@ -166,10 +165,9 @@ impl<T: Clone> LinkedList<T> {
 
     /** Adds a node to the tail of the list/queue in O(n) time;
 
-    TODO: Safely implement a way to store a reference to the last node in the 
+    TODO: Safely implement a way to store a reference to the last node in the
     list for O(1) enqueue operations */
     pub fn enqueue(&mut self, data: T) {
-
         // Wraps the data in an Option<Box<Node>>
         let new_node = Some(Box::from(Node::new(data, None)));
 
@@ -234,8 +232,8 @@ impl<'a, T> Iterator for Iter<'a, T> {
 
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(current) = self.next {
-                self.next = current.next.as_deref(); // Move to next node
-                Some(&current.data) // Return reference to data
+            self.next = current.next.as_deref(); // Move to next node
+            Some(&current.data) // Return reference to data
         } else {
             None
         }
@@ -244,23 +242,22 @@ impl<'a, T> Iterator for Iter<'a, T> {
 
 #[test]
 fn singly_linked_list_sort() {
-    
     let mut list: LinkedList<u8> = LinkedList::new();
 
     // Creates a list by pushing elements to the head
     list.push(4);
-    list.push(34); 
+    list.push(34);
     list.push(46);
     list.push(196);
     list.push(98);
-    list.push(3); 
+    list.push(3);
     list.push(77);
     list.push(163); // Current head
 
     // Pushes the list to a sortable structure
     let mut data: Vec<_> = list.iter().cloned().collect();
     data.sort(); // Defaults to ascending order
-    
+
     // Reconstructs the list as a sorted variant
     let mut sorted_list = LinkedList::new();
     for node in data {
@@ -282,5 +279,4 @@ fn singly_linked_list_sort() {
 
     assert_eq!(list.peek().unwrap(), &163); // head of unsorted list
     assert_eq!(sorted_list.peek().unwrap(), &3); // head of sorted list
-
 }

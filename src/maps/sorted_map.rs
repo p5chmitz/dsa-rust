@@ -45,10 +45,9 @@
     assert!(removed.is_some());
     assert_eq!(*removed.unwrap().value(), 45);
     assert_eq!(map.entries(), 7);
-    
+
  ```
 */
-
 
 //use std::cmp::Ordering::{Equal, Greater, Less};
 

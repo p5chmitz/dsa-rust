@@ -1,4 +1,4 @@
-/*! A VecDeque-based queue (wrapper) 
+/*! A VecDeque-based queue (wrapper)
 
 This is a simple std::VecDeque wrapper
 

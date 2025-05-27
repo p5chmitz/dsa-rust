@@ -72,7 +72,7 @@ fn linear_probe(v: &Vec<Option<&str>>, key: &str) -> usize {
     location
 }
 /// Linear probe calculates `A[location] = A[(h(k) + f(i)) mod N]`, where i > 0 and f(i) == i^2
-/// Assumes there is always going to be a valid index 
+/// Assumes there is always going to be a valid index
 pub fn quadratic_probe(v: &Vec<Option<&str>>, key: &str) -> usize {
     // Example instance values
     let prime = 13;

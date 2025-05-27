@@ -1,17 +1,17 @@
 /*! A simple array-based list illustration
 
 # About
-This is a map-like list used to explore how arrays work in Rust. This concept is 
+This is a map-like list used to explore how arrays work in Rust. This concept is
 to use array primitives to construct a simple list of names with associated scores.
 
-The list maintains a sorted invariant. It is actually more efficient to periodically 
-run a `O(n log n)` sorting function on an unsorted list structure that simply 
-appends entries in `O(1)` time, but that approach sacrifices the convenience of 
-the sorted invariant. 
+The list maintains a sorted invariant. It is actually more efficient to periodically
+run a `O(n log n)` sorting function on an unsorted list structure that simply
+appends entries in `O(1)` time, but that approach sacrifices the convenience of
+the sorted invariant.
 
  ```rust
     use dsa_rust::lists::array_list::Podium;
-    
+
     let mut podium = Podium::new();
 
     // Adds placeholders
@@ -20,21 +20,21 @@ the sorted invariant.
     podium.add("Dorkus", Some(12));
     podium.print_full(false);
     assert_eq!(podium.size(), 3);
-     
+
     let guess = podium.remove(2); // Removes by index
     assert_eq!(guess.unwrap(), "Dingus".to_string());
     podium.print_full(false);
-    
+
     // Add scores to placeholders
     podium.add("Brain", Some(616));
     podium.add("Peter", Some(1223));
     podium.add("Dangus", Some(420));
     podium.print_full(false);
-    
+
     // Remove and print Entry
     let removed = podium.remove(4).unwrap();
     println!("Removing an entry: \n\t{removed}");
-    
+
     // Attempting to remove data from an empty index is an error
     let msg = podium.remove(5);
     assert_eq!(msg, Err("No data at index".to_string()));
@@ -63,8 +63,8 @@ impl Clone for Entry {
     }
 }
 
-/** NOTE: Rust requires array initializations to happen at compile time; For 
-implementations where the same value is used across several functions in a module 
+/** NOTE: Rust requires array initializations to happen at compile time; For
+implementations where the same value is used across several functions in a module
 you need to use a constant */
 #[derive(Default)] // Required for generic array initialization
 pub struct Podium {
@@ -72,7 +72,7 @@ pub struct Podium {
     size: usize,
 }
 impl Podium {
-    /** Creates a list that contains `const PODIUM_SIZE` number of elements with 
+    /** Creates a list that contains `const PODIUM_SIZE` number of elements with
     indexes from 0 to (PODIUM_SIZE - 1) */
     pub fn new() -> Podium {
         Podium {
@@ -82,7 +82,7 @@ impl Podium {
     }
 
     /** Returns the number of Entrys in the Podium */
-    pub fn size (&self) -> usize {
+    pub fn size(&self) -> usize {
         self.size
     }
 
@@ -111,10 +111,10 @@ impl Podium {
         self.size += 1;
     }
 
-    /** Attempts to write new score data to an index; Returns an error if there 
+    /** Attempts to write new score data to an index; Returns an error if there
     is no data at the specified index, or if the index is out of bounds by
     using recycled logic and propagated errors from remove()
-    
+
     NOTE: There is probably a better way to write directly to the underlying
     node instead of overwriting it, but then you'd have to write another set
     of logical assertions */

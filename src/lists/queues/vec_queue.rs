@@ -1,4 +1,4 @@
-/*! A Vector-based queue (wrapper) 
+/*! A Vector-based queue (wrapper)
 
 This is a simple Vec wrapper
 

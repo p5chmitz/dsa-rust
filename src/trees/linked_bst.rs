@@ -1,4 +1,4 @@
-/*! A safe, linked binary search tree (BST) 
+/*! A safe, linked binary search tree (BST)
 
 # About
 */
@@ -18,10 +18,10 @@ pub struct Node<T: std::cmp::PartialEq> {
 }
 
 /** The BinTree struct contains operations specific to binary trees.
- 
+
 NOTE: Requires the PartialEq trait bounds for binary tree operations */
 pub struct BinTree<T: std::cmp::PartialEq> {
-    root: Box<Node<T>>, // No Option because 
+    root: Box<Node<T>>, // No Option because
     size: usize,
 }
 impl<T> BinTree<T>
@@ -57,7 +57,7 @@ where
         ancestor.right = Some(node);
     }
 
-    /** WARNNING: Unimplemented 
+    /** WARNNING: Unimplemented
 
     Overwrites the data at a given node (position) */
     pub fn set(&mut self, _p: Pos<T>, _node: T) -> Result<(), String> {
@@ -85,7 +85,6 @@ where
     pub fn root(&self) -> Option<&Pos<T>> {
         Some(&self.root)
     }
-
 }
 //impl<T> Tree<Pos<T>, T> for BinTree<T>
 impl<T> Tree<T> for BinTree<T>
