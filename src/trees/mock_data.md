@@ -51,6 +51,8 @@ Vulputate ad nec eget arcu; parturient curae ornare lacinia. Rhoncus senectus et
       lvl: 5, title: "Old Town"
       lvl: 6, title: "Cathédrale Saint-Pierre"
       lvl: 3, title: "Bolivia"
+      lvl: 6, title: "Puerta del Sol"
+      lvl: 6, title: "Puerta de la Luna"
       lvl: 2, title: "Islands"
       lvl: 3, title: "Marine"
       lvl: 4, title: "Australia"
@@ -59,19 +61,24 @@ Vulputate ad nec eget arcu; parturient curae ornare lacinia. Rhoncus senectus et
 ```
 
 ```
-    [] Lorem Ipsum Test 
-    │    An ordered look at MD parsing
-    │
-    ├── Landlocked
-    │   ├── Switzerland
-    │   │   └── Geneva
-    │   │       └── Old Town
-    │   │           └── Cathédrale Saint-Pierre
-    │   └── Bolivia
-    └── Island
-        ├── Marine
-        │   └── Australiae
-        └── Fresh Water
+./src/trees/mock_data.md
+📄 Location Tree Test
+	│
+	└── []
+	    ├── Landlocked
+	    │   ├── Switzerland
+	    │   │   └── Geneva
+	    │   │       └── Old Town
+	    │   │           └── Cathédrale Saint-Pierre
+	    │   └── Bolivia
+	    │       └── []
+	    │           └── []
+	    │               ├── Puerta del Sol
+	    │               └── Puerta de la Luna
+	    └── Islands
+	        ├── Marine
+	        │   └── Australia
+	        └── Fresh Water`
 ```
 
 ```
