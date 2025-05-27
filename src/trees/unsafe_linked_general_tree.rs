@@ -1,63 +1,169 @@
-/*! An unsafe, linked, n-ary tree implementation 
+/*! An unsafe, linked, n-ary tree implementation
 
 # About
+Following classical DSA curricula, this implementation relies primarily on pointers for the structure's composition and navigation.
 
-#### Design
+There are better ways to do this. Specifically, an index-backed graph crate would likely provide a more robust set of tooling to construct and navigate hierarchical, n-ary tree structures.
 
-# Examples
+# Design
+The base [GenTree] structure is sparse and only contains basic operations for constructors and metadata retrieval. Most of the magic happens in the [CursorMut] struct. Both structs rely on a [Position] struct which provides a safe handle to all the raw pointers required to make tree go brrr.
+
+# Example
+This section presents an algorithm that builds a tree from a `Vec` of custom `Heading` objects that contain a level and a heading value. Assume the inputs to the algorithm start at level 1 with the first (and lowest) level in the `Vec<Heading>` list being 2. The result is a single, empty root node represented by `[]`. 
+```text
+    []
+    │
+    ├── Landlocked
+    │   ├── Switzerland
+    │   │   └── Geneva
+    │   │       └── Old Town
+    │   │           └── Cathédrale Saint-Pierre
+    │   └── Bolivia
+    │       └── []
+    │           └── []
+    │               ├── Puerta del Sol
+    │               └── Puerta de la Luna
+    └── Islands
+        ├── Marine
+        │   └── Australia
+        └── Fresh Water`
+```
+```rust
+    use dsa_rust::trees::unsafe_linked_general_tree::GenTree;
+
+    struct Heading {
+        level: usize,
+        title: String,
+    }
+    impl Heading {
+        fn new(title: String, level: usize) -> Heading {
+            Heading { level, title }
+        }
+    }
+
+    pub fn construct(mut cur_level: usize, data: Vec<Heading>) -> GenTree<Heading> {
+        // Instantiates a Tree with a generic root and traversal positioning
+        let mut tree: GenTree<Heading> = GenTree::<Heading>::new();
+        let mut cursor = tree.cursor_mut(); // Sets cursor to tree.root
+
+        // Constructs tree from Vec<T>
+        for heading in data {
+            let data_level = heading.level;
+
+            // Case 1: Adds a child to the current parent and sets level cursor
+            if data_level == cur_level + 1 {
+                cursor.add_child(heading);
+                cur_level += 1;
+            }
+            // Case 2: Adds a child with multi-generational skips
+            else if data_level > cur_level {
+                let diff = data_level - cur_level;
+                for _ in 1..diff {
+                    let empty = Heading::new("[]".to_string(), 0);
+                    cursor.add_child(empty);
+                    cur_level += 1;
+                }
+                cursor.add_child(heading);
+                cur_level += 1;
+            }
+            // Case 3: Adds sibling to current parent
+            else if data_level == cur_level {
+                cursor.ascend().ok();
+                cursor.add_child(heading);
+            }
+            // Case 4: Adds a child to the appropriate ancestor,
+            // ensuring proper generational skips
+            else {
+                let diff = cur_level - data_level;
+                for _ in 0..=diff {
+                    cursor.ascend().ok();
+                    cur_level -= 1;
+                }
+                cursor.add_child(heading);
+                cur_level += 1;
+            }
+        }
+        tree
+    }
+
+```
 
 */
 
 //use crate::trees::traits::Tree;
-use std::ptr::NonNull;
 use std::marker::PhantomData;
+use std::ptr::NonNull;
 
-/** The Position struct is a concrete, lightweight struct that provides a safe 
-handle to raw Node position data to avoid exposing/passing raw pointer data in 
-the public GenTree and CursorMut APIs. 
+/** The Position struct is a concrete, lightweight struct that provides a safe
+handle to raw Node position data to avoid exposing/passing raw pointer data in
+the public GenTree and CursorMut APIs.
 
-```rust
+```example
     // Type aliasing exposes raw pointers! 🙅
-    //type Pos<T> = Option<*mut Node<T>>; 
-    
+    type Pos<T> = Option<*mut Node<T>>;
+
     // Nullable, even if `Some`
-    //ptr: *mut Node<T>,
-    //ptr: Option<*mut Node<T>>
+    ptr: *mut Node<T>,
+    ptr: Option<*mut Node<T>>
 
     // Wrapping NonNull guarantees a valid pointer, if one exists
-    ptr: Option<NonNull<Node<T>>> 
+    ptr: Option<NonNull<Node<T>>>
 ```
 
-The `Position<T>` struct only contains methods for simple, internal operations 
-like constructing and acquiring pointers, it is intended to be an opaque handle.
-*/
+The `Position<T>` struct only contains methods for simple, internal operations
+like constructing and acquiring pointers, it is intended to be an opaque handle. */
+#[derive(Debug, PartialEq)]
 pub struct Position<T> {
     ptr: Option<NonNull<Node<T>>>,
     _phantom: PhantomData<T>,
 }
 impl<T> Position<T> {
-
     /** Internal constructor only:
     Creates a safe handle to `Node<T>` and returns it as a `Position<T>`.
     Marked as unsafe because it takes a *mut which is the caller's
     responsibility to ensure is not null. */
     //pub(crate) unsafe fn new(ptr: *mut Node<T>) -> Self {
     unsafe fn new(ptr: *mut Node<T>) -> Self {
-        Position { 
+        Position {
             // NonNull::new() automatically wraps the pointer in Option
-            ptr: NonNull::new(ptr), 
-            _phantom: PhantomData 
+            ptr: NonNull::new(ptr),
+            _phantom: PhantomData,
         }
     }
 
     /** Utility for internal access:
-     
+
     Takes a `Position<T>` and safely extracts the raw `Node<T>` pointer. */
     //pub(crate) fn as_ptr(&self) -> Result<*mut Node<T>, String> {
     fn as_ptr(&self) -> Result<*mut Node<T>, String> {
         match self.ptr {
             Some(non_null_ptr) => Ok(non_null_ptr.as_ptr()),
             None => Err("Oh noez: pointer is null".to_string()),
+        }
+    }
+
+    fn _get_data(&self) -> Option<&T> {
+        if let Ok(ptr) = self.as_ptr() {
+            unsafe { (*ptr).data.as_ref() }
+        } else {
+            None
+        }
+    }
+
+    //pub fn temp(data: T) -> Self {
+    //    Position {
+    //        // NonNull::new() automatically wraps the pointer in Option
+    //        ptr: NonNull::new(Box::into_raw(Node::build(Some(data)))),
+    //        _phantom: PhantomData,
+    //    }
+
+    //}
+}
+impl<T> Clone for Position<T> {
+    fn clone(&self) -> Self {
+        Position {
+            ptr: self.ptr,
+            _phantom: PhantomData,
         }
     }
 }
@@ -69,7 +175,6 @@ struct Node<T> {
     data: Option<T>,
 }
 impl<T> Node<T> {
-
     /** Builds a new Node and returns its position */
     fn build(data: Option<T>) -> Box<Node<T>> {
         Box::new(Node {
@@ -92,7 +197,7 @@ impl<T> Node<T> {
     // fn get<'a>(position: Position<T>) -> Option<&'a T> {
     //     // Safely extract the raw pointer from Position<T>
     //     // and then YOLO the deref
-    //     if let Ok(p) = position.as_ptr() { 
+    //     if let Ok(p) = position.as_ptr() {
     //         unsafe { (*p).data.as_ref() }
     //     } else {
     //         None
@@ -120,24 +225,17 @@ Example:
 ```
 */
 //#[derive(Debug)] // No Debug because Position is secret
-struct GenTree<T> {
+pub struct GenTree<T> {
     root: Position<T>,
     size: usize,
 }
 impl<T> GenTree<T> {
-
     /** Instantiates a new Tree with a default root */
     pub fn new() -> GenTree<T> {
         //let root: Pos<T> = Some(Box::into_raw(Node::build(None)));
         let root: Position<T> = unsafe { Position::new(Box::into_raw(Node::build(None))) };
         GenTree { root, size: 0 }
     }
-
-    /** Returns the Position of the tree's root */
-    //pub fn root(&self) -> Position<T> {
-    //    let ptr = self.root.as_ptr().ok().unwrap();
-    //    unsafe { Position::new(ptr) }
-    //} 
 
     // /** Creates a new node and returns its position */
     //pub fn new_node(&self, data: T) -> Position<T> {
@@ -163,12 +261,12 @@ impl<T> GenTree<T> {
     //    //node.as_ref().and_then(|n| unsafe { (*(*n)).data.as_ref() })
     //}
 
-    fn dummy(&self) -> Position<T> {
-        let ptr = self.root.as_ptr().ok().unwrap();
-        unsafe { Position::new(ptr) }
-    }
+    //fn dummy(&self) -> Position<T> {
+    //    let ptr = self.root.as_ptr().ok().unwrap();
+    //    unsafe { Position::new(ptr) }
+    //}
 
-    /** Returns the parent of a given node, if it exists */
+    // /** Returns the parent of a given node, if it exists */
     //pub fn get_parent(&self, node: Position<T>) -> Option<Position<T>> {
     //    if let Ok(n) = node.as_ptr() {
     //        unsafe { (*n).parent }
@@ -213,7 +311,7 @@ impl<T> GenTree<T> {
     // /** Adds a child to a parent's children field represented as Vec<Pos<T>> */
     //pub fn add_child(&mut self, ancestor: Position<T>, data: T) {
     //    // Create the new child node
-    //    let node: Box<Node<T>> = Box::new(Node { 
+    //    let node: Box<Node<T>> = Box::new(Node {
     //        parent: Some(ancestor),
     //        children: Vec::new(),
     //        data: Some(data)
@@ -243,10 +341,19 @@ impl<T> GenTree<T> {
     //    }
     //}
 
-    /** Returns true if the given position is the tree's root */
-    //pub fn is_root(&self, node: Position<T>) -> bool {
-    //    node == self.root
+    // /** Returns true if the given position is the tree's root. 
+    // 
+    //WARNING: Unsafe */
+    //pub unsafe fn is_root(&self, node: Position<T>) -> bool {
+    //    // Sloppy
+    //    node.as_ptr().ok().unwrap() == self.root.as_ptr().ok().unwrap()
     //}
+
+    /** Returns the Position of the tree's root */
+    pub fn root(&self) -> Position<T> {
+        let ptr = self.root.as_ptr().ok().unwrap();
+        unsafe { Position::new(ptr) }
+    }
 
     /** Creates a `CursorMut<T>` starting at the tree's root */
     pub fn cursor_mut(&mut self) -> CursorMut<T> {
@@ -255,22 +362,35 @@ impl<T> GenTree<T> {
         // Constructs and returns the Position<T>
         let root = unsafe { Position::new(ptr) };
 
-        CursorMut{
+        CursorMut {
             node: root,
-            tree: self
+            tree: self,
         }
     }
 
-    // /** Returns the depth for a given node */
-    //pub fn depth(&self, node: Pos<T>) -> Option<usize> {
-    //    let mut d = 1;
-    //    let mut cursor = node;
-    //    while !self.is_root(cursor) {
-    //        cursor = self.get_parent(cursor)?;
-    //        d += 1;
-    //    }
-    //    Some(d)
-    //}
+    pub fn cursor_from(&mut self, position: &mut Position<T>) -> CursorMut<T> {
+        // Gets the *mut from root
+        let ptr = position.as_ptr().ok().unwrap();
+        // Constructs and returns the Position<T>
+        let root = unsafe { Position::new(ptr) };
+
+        CursorMut {
+            node: root,
+            tree: self,
+        }
+    }
+
+    /** Returns the depth for a given node */
+    pub fn depth(&mut self, node: Position<T>) -> usize {
+        let mut depth = 1;
+        let mut cursor = self.cursor_mut();
+        cursor.jump(&node);
+        while !cursor.is_root() {
+            cursor.ascend().ok();
+            depth += 1;
+        }
+        depth
+    }
 
     // /** Returns the height of a sub-tree at a given position */
     //pub fn height(&self, node: Pos<T>) -> Option<usize> {
@@ -282,278 +402,449 @@ impl<T> GenTree<T> {
     //    }
     //    Some(h + 1)
     //}
-
+    
 }
 
-//impl<T> Drop for GenTree<T> {
-//    fn drop(&mut self) {
-//        /** Recursive tree destructor */
-//        // TODO: Update implementation with NonNull
-//        // to avoid null pointer dereference check
-//        unsafe fn drop_node_recursive<T>(node_ptr: *mut Node<T>) {
-//            // Avoids a null pointer dereference
-//            if node_ptr.is_null() {
-//                return;
-//            }
-//
-//            // Dereference the pointer and process its children
-//            let node = &mut *node_ptr;
-//            for &child_ptr in node.children.iter() {
-//                if let Some(child_ptr) = child_ptr {
-//                    drop_node_recursive(child_ptr);
-//                }
-//            }
-//
-//            // Deallocate the current node
-//            let _ = Box::from_raw(node_ptr);
-//        }
-//
-//        unsafe {
-//            if let Some(root_ptr) = self.root {
-//                drop_node_recursive(root_ptr);
-//            }
-//        }
-//    }
-//}
+impl<T> Drop for GenTree<T> {
+    /** Recursive Drop implementation with some dirty tricks */
+    fn drop(&mut self) {
+        // Recursive wrapper/entry point
+        unsafe {
+            if let Ok(root_ptr) = &self.root.as_ptr() {
+                drop_node_recursive(*root_ptr);
+            }
+        }
 
-/** A cursor over mutable data that operates with the safe `Position<T>` handle over raw pointers. 
+        // Recursive function to Drop Nodes
+        unsafe fn drop_node_recursive<T>(node_ptr: *mut Node<T>) {
+            // Take the children by swapping out the Vec
+            let children = std::mem::take(&mut (*node_ptr).children);
+            // Original results in double free
+            //let children = std::ptr::read(&(*node_ptr).children);
 
-This is how we win with raw pointers */
+            // Recursively visit the Positions for each Node
+            for child_pos in children {
+                if let Ok(child_ptr) = child_pos.as_ptr() {
+                    drop_node_recursive(child_ptr);
+                }
+            }
+
+            // Deallocate the current node
+            drop(Box::from_raw(node_ptr));
+        }
+    }
+}
+
+/** A cursor over mutable data that operates with the safe `Position<T>` handle over raw pointers. */
 pub struct CursorMut<'a, T> {
-    //node: Pos<T>, // Option<*mut Node<T>>
     node: Position<T>, // ptr: Option<NonNull<Node<T>>>
     tree: &'a mut GenTree<T>,
 }
 
 impl<'a, T> CursorMut<'a, T> {
 
-    // NAVIGATION
-    /////////////
-
-    /// Navigates down a generation, if Some
-    ///
-    /// WARNING: Unimplemented
-    pub fn descendant(&self) -> Option<Position<T>> {
-        unsafe { Some(Position::new(Box::into_raw(Node::build(None)))) }
-        //let ptr = self.node.as_ptr().ok().unwrap();
-        //unsafe {
-        //    if let Some(children) = (*ptr).children { // Unsafe deref
-        //        let parent_ptr = children.as_ptr().ok().unwrap();
-        //        Some(Position::new(parent_ptr)) // Unsafe constructor
-        //    } else { None }
-        //}
-    }
-    /// Jumps the cursor to the current Node's first child
-    ///
-    /// TODO: split into first_child() and last_child()?
-    /// Moves the cursor to the first child of the current node.
-    //pub fn child(&mut self) {
-    //    if let Some(ptr) = self.node {
-    //        unsafe {
-    //            let node = &*ptr;
-    //            if let Some(&first_child) = node.children.first() {
-    //                self.node = first_child;
-    //            } else {
-    //                self.node = None;
-    //            }
-    //        }
-    //    }
-    //}
-
-
-    /** Navigates up a generation, if Some */
-    pub fn ancestor(&self) -> Option<Position<T>> {
-        let ptr = self.node.as_ptr().ok().unwrap();
-        unsafe {
-            if let Some(parent) = (*ptr).parent.take() { // Unsafe deref
-                let parent_ptr = parent.as_ptr().ok().unwrap();
-                Some(Position::new(parent_ptr)) // Unsafe constructor
-            } else { None }
-        }
-    }
-
-    /// Moves the cursor to the Node's next sibling
-    ///
-    /// TODO: split into first_sibling() and last_sibling()?
-    /// Moves the cursor to the next sibling of the current node.
-    //pub fn siblings(&mut self) -> Option<Position<T>> {
-    //pub fn siblings(&mut self) -> Vec<Position<T>> {
-
-    //    if let Ok(ptr) = self.node.as_ptr() {
-    //        unsafe {
-    //            let node = &*ptr;
-    //            if let Some(parent_ptr) = node.parent {
-    //                let parent = &*parent_ptr;
-    //                if let Some(index) = parent.children.iter().position(|&child| child == Some(ptr)) {
-    //                    if index + 1 < parent.children.len() {
-    //                        self.node = parent.children[index + 1];
-    //                        return;
-    //                    }
-    //                }
-    //            }
-    //            self.node = None;
-    //        }
-    //    }
-    //}
-
-    /** Every node has a children Vec, so the only safety concern is if theres 
-    actually a Node at the `Position<T>`, which is handled by an internal
-    as_ptr() method on `Position<T>`. */
-    pub fn children(&self) -> &Vec<Position<T>> {
-        let node_ptr = self.node.as_ptr().expect("Error dereferencing Node pointer");
-        unsafe { (*node_ptr).children.as_ref() }
-    }
-
-
-    pub fn dummy(&self) -> Position<T> {
-        // Just return tree.dummy()
-        self.tree.dummy()
-    }
-
     // METADATA
     ///////////
 
-    /// Returns true if the current Node has data
+    /** Returns true if the Node under the curosr is the tree's root. */
+    pub fn is_root(&self) -> bool {
+        if self.node.as_ptr().ok() == self.tree.root().as_ptr().ok() {
+            true
+        } else {
+            false
+        }
+    }
+
+    /** Returns true if the Node under the curosr has data. */
     pub fn is_some(&self) -> bool {
         if let Some(node) = self.node.ptr {
             let ptr = node.as_ptr();
             unsafe { (*ptr).data.is_some() }
-        } else { false }
+        } else {
+            false
+        }
     }
 
-    /// Returns true if the current Node is empty
+    /** Returns true if the Node under the cursor is empty. */
     pub fn is_none(&self) -> bool {
         if let Some(node) = self.node.ptr {
             let ptr = node.as_ptr();
             unsafe { (*ptr).data.is_none() }
-        } else { false }
+        } else {
+            false
+        }
     }
 
-    /** Returns a handle to the root Node, all trees have roots 
-
-    WARNING: unimplemented */
-    pub fn is_root(&self) -> Position<T> {
-        // Gets the *mut from root
-        let ptr = self.node.as_ptr().ok().unwrap();
-        
-        // Constructs and returns the Position<T>
-        unsafe { Position::new(ptr) }
-    }
-
-    /** Returns the size of the Node's children Vec as usize */
-    pub fn num_children(&self) -> Option<usize> {
+    /** Returns the size of the Node's children Vec as usize. */
+    pub fn num_children(&self) -> usize {
         if let Ok(ptr) = self.node.as_ptr() {
-            unsafe { Some((*ptr).children.len()) }
-        } else { None }
+            unsafe { (*ptr).children.len() }
+        } else {
+            0
+        }
     }
 
     // ACCESSORS AND MUTATORS
     /////////////////////////
 
-    /// Gets an immutable reference to the data for the current Node
+    /** Gets an immutable reference to the data under the cursor, if Some. */
+    pub fn get_data(&self) -> Option<&T> {
+        let ptr = self.node.as_ptr().ok()?;
+        unsafe { (*ptr).data.as_ref() }
+    }
+
+    // /** Gets an immutable reference to the data for the current Node */
     //pub fn get(&self) -> Option<&T> {
-    //    if let Some(ptr) = self.node {
+    //    // Imperative approach
+    //    if let Ok(n) = self.node.as_ptr() {
+    //        unsafe { (*n).data.as_ref() }
+    //    } else {
+    //        None
+    //    }
+    //    // Functional approach
+    //    //node.as_ref().and_then(|n| unsafe { (*(*n)).data.as_ref() })
+    //}
+
+    // /** Gets an immutable reference to the data for a supplied Position */
+    //pub fn get_for_pos(&self, pos: &Position<T>) -> Option<&'a T> {
+    //    if let Ok(n) = pos.as_ptr() {
+    //        unsafe { (*n).data.as_ref() }
+    //    } else {
+    //        None
+    //    }
+    //}
+
+    // /** Overwrites the data for the current Node without affecting its position,
+    // returns the old data, if Some */
+    //pub fn set(&mut self, data: T) -> Option<T> {
+    //    if let Ok(n) = self.node.as_ptr() {
     //        unsafe {
-    //            (*ptr).data.as_ref()
+    //            let old = (*n).data.take();
+    //            (*n).data = Some(data);
+    //            return old;
     //        }
     //    } else {
     //        None
     //    }
     //}
-    pub fn get(&self) -> Option<&T> {
-        // Imperative approach
-        if let Ok(n) = self.node.as_ptr() {
-            unsafe { (*n).data.as_ref() }
-        } else {
-            None
-        }
-        // Functional approach
-        //node.as_ref().and_then(|n| unsafe { (*(*n)).data.as_ref() })
-    }
 
-    /** Gets an immutable reference to the data for a supplied Position */
-    pub fn get_for_pos(&self, pos: &Position<T>) -> Option<&'a T> {
-        if let Ok(n) = pos.as_ptr() {
-            unsafe { (*n).data.as_ref() }
-        } else {
-            None
-        }
-    }
-
-    /// Overwrites the data for the current Node without affecting its position,
-    /// returns the old data, if Some
-    pub fn set(&mut self, data: T) -> Option<T> {
-        if let Ok(n) = self.node.as_ptr() {
-            unsafe { 
-                let old = (*n).data.take();
-                (*n).data = Some(data);
-                return old;
-            }
-        } else {
-            None
-        }
-    }
-
-    /** Creates and adds a child Node at the cursor's Position, 
-    returns the Position of the new node. */
-    pub fn add_child(&mut self, data: T) -> Position<T> {
-        // Get the *mut out of the parent's Position<T>
-        let parent_ptr = self.node.as_ptr().ok().unwrap();
+    /** Adds a new child Node under the current cursor and advances the cursor to the new child. */
+    pub fn add_child(&mut self, data: T) {
+        // Get the *mut out of the node's Position<T>
+        let ptr = self.node.as_ptr().ok().unwrap();
 
         // Create the new child node and give it a Position
-        let new_boxed_node: Box<Node<T>> = Box::new(Node { 
-            parent: Some(unsafe {Position::new(parent_ptr) }),
+        let new_boxed_node: Box<Node<T>> = Box::new(Node {
+            parent: Some(unsafe { Position::new(ptr) }),
             children: Vec::new(),
-            data: Some(data)
+            data: Some(data),
         });
         let node_ptr: *mut Node<T> = Box::into_raw(new_boxed_node);
         let new_node = unsafe { Position::new(node_ptr) };
 
         // Add the new child to the parent's child list
-        unsafe { (*parent_ptr).children.push(new_node); }
+        unsafe { (*ptr).children.push(new_node) };
+
+        // Mutates self to be the Position of the new node
+        self.node = unsafe { Position::new(node_ptr) };
 
         // Increment the size of the tree
         self.tree.size += 1;
-
-        // Returns the Position<T> of the new node
-        unsafe { Position::new(node_ptr) }
     }
 
-    /** Returns an immutable reference to the parent position for the Node at 
-    the current cursor position, if Some. */
-    pub fn parent(&self) -> Option<&Position<T>> {
-        if let Ok(ptr) = self.node.as_ptr() {
-            unsafe {
-                (*ptr).parent.as_ref()
+
+    /** Deletes the node at the current cursor position,
+    adds all children to the parent (if Some), and returns the deleted Node.
+    If the cursor is at the tree's root, this just deletes the Node's data, leaving None.
+    Moves the cursor to the parent, if Some */
+    pub fn delete(&mut self) -> Option<T> {
+        // Gets a raw pointer to self
+        let self_ptr = self.node.ptr.unwrap().as_ptr();
+    
+        // Transfers the self.chilren to parent.children, if Some
+        unsafe {
+            if let Some(parent_position) = &(*self_ptr).parent {
+                let parent_ptr = parent_position.as_ptr().unwrap();
+    
+                // Get mutable references to the parent and self children vecs
+                let parent_children = &mut (*parent_ptr).children;
+                let self_children = &mut (*self_ptr).children;
+    
+                // Remove self from parent's children Vec
+                if let Some(index) = parent_children
+                    .iter()
+                    .position(|c| c.as_ptr() == self.node.as_ptr())
+                {
+                    parent_children.remove(index);
+                }
+    
+                // Move each self.child to the parent's children Vec
+                parent_children.append(self_children);
+    
+                // Update their parent pointers
+                for child in parent_children.iter_mut() {
+                    (*child.as_ptr().unwrap()).parent = Some(Position::new(parent_ptr));
+                }
+
+                // Move the cursor up to the parent
+                self.jump(&parent_position);
+    
+                // Save original pointer to access deleted data
+                // Takes ownership so Box can be automatically dropped
+                let boxed_node: Box<Node<T>> = Box::from_raw(self_ptr); 
+    
+                // Return the deleted node's data
+                boxed_node.data
+
+            } else {
+                None
             }
-        } else { None }
+        }
     }
 
-    /// Return a safe opaque handle to the current node's position
-    pub fn get_position(&self) -> Position<T> {
-        // We can be cavalier with safety because we know the Node exists,
-        // we're already at it!
-        let ptr = self.node.as_ptr().ok().unwrap();
-        unsafe { Position::new(ptr) }
+    /** Same as `CursorMut::delete()` but for an arbitrary cursor position.
+    
+    Deletes the node at the current cursor position,
+    adds all children to the parent (if Some), and returns the deleted Node.
+    If the cursor is at the tree's root, this just deletes the Node's data, leaving None.
+    Moves the cursor to the parent, if Some */
+    //pub fn delete_node(&mut self, node: Position<T>) Option<Node<T>> {}
+
+    // /** Returns an immutable reference to the parent position for the Node at
+    // the current cursor position, if Some. */
+    //pub fn parent(&self) -> Option<&Position<T>> {
+    //    if let Ok(ptr) = self.node.as_ptr() {
+    //        unsafe { (*ptr).parent.as_ref() }
+    //    } else {
+    //        None
+    //    }
+    //}
+
+    // NAVIGATION
+    /////////////
+
+    /** Returns a reference to the current Position. */
+    pub fn current(&self) -> &Position<T> {
+        &self.node
     }
 
     /** Jump the cursor to the defined Position */
-    pub fn set_position(&mut self, new: &Position<T>) {
+    pub fn jump(&mut self, new: &Position<T>) {
         let ptr = new.as_ptr().ok().unwrap();
         self.node = unsafe { Position::new(ptr) };
     }
 
-    /// Jump to a previously saved position
-    //pub fn move_to(&mut self, pos: Position<T>) {
-    //    self.node = Some(pos.as_ptr());
+    // /** Navigates down a generation, if Some */
+    //pub fn descend(&self) -> Option<Position<T>> {
+    //    unsafe { Some(Position::new(Box::into_raw(Node::build(None)))) }
+    //    //let ptr = self.node.as_ptr().ok().unwrap();
+    //    //unsafe {
+    //    //    if let Some(children) = (*ptr).children { // Unsafe deref
+    //    //        let parent_ptr = children.as_ptr().ok().unwrap();
+    //    //        Some(Position::new(parent_ptr)) // Unsafe constructor
+    //    //    } else { None }
+    //    //}
+    //}
+    //pub fn descend_first(&mut self) -> Option<Position<T>> {
+    //    // Gets cursor's current Position
+    //    let ptr = self.node.as_ptr().ok()?;
+
+    //    // Returns the position of the first child
+    //    unsafe {
+    //        let node = &*ptr;
+    //        node.children.get(0).cloned()
+    //    }
     //}
 
-    pub fn insert_sibling() {}
+    /** Moves the cursor up a generation, if Some. Trying to ascend past the root results in an error. */
+    //pub fn ascend(&mut self) -> Result<(), String> {
 
-    pub fn insert_parent() {}
+    //    // Finds current position
+    //    if let Some(ptr) = self.node.as_ptr().ok() {
 
-    pub fn insert_child() {}
+    //        // Finds parent's position
+    //        let par = unsafe {
+    //            (*ptr).parent.take()
+    //        };
+
+    //        // Resets self to parent's Position, if Some
+    //        if let Some(ptr) = par {
+    //            self.node = ptr
+    //        };
+
+    //        Ok(())
+
+    //    } else {
+
+    //        Err("Error: Cannot ascend past root".to_string())
+    //    }
+    //}
+pub fn ascend(&mut self) -> Result<(), String> {
+    if let Some(ptr) = self.node.as_ptr().ok() {
+        // SAFETY: ptr is a valid pointer to a Node<T>
+        let parent = unsafe { (*ptr).parent.clone() };
+
+        if let Some(parent_ptr) = parent {
+            self.node = parent_ptr;
+            Ok(())
+        } else {
+            Err("Error: Cannot ascend past root".to_string())
+        }
+    } else {
+        Err("Error: No current node to ascend from".to_string())
+    }
 }
+    /** Returns a list of owned descendant (child) Positions for the current cursor node. */
+    pub fn children(&self) -> Vec<Position<T>> {
+        let Some(ptr) = self.node.as_ptr().ok() else {
+            return vec![];
+        };
+    
+        unsafe {
+            let node = &*ptr;
+            node.children.clone()
+        }
+    }
+
+}
+
+#[cfg(test)]
+mod tests {
+
+    #[test]
+    /** Creates this tree to test properties
+    	[]
+    	├── Landlocked
+    	│   ├── Switzerland
+    	│   │   └── Geneva
+    	│   │       └── Old Town
+    	│   │           └── Cathédrale Saint-Pierre
+    	│   └── Bolivia
+    	│       └── []
+    	│           └── []
+    	│               ├── Puerta del Sol
+    	│               └── Puerta de la Luna
+    	└── Islands
+    	    ├── Marine
+    	    │   └── Australia
+    	    └── Fresh Water
+    */
+    fn basic() {
+        use super::{
+            builder, 
+            builder::Heading,
+            GenTree,
+            Position
+        };
+        let tree_vec = vec![
+            Heading{level: 2, title: "Landlocked".to_string()},
+            Heading{level: 3, title: "Switzerland".to_string()},
+            Heading{level: 4, title: "Geneva".to_string()},
+            Heading{level: 5, title: "Old Town".to_string()},
+            Heading{level: 6, title: "Cathédrale Saint-Pierre".to_string()},
+            Heading{level: 3, title: "Bolivia".to_string()},
+            Heading{level: 6, title: "Puerta del Sol".to_string()},
+            Heading{level: 6, title: "Puerta de la Luna".to_string()},
+            Heading{level: 2, title: "Islands".to_string()},
+            Heading{level: 3, title: "Marine".to_string()},
+            Heading{level: 4, title: "Australia".to_string()},
+            Heading{level: 3, title: "Fresh Water".to_string()}
+        ];
+
+        // Constructs tree ignoring the first heading
+        let mut tree: GenTree<Heading> = builder::construct(1, tree_vec);
+        let cursor = tree.cursor_mut();
+
+        // Tests root() -> Position<T>
+        assert_eq!(cursor.node.as_ptr().ok(), tree.root().as_ptr().ok());
+
+        let mut cursor = tree.cursor_mut();
+        // Tests that root is empty with is_some() and is_none()
+        assert!(!cursor.is_some()); 
+        assert!(cursor.is_none()); 
+        
+        // Tests num_children()
+        assert_eq!(cursor.num_children(), 2); // Root has [Landlocked, Islands]
+        
+        // Tests children(), jump(), and get_data()
+        let kids = cursor.children();
+        let mut kids_iter = kids.iter();
+        cursor.jump(kids_iter.next().unwrap()); // Moves to first child
+        let data = cursor.get_data().unwrap();
+        assert_eq!(*data.title, "Landlocked".to_string());
+
+        cursor.jump(kids_iter.next().unwrap()); // Moves to first child
+        let curr: Position<Heading> = cursor.current().clone(); // Passes the torch
+        let data = cursor.get_data().unwrap();
+        assert_eq!(*data.title, "Islands".to_string());
+        
+        // Jumps down a generation to [Marine, Fresh Water]
+        cursor.jump(&curr);
+        let new_kids = cursor.children();
+        let mut kids_iter = new_kids.iter();
+        cursor.jump(kids_iter.next().unwrap()); // Moves to first child
+        let data = cursor.get_data().unwrap();
+        assert_eq!(*data.title, "Marine".to_string());
+        
+        // Jumps down a generation, for fun
+        let new_kids = cursor.children(); // Gets cursor's chidlren
+        let mut kids_iter = new_kids.iter(); // Creates an iterator
+        cursor.jump(kids_iter.next().unwrap()); // Moves to first child
+        let data = cursor.get_data().unwrap();
+        assert_eq!(*data.title, "Australia".to_string());
+
+        // Tests ascend()
+        assert!(cursor.ascend().is_ok()); // Marine
+        assert!(cursor.ascend().is_ok()); // Islands
+        let data = cursor.get_data().unwrap();
+        assert_eq!(*data.title, "Islands".to_string());
+        assert!(cursor.ascend().is_ok()); // []
+        assert!(cursor.ascend().is_err()); // Cannot ascend() past root
+        assert!(cursor.is_root()); // Double checks, just in case
+
+        // Descends to Islands to test delete()
+        let kids = cursor.children(); // Gets cursor's chidlren
+        let mut kids_iter = kids.iter(); // Creates an iterator
+        cursor.jump(kids_iter.next().unwrap()); // Moves to Landlocked
+        cursor.jump(kids_iter.next().unwrap()); // Moves to Islands
+        let data = cursor.get_data().unwrap();
+        assert_eq!(*data.title, "Islands".to_string());
+
+        // Tests delete()
+        let mut deleted = String::new(); // Creates placeholder
+        // Iterates through the current position to find the Heading to delete,
+        // deletes the Marine Heading, and jumps 
+        for child in cursor.children() {
+            if let Some(val) = child._get_data() {
+                // Once Marine is spotted, jumps the cursor there,
+                // deletes Marine, pushing Australia up under Islands,
+                // and the delete() function jumps the cursor back up to Islands
+                if val.title == "Marine".to_string() {
+                    cursor.jump(&child);
+                    deleted = cursor.delete().unwrap().title;
+                    break
+                }
+            }
+        }
+        // Tests that the correct Heading was deleted
+        assert_eq!(deleted, "Marine".to_string());
+
+        // Tests that the cursor got bumped up to Islands
+        let data = cursor.get_data().unwrap();
+        assert_eq!(*data.title, "Islands".to_string());
+
+        // Tests that the Islands node has the correct children
+        let mut kids = Vec::new();
+        assert_eq!(cursor.children().len(), 2);
+        for child in cursor.children() {
+            let title = child._get_data().unwrap().title.clone();
+            kids.push(title)
+        }
+        assert_eq!(kids, vec!["Fresh Water".to_string(), "Australia".to_string()]);
+
+    }
+}
+
 
 pub mod builder {
 
@@ -561,12 +852,13 @@ pub mod builder {
     use std::fs::File;
     use std::io::{BufRead, BufReader};
 
+    use crate::trees::unsafe_linked_general_tree::{CursorMut, GenTree};
     use std::path::Path;
-    use crate::trees::unsafe_linked_general_tree::{GenTree, CursorMut};
 
-    struct Heading {
-        level: usize,
-        title: String,
+    #[derive(Debug, PartialEq)]
+    pub struct Heading {
+        pub level: usize,
+        pub title: String,
     }
     impl Heading {
         /** Just a humble Heading builder */
@@ -578,7 +870,7 @@ pub mod builder {
     /** Takes a path to a Markdown file, parses it for title and headings,
     and returns a tuple containing the document title and a vector of
     headings.
-    
+
     Note: The document title portion of the tuple is specifically
     designed for the Astro-formatted frontmatter of each MD document. */
     fn parse(root: &Path) -> (String, Vec<Heading>) {
@@ -588,12 +880,12 @@ pub mod builder {
         // Regex for capturing headings H1-H6 as #-######
         let h = Regex::new(r"^(#{1,6})\s+(.*)").unwrap();
         let mut headings: Vec<Heading> = Vec::new();
-    
+
         // Read input
         let file_path = root;
         let file = File::open(file_path).unwrap(); // TODO: Fix lazy error handling
         let reader = BufReader::new(file);
-    
+
         // Read the entire file into a single string
         // Imperative style
         let mut content = String::new();
@@ -610,13 +902,13 @@ pub mod builder {
         //    .map(|l| l.unwrap())
         //    .collect::<Vec<_>>()
         //    .join("\n");
-    
+
         // Extract the document title
         if let Some(captures) = t.captures(&content) {
             let title = captures.get(1).unwrap().as_str();
             doc_title.push_str(title);
         }
-    
+
         // Parse headings line by line
         for line in content.lines() {
             if let Some(captures) = h.captures(line) {
@@ -625,119 +917,81 @@ pub mod builder {
                 headings.push(Heading { level, title: text });
             }
         }
-    
+
         (doc_title, headings)
     }
-    
-    /** Constructs a tree of Heading types */
-    fn construct(level: usize, data: Vec<Heading>) -> GenTree<Heading> {
-        // Debug print
-        println!("Constructing tree...");
 
+    /** Constructs a tree of Heading types */
+    pub fn construct(mut cur_level: usize, data: Vec<Heading>) -> GenTree<Heading> {
         // Instantiates a Tree with a generic root and traversal positioning
         let mut tree: GenTree<Heading> = GenTree::<Heading>::new();
-        let mut level_cursor = level;
-        // NOTE: Unwrap is safe here because we literally just created the tree
-        let mut cursor = tree.cursor_mut();
-        let mut temp = cursor.dummy();
-    
+        let mut cursor = tree.cursor_mut(); // Sets cursor to tree.root
+
         // Constructs tree from Vec<T>
-        for heading in data {
-            let current_level = heading.level;
-    
-            // Case 1: Adds a child to the current parent and sets level cursor
-            if current_level == level_cursor + 1 {
+        for node in data {
+            let data_level = node.level;
 
-                // Debug print
-                println!("Case 1: {}: h{}", &heading.title, &heading.level);
-
-                temp = cursor.add_child(heading);
-
-                // Debug print
-                //if cursor.get().is_some() {
-                //    println!("cursor: {}", cursor.get().unwrap().title)
-                //} else {
-                //    println!("cursor is empty")
-                //}
-
-                // Debug print
-                //match cursor.get_for_pos(&temp) {
-                //    Some(val) => println!("Added new node: {}", val.title),
-                //    None => println!("temp node is empty")
-                //}
-
-                level_cursor = cursor.get_for_pos(&temp).unwrap().level;
+            // Case 1: Adds a child to the current parent
+            if data_level == cur_level + 1 {
+                cursor.add_child(node);
+                cur_level += 1;
             }
-    
-            // Case 2: Adds a child with multi-generational skips with empty nodes
-            else if current_level > level_cursor + 1 {
-            
-                // Debug print
-                println!("Case 2: {}: h{}", &heading.title, &heading.level);
-
-                let diff = current_level - level_cursor;
+            // Case 2: Adds a child with multi-generational skips
+            else if data_level > cur_level {
+                let diff = data_level - cur_level;
                 for _ in 1..diff {
-                    let heading = Heading::new("[]".to_string(), 0);
-                    cursor.add_child(heading);
-                    level_cursor += 1;
+                    let empty = Heading::new("[]".to_string(), 0);
+                    cursor.add_child(empty);
+                    cur_level += 1;
                 }
-                temp = cursor.add_child(heading);
-                //let node_data = cursor.get();
-                //level_cursor = node_data.unwrap().level;
-                level_cursor = cursor.get_for_pos(&temp).unwrap().level;
+                cursor.add_child(node);
+                cur_level += 1;
             }
-    
             // Case 3: Adds sibling to current parent
-            else if current_level == level_cursor {
-                // Debug print
-                println!("Case 3: {}: h{}", &heading.title, &heading.level);
-
-                //tree.add_child(tree.parent(position_cursor).expect("No parent"), node);
-                cursor.add_child(heading);
+            else if data_level == cur_level {
+                cursor.ascend().ok();
+                cursor.add_child(node);
             }
-    
             // Case 4: Adds a child to the appropriate ancestor,
             // ensuring proper generational skips
             else {
-                // Debug print
-                println!("Case 4: {}: h{}", &heading.title, &heading.level);
-
-                let diff = level_cursor - current_level;
-                //cursor.parent();
-                for _ in 0..diff {
-                    cursor.ancestor();
-                    level_cursor -= 1;
+                let diff = cur_level - data_level;
+                for _ in 0..=diff {
+                    cursor.ascend().ok();
+                    cur_level -= 1;
                 }
-                temp = cursor.add_child(heading);
-                let node_data = cursor.get();
-                level_cursor = node_data.unwrap().level;
+                cursor.add_child(node);
+                cur_level += 1;
             }
-    
-            // Updates the most recent addition
-            cursor.set_position(&temp);
         }
         tree
     }
+
+    /** Modified preorder traversal function that walks the tree recursively
+    printing each node's title and children with appropriate box drawing components */
+    fn preorder(cursor: &mut CursorMut<Heading>, prefix: &str) {
+        let children = cursor.children();
     
-    // /** Modified preorder traversal function that walks the tree recursively 
-    // printing each node's title and children with appropriate box drawing components */
-    fn preorder(node: &CursorMut<Heading>, prefix: &str) {
-
-        // Recursively visit each child, if they exist
-        if node.children().len() > 0 {
-            let mut index = node.children().len();
-
-            for _ in node.children() {
-                println!("index len: {index}");
-
-                if let Some(node_data) = node.get() {
-                    index -= 1;
+        if !children.is_empty() {
+            let mut index = children.len();
+    
+            for child_pos in children {
+                index -= 1;
+    
+                // Create a CursorMut from the child Position
+                let mut child_cursor = CursorMut {
+                    node: child_pos,
+                    tree: cursor.tree,
+                };
+    
+                // Access data at child position
+                if let Some(child_data) = child_cursor.get_data() {
                     if index == 0 {
-                        println!("\t{}└── {}", prefix, node_data.title);
-                        preorder(node, &format!("{}    ", prefix));
+                        println!("\t{}└── {}", prefix, child_data.title);
+                        preorder(&mut child_cursor, &format!("{}    ", prefix));
                     } else {
-                        println!("\t{}├── {}", prefix, node_data.title);
-                        preorder(node, &format!("{}│   ", prefix));
+                        println!("\t{}├── {}", prefix, child_data.title);
+                        preorder(&mut child_cursor, &format!("{}│   ", prefix));
                     }
                 }
             }
@@ -746,33 +1000,32 @@ pub mod builder {
 
     /** A wrapper for a recursive preorder(ish) traversal function;
     Contains logic to print [] on empty trees for more appealing presentation */
-    fn pretty_print(name: &str, position: CursorMut<Heading>) {
-            //let children: &Vec<Pos<Heading>> = unsafe { (*(*p)).children.as_ref() };
-            let children = &position.children();
-            if children.len() == 0 {
-                println!("📄 {}\n\t[]\n", name); // Empty trees
-            } else {
-                println!("📄 {}\n\t│", name);
-                preorder(&position, "");
-                println!("");
-            }
+    fn pretty_print(name: &str, position: &mut CursorMut<Heading>) {
+        let children = &position.children();
+        if children.len() == 0 {
+            println!("📄 {}\n\t[]\n", name); // Empty trees
+        } else {
+            println!("📄 {}\n\t│", name);
+            preorder(position, "");
+            println!("");
+        }
     }
-    
-    /** A recursive function that chains the module's utility functions to 
-    pretty-print a table of contents for each Markdown file in the specified 
-    directory; The is_file() path contains logic to build a tree from filtered 
+
+    /** A recursive function that chains the module's utility functions to
+    pretty-print a table of contents for each Markdown file in the specified
+    directory; The is_file() path contains logic to build a tree from filtered
     values, skipping headers above the user-supplied level argument;
     The function also substitues the file name (if any) for all MD files
     not formatted with Astro's frontmatter */
     pub fn navigator(level: usize, path: &Path) {
         if path.is_dir() {
-            for e in path.read_dir().expect("read_dir call failed") {
-                let entry = e.expect("failure to deconstruct value");
+            for component in path.read_dir().expect("read_dir call failed") {
+                let entry = component.expect("failure to deconstruct value");
                 navigator(level, &entry.path()); // Recursive call
             }
         } else if path.is_file() {
             if let Some(ext) = path.extension() {
-                match ext.to_str() { 
+                match ext.to_str() {
                     Some("md") | Some("mdx") => {
                         println!("{}", path.display());
                         let parsed = parse(path);
@@ -788,98 +1041,11 @@ pub mod builder {
                         }
                         let filtered = parsed.1.into_iter().filter(|h| h.level > level).collect();
                         let mut tree = construct(level, filtered);
-                        pretty_print(&name, tree.cursor_mut());
+                        pretty_print(&name, &mut tree.cursor_mut());
                     }
-                    _ => ()
+                    _ => (),
                 }
             }
         }
     }
-    
-    //#[cfg(test)]
-    //mod tests{
-    //
-    //    use super::*;
-    //
-    //    #[test]
-    //    fn basic_function_test() {
-    //        use std::ptr; // Used by test
-    //    
-    //        // Creates a tree with a default ROOT node
-    //        let mut tree = GenTree::<Heading>::new();
-    //        if let Some(r) = tree.root {
-    //            if let Some(h) = unsafe { (*r).data.as_ref() } {
-    //                assert_eq!(&h.title, "ROOT");
-    //            } else {
-    //                panic!("Data is None!");
-    //            }
-    //        }
-    //    
-    //        // Builds a Heading that simulates an H2, converts it to a Node,
-    //        // and finally converts it to a position Pos<Heading> as raw pointer "a"
-    //        let h2 = Heading::new("H2".to_string(), 2);
-    //        let node_a: Box<Node<Heading>> = Node::build(Some(h2));
-    //        let node_a_ptr: Pos<Heading> = Some(Box::into_raw(node_a));
-    //    
-    //        // Adds a to root
-    //        tree.add_child(tree.root, node_a_ptr);
-    //    
-    //        // Checks that add_child() assigns correct parent for the node
-    //        assert_eq!(tree.root, tree.parent(node_a_ptr).expect("No parent"));
-    //        // Checks that the parent (ROOT) has exactly one child as the "a" node
-    //        assert_eq!(tree._children(tree.root), Some(&vec![node_a_ptr]));
-    //        // Checks that the ROOT's children list _contains_ the "a" node
-    //        assert!(tree._children(tree.root).unwrap().iter().any(|&item| {
-    //            if let Some(ptr) = item {
-    //                ptr::eq(ptr, node_a_ptr.unwrap())
-    //            } else {
-    //                false
-    //            }
-    //        }));
-    //    
-    //        // At this point there should be one node with one default ROOT node
-    //        assert_eq!(tree.size, 2);
-    //    
-    //        // Builds a Heading that simulates an H3, converts it to a Node,
-    //        // and finally converts it to a position Pos<Heading> as raw pointer "b"
-    //        let h3 = Heading::new("H3".to_string(), 3);
-    //        let node_b: Box<Node<Heading>> = Node::build(Some(h3));
-    //        let node_b_ptr: Pos<Heading> = Some(Box::into_raw(node_b));
-    //    
-    //        // Adds "b" to "a"
-    //        tree.add_child(node_a_ptr, node_b_ptr);
-    //    
-    //        // Checks the tree's size, height, and depth of "b"
-    //        // NOTE: size, height, and depth include the ROOT node
-    //        assert_eq!(tree.size, 3);
-    //        assert_eq!(tree._height(tree.root), Some(3));
-    //        assert_eq!(tree._depth(node_b_ptr), Some(3));
-    //    }
-    //    
-    //    #[test]
-    //    /** Creates this tree to test properties
-    //        [] Lorem Ipsum Test
-    //        │    An ordered look at MD parsing
-    //        │
-    //        ├── Landlocked
-    //        │   ├── Switzerland
-    //        │   │   └── Geneva
-    //        │   │       └── Old Town
-    //        │   │           └── Cathédrale Saint-Pierre
-    //        │   └── Bolivia
-    //        └── Island
-    //          ├── Marine
-    //          │   └── Australiae
-    //          └── Fresh Water
-    //    */
-    //    fn n_ary_algorithm_test() {
-    //    
-    //        // Checks that the height is 4
-    //    
-    //        // Checks that the depth of the H5 is 4
-    //    
-    //        // Empty doc test
-    //    }
-    //}
-
 }
