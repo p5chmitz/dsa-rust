@@ -1,20 +1,30 @@
-/*! A circular Vec-based queue 
+/*! A circular Vec-based queue
 
 # About
 This simple, safe, Vec-based circular queue is mostly just a fun experiment, but can be used for situations in which you need a fixed-sized buffer with FIFO logic. The circular queue can be used to provide a solution to the [Josephus problem](https://en.wikipedia.org/wiki/Josephus_problem).
 
-This example illustrates the circular queue logic. The example provides a queue postcondition for enqueue/dequeue operations as `queue: 0:a (fr), 1:b, 2:c (ba)` where `(fr)` indicates "front" and `(ba)` indicates the "back" of the queue. Remember that `enqueue()` adds to the _back_, and `dequeue()` removes from the _front_ of the queue.
+This example illustrates the circular queue logic. The example provides a queue postcondition for enqueue/dequeue operations to illustrate the state of the list after each operation. Remember that `enqueue()` adds to the _back_, and `dequeue()` removes from the _front_ of the queue.
 ```rust
 
     use dsa_rust::lists::queues::vec_circ_queue::CircularQueue;
 
+    // The queue is a fixed size
     let mut q: CircularQueue<char> = CircularQueue::new(3);
+
+    //     a <-> b <-> c <-> 
+    //     ^           ^
+    //  front        back
 
     // enqueue/dequeue return Result because adding/removing on a
     // full/empty queue is an error
+    // Postcondition
+    //
+    //     <-> a <-> b <-> c <-> 
+    //         ^           ^
+    //      front        back
     q.enqueue('a').unwrap();
     q.enqueue('b').unwrap();
-    q.enqueue('c').unwrap(); // queue: 0:a (fr), 1:b, 2:c (ba)
+    q.enqueue('c').unwrap();
 
     // The queue is at capacity, and the queue hasn't shifted
     assert_eq!(q.peek().unwrap(), &'a');
@@ -23,32 +33,62 @@ This example illustrates the circular queue logic. The example provides a queue 
     assert_eq!(q.back(), 2);
 
     // The queue cannot take additional elements
-    assert!(q.enqueue('d').is_err()); // queue: 0:a (fr), 1:b, 2:c (ba)
+    assert!(q.enqueue('d').is_err());
 
     // Remove the head node and check changes:
     // Postcondition:
     // - There is only one item in the queue
     // - The front and back of the queue point to the same index
-    assert_eq!(q.dequeue().unwrap(), 'a'); // queue: 0:None, 1:b (fr), 2:c (ba)
+    // Postcondition
+    //
+    //     <-> None <-> b <-> c <-> 
+    //                  ^     ^
+    //               front  back
+    assert_eq!(q.dequeue().unwrap(), 'a');
+    // Postcondition
+    //
+    //     <-> None <-> Non <-> c <-> 
+    //                          ^
+    //                     front/back
     assert_eq!(q.dequeue().unwrap(), 'b'); // queue: 0:None, 1:None, 2:c (fr/ba)
     assert_eq!(2, q.capacity() - q.size()); // Remaining capacity
     assert_eq!(q.front(), 2);
-    assert_eq!(q.back(), 2); 
+    assert_eq!(q.back(), 2);
     assert_eq!(q.size(), 1);
 
     // Adding new items wraps the queue, hence circular queue
-    q.enqueue('d'); // queue: 0:d (ba), 1:None, 2:c (fr)
-    q.enqueue('e'); // queue: 0:d, 1:e (ba), 2:c (fr)
+    // Postcondition
+    //
+    //     <-> d <-> None <-> c <-> 
+    //         ^              ^
+    //       back           front
+    q.enqueue('d');
+    // Postcondition
+    //
+    //     <-> d <-> e <-> c <-> 
+    //               ^     ^
+    //             back  front
+    q.enqueue('e');
     assert_eq!(q.front(), 2);
     assert_eq!(q.back(), 1);
     assert_eq!(q.size(), 3);
 
     // Removes two more elements and checks that there is just one element left
-    assert_eq!(q.dequeue().unwrap(), 'c'); // queue: 0:d (fr), 1:e (ba), 2:None
-    assert_eq!(q.dequeue().unwrap(), 'd'); // queue: 0:None, 1:e (fr/ba), 2:None
+    // Postcondition
+    //
+    //     <-> d <-> e <-> None <-> 
+    //         ^     ^
+    //       front  back
+    assert_eq!(q.dequeue().unwrap(), 'c');
+    // Postcondition
+    //
+    //     <-> None <-> e <-> None <-> 
+    //                  ^
+    //             front/back
+    assert_eq!(q.dequeue().unwrap(), 'd');
     assert_eq!(2, q.capacity() - q.size()); // Remaining capacity
     assert_eq!(q.front(), 1);
-    assert_eq!(q.back(), 1); 
+    assert_eq!(q.back(), 1);
     assert_eq!(q.size(), 1);
     assert_eq!(q.peek().unwrap(), &'e');
 
@@ -64,7 +104,6 @@ pub struct CircularQueue<T> {
 }
 /** NOTE: All functions operation in O(1) time */
 impl<T> CircularQueue<T> {
-
     /** Creates a queue that contains (at least) `capacity` number of elements */
     pub fn new(capacity: usize) -> CircularQueue<T> {
         let mut data = Vec::with_capacity(capacity);
@@ -98,7 +137,7 @@ impl<T> CircularQueue<T> {
     pub fn size(&self) -> usize {
         self.size
     }
-    
+
     /** Returns the capacity of the queue */
     pub fn capacity(&self) -> usize {
         self.capacity
@@ -137,7 +176,7 @@ impl<T> CircularQueue<T> {
     }
 }
 
-/** Illustrates that the for loop is the most efficient way to initialize an 
+/** Illustrates that the for loop is the most efficient way to initialize an
 array with None values:
 
 100x
@@ -161,12 +200,10 @@ fn _empirical_test() {
 
     let allocations = [100, 10_000, 100_000_000];
     let runs = 100;
-    let methods: Vec<(&str, fn(usize) -> CircularQueue<char>)> = vec![
-        (
-            "For",
-            CircularQueue::new as fn(usize) -> CircularQueue<char>,
-        ),
-    ];
+    let methods: Vec<(&str, fn(usize) -> CircularQueue<char>)> = vec![(
+        "For",
+        CircularQueue::new as fn(usize) -> CircularQueue<char>,
+    )];
 
     for &n in &allocations {
         println!("\n{}x", n);
