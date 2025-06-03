@@ -131,8 +131,8 @@ pub fn example() {
     let mut podium = Podium::new();
 
     // Sample data to build a basic set of PodiumEntry instances
-    let names_vec = vec!["Peter", "Dingus", "Brain", "Bobson"];
-    let scores_vec = vec![Some(1223), None, Some(616), Some(42069)];
+    let names_vec = ["Peter", "Dingus", "Brain", "Bobson"];
+    let scores_vec = [Some(1223), None, Some(616), Some(42069)];
     for i in 0..names_vec.len() {
         podium.add(names_vec[i].to_string(), scores_vec[i as usize]);
     }

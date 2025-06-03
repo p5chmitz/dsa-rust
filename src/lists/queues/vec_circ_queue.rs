@@ -6,92 +6,90 @@ This simple, safe, Vec-based circular queue is mostly just a fun experiment, but
 This example illustrates the circular queue logic. The example provides a queue postcondition for enqueue/dequeue operations to illustrate the state of the list after each operation. Remember that `enqueue()` adds to the _back_, and `dequeue()` removes from the _front_ of the queue.
 ```rust
 
-    use dsa_rust::lists::queues::vec_circ_queue::CircularQueue;
+   use dsa_rust::lists::queues::vec_circ_queue::CircularQueue;
 
-    // The queue is a fixed size
-    let mut q: CircularQueue<char> = CircularQueue::new(3);
+   // The queue is a fixed size
+   let mut q: CircularQueue<char> = CircularQueue::new(3);
 
-    //     a <-> b <-> c <-> 
-    //     ^           ^
-    //  front        back
+   // enqueue/dequeue return Result because adding/removing on a
+   // full/empty queue is an error
+   // Postcondition
+   //
+   //  <-> a <-> b <-> c <->
+   //      ^           ^
+   //   front        back
+   q.enqueue('a').unwrap();
+   q.enqueue('b').unwrap();
+   q.enqueue('c').unwrap();
 
-    // enqueue/dequeue return Result because adding/removing on a
-    // full/empty queue is an error
-    // Postcondition
-    //
-    //     <-> a <-> b <-> c <-> 
-    //         ^           ^
-    //      front        back
-    q.enqueue('a').unwrap();
-    q.enqueue('b').unwrap();
-    q.enqueue('c').unwrap();
+   // The queue is at capacity, and the queue hasn't shifted
+   assert_eq!(q.peek().unwrap(), &'a');
+   assert_eq!(q.size(), q.capacity());
+   assert_eq!(q.front(), 0);
+   assert_eq!(q.back(), 2);
 
-    // The queue is at capacity, and the queue hasn't shifted
-    assert_eq!(q.peek().unwrap(), &'a');
-    assert_eq!(q.size(), q.capacity());
-    assert_eq!(q.front(), 0);
-    assert_eq!(q.back(), 2);
+   // The queue cannot take additional elements
+   assert!(q.enqueue('d').is_err());
 
-    // The queue cannot take additional elements
-    assert!(q.enqueue('d').is_err());
+   // Remove the head node and check changes:
+   // Postcondition:
+   // - There is only one item in the queue
+   // - The front and back of the queue point to the same index
+   // Postcondition
+   //
+   //  <-> None <-> b <-> c <->
+   //               ^     ^
+   //            front  back
+   assert_eq!(q.dequeue().unwrap(), 'a');
 
-    // Remove the head node and check changes:
-    // Postcondition:
-    // - There is only one item in the queue
-    // - The front and back of the queue point to the same index
-    // Postcondition
-    //
-    //     <-> None <-> b <-> c <-> 
-    //                  ^     ^
-    //               front  back
-    assert_eq!(q.dequeue().unwrap(), 'a');
-    // Postcondition
-    //
-    //     <-> None <-> Non <-> c <-> 
-    //                          ^
-    //                     front/back
-    assert_eq!(q.dequeue().unwrap(), 'b'); // queue: 0:None, 1:None, 2:c (fr/ba)
-    assert_eq!(2, q.capacity() - q.size()); // Remaining capacity
-    assert_eq!(q.front(), 2);
-    assert_eq!(q.back(), 2);
-    assert_eq!(q.size(), 1);
+   // Postcondition
+   //
+   //  <-> None <-> Non <-> c <->
+   //                       ^
+   //                  front/back
+   assert_eq!(q.dequeue().unwrap(), 'b'); // queue: 0:None, 1:None, 2:c (fr/ba)
+   assert_eq!(2, q.capacity() - q.size()); // Remaining capacity
+   assert_eq!(q.front(), 2);
+   assert_eq!(q.back(), 2);
+   assert_eq!(q.size(), 1);
 
-    // Adding new items wraps the queue, hence circular queue
-    // Postcondition
-    //
-    //     <-> d <-> None <-> c <-> 
-    //         ^              ^
-    //       back           front
-    q.enqueue('d');
-    // Postcondition
-    //
-    //     <-> d <-> e <-> c <-> 
-    //               ^     ^
-    //             back  front
-    q.enqueue('e');
-    assert_eq!(q.front(), 2);
-    assert_eq!(q.back(), 1);
-    assert_eq!(q.size(), 3);
+   // Adding new items wraps the queue, hence circular queue
+   // Postcondition
+   //
+   //  <-> d <-> None <-> c <->
+   //      ^              ^
+   //    back           front
+   q.enqueue('d');
 
-    // Removes two more elements and checks that there is just one element left
-    // Postcondition
-    //
-    //     <-> d <-> e <-> None <-> 
-    //         ^     ^
-    //       front  back
-    assert_eq!(q.dequeue().unwrap(), 'c');
-    // Postcondition
-    //
-    //     <-> None <-> e <-> None <-> 
-    //                  ^
-    //             front/back
-    assert_eq!(q.dequeue().unwrap(), 'd');
-    assert_eq!(2, q.capacity() - q.size()); // Remaining capacity
-    assert_eq!(q.front(), 1);
-    assert_eq!(q.back(), 1);
-    assert_eq!(q.size(), 1);
-    assert_eq!(q.peek().unwrap(), &'e');
+   // Postcondition
+   //
+   //  <-> d <-> e <-> c <->
+   //            ^     ^
+   //          back  front
+   q.enqueue('e');
+   assert_eq!(q.front(), 2);
+   assert_eq!(q.back(), 1);
+   assert_eq!(q.size(), 3);
 
+   // Removes two more elements and checks that there is just one element left
+   // Postcondition
+   //
+   //  <-> d <-> e <-> None <->
+   //      ^     ^
+   //    front  back
+   assert_eq!(q.dequeue().unwrap(), 'c');
+
+   // Postcondition
+   //
+   //  <-> None <-> e <-> None <->
+   //               ^
+   //          front/back
+   assert_eq!(q.dequeue().unwrap(), 'd');
+   assert_eq!(2, q.capacity() - q.size()); // Remaining capacity
+   assert_eq!(q.front(), 1);
+   assert_eq!(q.back(), 1);
+   assert_eq!(q.size(), 1);
+   assert_eq!(q.peek().unwrap(), &'e');
 ```
 */
 
