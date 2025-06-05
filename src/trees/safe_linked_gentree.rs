@@ -284,18 +284,34 @@ impl<'a, T> CursorMut<'a, T> {
     }
 
     /** Returns the depth of the cursor from the tree's root */
-    pub fn depth(&mut self) -> usize {
+    //pub fn depth(&mut self) -> usize {
+    //    let mut depth = 0;
+    //    let current = self.current().clone();
+    //    while !self.is_root() {
+    //        self.ascend().ok();
+    //        depth += 1;
+    //    }
+    //    self.jump(&current);
+    //    depth
+    //}
+    pub fn depth(&self) -> usize {
         let mut depth = 0;
-        let current = self.current().clone();
-        while !self.is_root() {
-            self.ascend().ok();
-            depth += 1;
+        let mut current_ptr = self.node.clone().ptr;
+        //while let Some(pos) = current.ptr {
+        while let Some(pos) = current_ptr {
+            let node_ref = pos.borrow();
+            if let Some(parent_weak) = &node_ref.parent {
+                //current = Position { ptr: parent_weak.upgrade() };
+                current_ptr = parent_weak.upgrade();
+                depth += 1;
+            } else {
+                break;
+            }
         }
-        self.jump(&current);
         depth
     }
 
-    /** Returns the height of the tallest sub-tree at the current position */
+    /** Returns the height of the tallest sub-tree for the current position */
     pub fn height(&self) -> usize {
         let current = self.current();
         self.height_rec(current.clone())
