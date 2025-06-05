@@ -138,30 +138,6 @@ impl<T> Position<T> {
             None
         }
     }
-
-    // depth and height are directly related to positions
-    // /** Returns the depth for a given node */
-    //pub fn depth(&mut self, node: Position<T>) -> usize {
-    //    let mut depth = 1;
-    //    let mut cursor = self.cursor_mut();
-    //    cursor.jump(&node);
-    //    while !cursor.is_root() {
-    //        cursor.ascend().ok();
-    //        depth += 1;
-    //    }
-    //    depth
-    //}
-
-    // /** Returns the height of a sub-tree at a given position */
-    //pub fn height(&self, node: Position<T>) -> Option<usize> {
-    //    let mut h = 0;
-    //    if let Some(n) = node {
-    //        for e in unsafe { &(*n).children } {
-    //            h = std::cmp::max(h, self.height(Some(e.expect("uh oh")))?)
-    //        }
-    //    }
-    //    Some(h + 1)
-    //}
 }
 // "Shallow" clone only clones/increases the Rc, not the whole Node
 impl<T> Clone for Position<T> {
@@ -305,6 +281,34 @@ impl<'a, T> CursorMut<'a, T> {
         } else {
             0
         }
+    }
+
+    /** Returns the depth of the cursor from the tree's root */
+    pub fn depth(&mut self) -> usize {
+        let mut depth = 0;
+        let current = self.current().clone();
+        while !self.is_root() {
+            self.ascend().ok();
+            depth += 1;
+        }
+        self.jump(&current);
+        depth
+    }
+
+    /** Returns the height of the tallest sub-tree at the current position */
+    pub fn height(&self) -> usize {
+        let current = self.current();
+        self.height_rec(current.clone())
+    }
+    /** The recursive guts of the height function */
+    fn height_rec(&self, node: Position<T>) -> usize {
+        let mut h = 0;
+        if let Some(n) = node.ptr.clone() {
+            for e in &(*(*n).borrow()).children {
+                h = std::cmp::max(h, self.height_rec(e.clone()))
+            }
+        }
+        h + 1
     }
 
     // ACCESSORS AND MUTATORS
@@ -541,6 +545,9 @@ mod tests {
         // Tests that root is empty with is_some() and is_none()
         assert!(!cursor.is_some());
         assert!(cursor.is_none());
+        // tests height and depth
+        assert_eq!(cursor.depth(), 0);
+        assert_eq!(cursor.height(), 6);
 
         // Tests num_children()
         assert_eq!(cursor.num_children(), 2); // Root has [Landlocked, Islands]
@@ -549,18 +556,24 @@ mod tests {
         let kids = cursor.children();
         let mut kids_iter = kids.iter();
 
-        cursor.jump(kids_iter.next().unwrap()); // Moves to first child
+        // Moves to first child "Landlocked"
+        cursor.jump(kids_iter.next().unwrap());
         {
             let data = cursor.get_data().unwrap();
             assert_eq!(*data.title, "Landlocked".to_string());
         }
+        assert_eq!(cursor.depth(), 1);
+        assert_eq!(cursor.height(), 5);
 
-        cursor.jump(kids_iter.next().unwrap()); // Moves to first child
+        // Moves to second child "Islands"
+        cursor.jump(kids_iter.next().unwrap());
         let curr: Position<Heading> = cursor.current().clone(); // Passes the torch
         {
             let data = cursor.get_data().unwrap();
             assert_eq!(*data.title, "Islands".to_string());
         }
+        assert_eq!(cursor.depth(), 1);
+        assert_eq!(cursor.height(), 3);
 
         // Jumps down a generation to [Marine, Fresh Water]
         cursor.jump(&curr);
@@ -571,6 +584,10 @@ mod tests {
             let data = cursor.get_data().unwrap();
             assert_eq!(*data.title, "Marine".to_string());
         }
+        // tests height and depth
+        assert_eq!(cursor.depth(), 2);
+        assert_eq!(cursor.height(), 2);
+
 
         // Jumps down a generation, for fun
         let new_kids = cursor.children(); // Gets cursor's chidlren
@@ -580,6 +597,8 @@ mod tests {
             let data = cursor.get_data().unwrap();
             assert_eq!(*data.title, "Australia".to_string());
         }
+        assert_eq!(cursor.depth(), 3);
+        assert_eq!(cursor.height(), 1);
 
         // Tests ascend()
         assert!(cursor.ascend().is_ok()); // Marine
@@ -591,6 +610,8 @@ mod tests {
         assert!(cursor.ascend().is_ok()); // []
         assert!(cursor.ascend().is_err()); // Cannot ascend() past root
         assert!(cursor.is_root()); // Double checks, just in case
+        assert_eq!(cursor.depth(), 0);
+        assert_eq!(cursor.height(), 6);
 
         // Descends to Islands to test delete()
         let kids = cursor.children(); // Gets cursor's chidlren
@@ -661,18 +682,37 @@ mod tests {
         ];
 
         // Creates a tree, Position, and CursorMut
-        let mut outer_tree: GenTree<Heading> = construct(0, one);
+        let mut outer_tree: GenTree<Heading> = construct(0, one.clone());
         let mut _pos: Position<Heading> = outer_tree.root();
         let mut cursor = outer_tree.cursor_mut();
 
         {
-            let inner_tree: GenTree<Heading> = construct(0, two);
+            let inner_tree: GenTree<Heading> = construct(0, two.clone());
             _pos = inner_tree.root();
             cursor.jump(&_pos);
+
         }
 
         // No more UB!!
-        let _oopsie = cursor.get_data();
-        let _oopsie = _pos.get_data();
+        cursor.get_data();
+        _pos.get_data();
+
+        // Creates a tree, Position, and CursorMut
+        let mut outer_tree: GenTree<Heading> = construct(0, one);
+        let mut pos: Position<Heading> = outer_tree.root();
+        let mut cursor = outer_tree.cursor_from(pos);
+
+        {
+            let inner_tree: GenTree<Heading> = construct(0, two);
+            pos = inner_tree.root();
+            cursor.jump(&pos);
+
+
+        }
+
+        // No more UB!!
+        cursor.get_data();
+        _pos.get_data();
+
     }
 }
