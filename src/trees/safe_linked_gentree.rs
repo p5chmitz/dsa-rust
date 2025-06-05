@@ -357,7 +357,7 @@ impl<'a, T> CursorMut<'a, T> {
     //}
 
     /** Adds a new child `Node` under the current cursor and advances the cursor
-    to the new child in `O(1)` time */
+    to the new child */
     pub fn add_child(&mut self, data: T) {
         let parent = self.node.clone();
 
