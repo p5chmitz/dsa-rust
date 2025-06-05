@@ -7,7 +7,7 @@ use std::path::Path;
 
 use crate::trees::safe_linked_gentree::{CursorMut, GenTree};
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Heading {
     pub level: usize,
     pub title: String,
