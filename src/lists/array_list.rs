@@ -89,7 +89,7 @@ impl Podium {
     /** Adds entry to list by score to maintain a sorted list in O(n) time;
     Does not overflow with attempts that exceed the initialized structure size,
     but does not log additional entries without sufficiently high score values */
-    pub fn add<'a>(&mut self, name: &'a str, new_score: Option<usize>) {
+    pub fn add(&mut self, name: &str, new_score: Option<usize>) {
         // Evaluates the existing array values to find the first appropriate index
         let mut insert_index = None;
         for i in 0..self.data.len() {
@@ -128,7 +128,7 @@ impl Podium {
 
     /** Removes the ith entry in O(n) time and returns the entry's name,
     shifts all remaining elements up by one index */
-    pub fn remove<'a>(&mut self, index: usize) -> Result<String, String> {
+    pub fn remove(&mut self, index: usize) -> Result<String, String> {
         if index >= PODIUM_SIZE - 1 {
             let msg: String = format!(
                 "Index out of bounds: {} is out of the range 0..={}",
@@ -150,10 +150,7 @@ impl Podium {
 
     /** Constructs a new Podium entry */
     fn entry(name: String, score: Option<usize>) -> Entry {
-        let score = match score {
-            Some(s) => s,
-            None => 0,
-        };
+        let score = score.unwrap_or_default(); 
         Entry {
             name,
             score: Some(score),
@@ -175,13 +172,12 @@ impl Podium {
 
     /** Der listen printen; Set bool to `true` for whole list or `false` for top three */
     pub fn print_full(&self, print_all: bool) {
-        let length: usize;
-        if print_all == true {
-            length = PODIUM_SIZE
+        let length: usize = if print_all {
+            PODIUM_SIZE
         } else {
             // Magic listen printen number
-            length = 3
-        }
+            3
+        };
         for (i, entry) in self.data.iter().enumerate() {
             // Only prints the first three podium entries
             if i >= length {
@@ -200,7 +196,7 @@ impl Podium {
 
             println!("{:>2}: {:<8} {:>6}", i + 1, name, score)
         }
-        println!("")
+        println!()
     }
 }
 
