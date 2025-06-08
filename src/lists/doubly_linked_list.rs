@@ -63,6 +63,11 @@ pub struct LinkedList<T> {
     tail: Link<T>,
     len: usize,
 }
+impl<T> Default for LinkedList<T> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 impl<T> LinkedList<T> {
     /** Creates a new list */
     pub fn new() -> LinkedList<T> {
@@ -102,7 +107,6 @@ impl<T> LinkedList<T> {
             // Resets the list's head and increments the list size
             self.head = Some(new_node_wrapper);
             self.len += 1;
-            return;
         }
     }
 
@@ -111,7 +115,7 @@ impl<T> LinkedList<T> {
         unsafe {
             if let Some(node_ptr) = self.head {
                 let node = &(*node_ptr).data;
-                return Some(node);
+                Some(node)
             } else {
                 None
             }
@@ -123,7 +127,7 @@ impl<T> LinkedList<T> {
         unsafe {
             if let Some(node_ptr) = self.tail {
                 let node = &(*node_ptr).data;
-                return Some(node);
+                Some(node)
             } else {
                 None
             }
@@ -171,7 +175,6 @@ impl<T> LinkedList<T> {
             // Resets the list's tail and increments the list size
             self.tail = Some(new_node_wrapper);
             self.len += 1;
-            return;
         }
     }
 
@@ -213,10 +216,7 @@ impl<T> LinkedList<T> {
 
     /** Returns a Boolean indicating whether the list is empty */
     pub fn is_empty(&self) -> bool {
-        if self.head.is_none() {
-            return true;
-        }
-        false
+        self.head.is_none()
     }
 
     /** Clears all elements from the list in O(n) time */
@@ -296,23 +296,17 @@ pub struct CursorMut<'a, T> {
     list: &'a mut LinkedList<T>,
     index: Option<usize>,
 }
-impl<'a, T> CursorMut<'a, T> {
+impl<T> CursorMut<'_, T> {
     /// Returns `true` if the cursor contains a Node pointer
     ///
     /// **Note**: The pointer may not be valid or safe to dereference
     pub fn is_some(&self) -> bool {
-        if self.cursor.is_some() {
-            return true;
-        }
-        false
+        self.cursor.is_some()
     }
 
     /// Returns `true` if the cursor does not contain a Node pointer
     pub fn is_none(&self) -> bool {
-        if self.cursor.is_none() {
-            return true;
-        }
-        false
+        self.cursor.is_none()
     }
 
     /// Returns the "index" to the current list node in a zero-indexed sequence
@@ -406,23 +400,26 @@ impl<'a, T> CursorMut<'a, T> {
     }
 
     /// Inserts a node before the cursor;
+    /// 
     /// - If the cursor is on the ghost node of an empty list,
-    /// the new node becomes the new head and tail;
+    ///   the new node becomes the new head and tail;
+    /// 
     /// - If the cursor is on the ghost node of a non-empty list,
-    /// the new node becomes the new tail;
+    ///   the new node becomes the new tail;
+    /// 
     /// - If the cursor is on the head, the new node is the new head;
-    ///
+    /// 
     /// Precondition:
-    ///
-    /// ```text
+    /// 
+    /// ```test
     ///     self.head -> A <-> C <- self.tail
     ///                        ^
     ///                     cursor
     /// ```
-    ///
+    /// 
     /// Postcondition:
-    ///
-    /// ```text
+    /// 
+    /// ```test
     ///     self.head -> A <-> B <-> C <- self.tail
     ///                              ^
     ///                           cursor
@@ -436,12 +433,12 @@ impl<'a, T> CursorMut<'a, T> {
 
         // Case 1) The cursor is at the ghost of an empty list;
         // new head/tail
-        if self.cursor == None && self.list.head.is_none() {
+        if self.cursor.is_none() && self.list.head.is_none() {
             self.list.head = Some(new_node_wrapper);
             self.list.tail = Some(new_node_wrapper);
         }
         // Case 2) The cursor is at the ghost of a non-empty list; new tail
-        else if self.cursor == None && self.list.head.is_some() {
+        else if self.cursor.is_none() && self.list.head.is_some() {
             // Update the old tail's next pointer
             let old_tail = self.list.tail.unwrap();
             unsafe {
@@ -501,22 +498,25 @@ impl<'a, T> CursorMut<'a, T> {
     }
 
     /// Inserts a node after the cursor;
+    ///
     /// - If the cursor is on the ghost node of an empty list,
-    /// the new node becomes the new head and tail;
+    ///   the new node becomes the new head and tail;
+    ///
     /// - If the cursor is on the ghost node of a non-empty list,
-    /// the new node becomes the new head;
+    ///   the new node becomes the new head;
+    ///
     /// - If the cursor is on the tail, the new node is the new tail;
-    ///
+    /// 
     /// Precondition:
-    ///
+    /// 
     /// ```text
     ///     self.head -> A <-> C <- self.tail
     ///                  ^
     ///               cursor
     /// ```
-    ///
+    /// 
     /// Postcondition:
-    ///
+    /// 
     /// ```text
     ///     self.head -> A <-> B <-> C <- self.tail
     ///                  ^
@@ -531,12 +531,12 @@ impl<'a, T> CursorMut<'a, T> {
 
         // Case 1) The cursor is at the ghost node in an empty list;
         // new head/tail
-        if self.cursor == None && self.list.head.is_none() {
+        if self.cursor.is_none() && self.list.head.is_none() {
             self.list.head = Some(new_node_wrapper);
             self.list.tail = Some(new_node_wrapper);
         }
         // Case 2) The cursor is at the ghost node in a non-empty list; new head
-        else if self.cursor == None && self.list.head.is_some() {
+        else if self.cursor.is_none() && self.list.head.is_some() {
             // Capture the old head node
             let old_head = self.list.head.unwrap();
 
@@ -617,7 +617,7 @@ impl<'a, T> CursorMut<'a, T> {
             // Case 2) You're in a non-empty list
             let node_data = if let Some(node_ptr) = self.cursor {
                 // 2.1 You're at the head
-                if (*node_ptr).prev == None {
+                if (*node_ptr).prev.is_none() {
                     // Reset the head and its pointers
                     if let Some(next_node) = (*node_ptr).next {
                         (*next_node).prev = None;
@@ -625,7 +625,7 @@ impl<'a, T> CursorMut<'a, T> {
                     }
                 }
                 // 2.2 You're at the tail
-                else if (*node_ptr).next == None {
+                else if (*node_ptr).next.is_none() {
                     // Reset the head and its pointers
                     if let Some(next_node) = (*node_ptr).prev {
                         (*next_node).next = None;
@@ -799,6 +799,7 @@ impl<'a, T> CursorMut<'a, T> {
     }
 
     /// Splices in a new list between the cursor node and the previous node
+    ///
     /// Precondition:
     ///
     /// ```text
@@ -1381,15 +1382,13 @@ pub fn example() {
     first.push_tail("c");
 
     print!("First:  [");
-    let mut i = 0;
-    for e in first.iter() {
+    for (i, e) in first.iter().enumerate() {
         print!("{e}");
         if i == first.len() - 1 {
             print!("]");
         } else {
             print!(", ");
         }
-        i += 1;
     }
     println!();
 
@@ -1401,15 +1400,13 @@ pub fn example() {
     second.push_tail("4");
 
     print!("Second:  [");
-    let mut i = 0;
-    for e in second.iter() {
+    for (i, e) in second.iter().enumerate() {
         print!("{e}");
         if i == second.len() - 1 {
             println!("]");
         } else {
             print!(", ");
         }
-        i += 1;
     }
 
     // Spliced
@@ -1420,15 +1417,13 @@ pub fn example() {
     // Postcondition: [1, 2, a, b, c, 3, 4]
 
     print!("Spliced:  [");
-    let mut i = 0;
-    for e in second.iter() {
+    for (i, e) in second.iter().enumerate() {
         print!("{e}");
         if i == second.len() - 1 {
             println!("]");
         } else {
             print!(", ");
         }
-        i += 1;
     }
 
     // Range split
@@ -1447,26 +1442,22 @@ pub fn example() {
                                 // Postcondition: [1, 2, 3, 4] [a, b, c]
 
     print!("Split numbers:  [");
-    let mut i = 0;
-    for e in second.iter() {
+    for (i, e) in second.iter().enumerate() {
         print!("{e}");
         if i == second.len() - 1 {
             println!("]");
         } else {
             print!(", ");
         }
-        i += 1;
     }
     print!("Split letters:  [");
-    let mut i = 0;
-    for e in new_front.iter() {
+    for (i, e) in new_front.iter().enumerate() {
         print!("{e}");
         if i == new_front.len() - 1 {
             println!("]");
         } else {
             print!(", ");
         }
-        i += 1;
     }
 
     //Interleaved
@@ -1487,8 +1478,7 @@ pub fn example() {
     let mut first_iter = first.iter();
     let mut second_iter = second.iter();
     print!("Interleaved:  [");
-    let mut i = 0;
-    for _ in 0..max {
+    for (i, _) in (0..max).enumerate() {
         // If the first list has a value, print it
         if let Some(s) = second_iter.next() {
             print!("{}", s);
@@ -1503,7 +1493,6 @@ pub fn example() {
                 print!(", ");
             }
         }
-        i += 1;
     }
     println!("]");
 }
