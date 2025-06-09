@@ -27,8 +27,7 @@ pub fn hash_1(key: &str) -> u64 {
     for e in key.bytes() {
         hasher.write_u8(e)
     }
-    let digest = hasher.finish();
-    digest
+    hasher.finish()
 }
 
 // COMPRESSION
@@ -37,7 +36,7 @@ pub fn hash_1(key: &str) -> u64 {
 /** Super simple division compression as `i mod N`;
 Produces a deterministic output, works best when `n` (len) is prime */
 pub fn division_compression(key: usize, len: usize) -> usize {
-    key % len as usize
+    key % len
 }
 
 /** Efficient primality test using the 6k ± 1 rule for numbers >3 by trial */
@@ -128,12 +127,10 @@ pub fn mad_compression(key: u64, len: usize) -> u64 {
     //(((key * a) + b) % p) % len
 
     // Apply wrapping * and + to prevent overflow
-    let wrapped_value = (key.wrapping_mul(a))
+    (key.wrapping_mul(a))
         .wrapping_add(b)
         .wrapping_rem(p)
-        .wrapping_rem(len as u64);
-
-    wrapped_value
+        .wrapping_rem(len as u64)
 }
 pub fn mad_compression_1(
     hash: usize,
@@ -142,5 +139,5 @@ pub fn mad_compression_1(
     shift: usize,
     capacity: usize,
 ) -> usize {
-    (hash.wrapping_mul(scale as usize)).wrapping_add(shift) % (prime) % (capacity)
+    (hash.wrapping_mul(scale)).wrapping_add(shift) % (prime) % (capacity)
 }
