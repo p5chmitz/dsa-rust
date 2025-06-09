@@ -193,11 +193,13 @@ None: 2.203727308s
 For: 1.947812524s
 
 */
+#[allow(clippy::type_complexity)]
 fn _empirical_test() {
     use std::time::{Duration, Instant};
 
     let allocations = [100, 10_000, 100_000_000];
     let runs = 100;
+    // TODO: Clippy isn't happy about this
     let methods: Vec<(&str, fn(usize) -> CircularQueue<char>)> = vec![(
         "For",
         CircularQueue::new as fn(usize) -> CircularQueue<char>,
