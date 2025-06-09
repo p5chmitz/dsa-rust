@@ -83,11 +83,21 @@ pub struct SortedMap<K, V> {
     data: Vec<Option<Entry<K, V>>>,
     size: usize,
 }
+impl<K, V> Default for SortedMap<K, V>
+where
+    K: Debug + PartialEq + Ord,
+    V: PartialEq,
+ {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 impl<K, V> SortedMap<K, V>
 where
     K: Debug + PartialEq + Ord,
     V: PartialEq,
 {
+
     /** Every structure needs a constructor */
     pub fn new() -> SortedMap<K, V> {
         SortedMap {
@@ -110,7 +120,7 @@ where
     NOTE: Calling function must handle case of entering first entry into empty list */
     fn find_index(&self, target: &K) -> usize {
         let right: usize = self.data.len() - 1;
-        return Self::find_index_rec(&self.data, target, 0, right as usize);
+        Self::find_index_rec(&self.data, target, 0, right)
     }
     /** If the tarket is in the list the function returns the index,
     if the target is not in the list the function returns the next appropriate index */
@@ -122,15 +132,15 @@ where
     ) -> usize {
         // Recursive base case returns next viable index when the key is not found
         if left > right {
-            return left;
+            left
         } else {
             let mid = (left + right) / 2;
             if data[mid].is_some() && *key == data[mid].as_ref().unwrap().key {
-                return mid;
+                mid
             } else if data[mid].is_some() && *key < data[mid].as_ref().unwrap().key {
-                return Self::find_index_rec(&data, key, left, mid - 1);
+                Self::find_index_rec(data, key, left, mid - 1)
             } else {
-                return Self::find_index_rec(&data, key, mid + 1, right);
+                Self::find_index_rec(data, key, mid + 1, right)
             }
         }
     }
@@ -138,7 +148,7 @@ where
     pub fn get(&self, key: K) -> Option<&V> {
         let j: usize = self.find_index(&key);
         if self.data[j].is_some() && self.data[j].as_ref().unwrap().key == key {
-            return Some(&self.data[j as usize].as_ref().unwrap().value);
+            return Some(&self.data[j].as_ref().unwrap().value);
         }
         None
     }
@@ -146,7 +156,7 @@ where
     /** Inserts an entry into the map while maintaining sorted order by key */
     pub fn put(&mut self, key: K, value: V) -> Option<Entry<K, V>> {
         // First entry
-        if self.data.len() == 0 {
+        if self.data.is_empty() {
             let new: Entry<K, V> = Entry::new(key, value);
             self.data.insert(0, Some(new));
             self.size += 1;
@@ -160,13 +170,13 @@ where
             // The location has a previous value
             let old: Entry<K, V> = self.data[index].take().unwrap();
             let new: Entry<K, V> = Entry::new(key, value);
-            self.data[index as usize] = Some(new);
-            return Some(old);
+            self.data[index] = Some(new);
+            Some(old)
         } else {
             let new: Entry<K, V> = Entry::new(key, value);
-            self.data.insert(index as usize, Some(new));
+            self.data.insert(index, Some(new));
             self.size += 1;
-            return None;
+            None
         }
     }
 
@@ -174,7 +184,7 @@ where
         let j: usize = self.find_index(&key);
         if self.data[j].is_some() && self.data[j].as_ref().unwrap().key == key {
             self.size -= 1;
-            return self.data[j as usize].take();
+            return self.data[j].take();
         }
         None
     }
