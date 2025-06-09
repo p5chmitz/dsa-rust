@@ -188,7 +188,7 @@ pub fn navigator(level: usize, path: &Path) {
                     println!("{}", path.display());
                     let parsed = parse(path);
                     let mut name: String = parsed.0;
-                    if name == "" {
+                    if name.is_empty() {
                         if let Some(n) = path
                             .file_name()
                             .expect("Error extracting file name")
