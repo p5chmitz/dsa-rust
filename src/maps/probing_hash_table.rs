@@ -116,6 +116,15 @@ pub struct ProbingHashTable<K, V> {
     size: usize,
     entries: usize,
 }
+impl<K, V> Default for ProbingHashTable<K, V>
+where
+    K: Clone + Debug + Hash + PartialEq,
+    V: Clone + PartialEq + std::fmt::Debug,
+ {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 impl<K, V> ProbingHashTable<K, V>
 where
     K: Clone + Debug + Hash + PartialEq,
@@ -147,6 +156,11 @@ where
     /// Returns the capacity of the map
     pub fn len(&self) -> usize {
         self.data.len()
+    }
+
+    /// Returns the capacity of the map
+    pub fn is_empty(&self) -> bool {
+        self.data.is_empty()
     }
 
     /// Returns the current number of active entires in the map
@@ -189,7 +203,7 @@ where
         let location = self.find_index(bucket, &key);
         if location >= 0 {
             let value = &self.data[location as usize].as_ref().unwrap().value;
-            return Some(value);
+            Some(value)
         } else {
             None
         }
@@ -229,7 +243,7 @@ where
             self.size += 1;
             self.entries += 1;
         };
-        return old_entry;
+        old_entry
     }
 
     /** Removes an entry from the map by key; The secret, though, is that
@@ -281,7 +295,7 @@ where
                 i += 1;
             }
         }
-        return -(current_bucket as isize + 1);
+        -(current_bucket as isize + 1)
     }
 
     /** Hashes the key using Rust's DefaultHasher */
@@ -293,9 +307,9 @@ where
 
     // Compresses the hash using the MAD algorithm
     fn compress(&self, hash: usize) -> usize {
-        (hash.wrapping_mul(self.scale as usize)).wrapping_add(self.shift)
+        (hash.wrapping_mul(self.scale)).wrapping_add(self.shift)
             % (self.prime)
-            % (self.data.len()) as usize
+            % (self.data.len())
     }
 
     /** Internal function that grows the base (storage) vector to the next prime
@@ -330,7 +344,7 @@ where
             if let Some(v) = e.take() {
                 // MAD compression algorithm
                 let mut location: usize = ((hash_lib::hash(&v.key))
-                    .wrapping_mul(self.scale as usize))
+                    .wrapping_mul(self.scale))
                 .wrapping_add(self.shift)
                     % (self.prime)
                     % (new_capacity);
@@ -427,7 +441,7 @@ pub fn example() {
     }
 
     // Checks that the map contains what we'd expect
-    if map.contains("Peter") == false {
+    if !map.contains("Peter") {
         panic!()
     };
     let val = map.get("Peter").unwrap();
