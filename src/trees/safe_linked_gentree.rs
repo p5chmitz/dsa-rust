@@ -216,6 +216,11 @@ pub struct GenTree<T> {
     root: Position<T>,
     size: usize,
 }
+impl<T> Default for GenTree<T> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 impl<T> GenTree<T> {
     /** Instantiates a new `GenTree` */
     pub fn new() -> GenTree<T> {
@@ -277,7 +282,7 @@ impl<'a, T> CursorMut<'a, T> {
     /** Returns the number of children for the `Node` under the cursor as usize */
     pub fn num_children(&self) -> usize {
         if let Some(val) = self.node.ptr.clone() {
-            (*(*val).borrow()).children.len()
+            (*val).borrow().children.len()
         } else {
             0
         }
@@ -312,19 +317,33 @@ impl<'a, T> CursorMut<'a, T> {
     }
 
     /** Returns the height of the tallest sub-tree for the current position */
+    //pub fn height(&self) -> usize {
+    //    let current = self.current();
+    //    self.height_rec(current.clone())
+    //}
+    ///** The recursive guts of the height function */
+    //#[allow(clippy::only_used_in_recursion)]
+    //fn height_rec(&self, node: Position<T>) -> usize {
+    //    let mut h = 0;
+    //    if let Some(n) = node.ptr.clone() {
+    //        for e in &(*n).borrow().children {
+    //            h = std::cmp::max(h, self.height_rec(e.clone()))
+    //        }
+    //    }
+    //    h + 1
+    //}
     pub fn height(&self) -> usize {
         let current = self.current();
-        self.height_rec(current.clone())
-    }
-    /** The recursive guts of the height function */
-    fn height_rec(&self, node: Position<T>) -> usize {
-        let mut h = 0;
-        if let Some(n) = node.ptr.clone() {
-            for e in &(*(*n).borrow()).children {
-                h = std::cmp::max(h, self.height_rec(e.clone()))
+        fn height_rec<T>(node: &Position<T>) -> usize {
+            let mut h = 0;
+            if let Some(n) = node.ptr.clone() {
+                for e in &(*n).borrow().children {
+                    h = std::cmp::max(h, height_rec(&e.clone()))
+                }
             }
+            h + 1
         }
-        h + 1
+        height_rec(current)
     }
 
     // ACCESSORS AND MUTATORS
@@ -392,7 +411,8 @@ impl<'a, T> CursorMut<'a, T> {
     pub fn children(&self) -> Vec<Position<T>> {
         self.node
             .get_node()
-            .map(|node| node.children.iter().cloned().collect())
+            //.map(|node| node.children.iter().cloned().collect())
+            .map(|node| node.children.to_vec())
             .unwrap_or_default()
     }
 
