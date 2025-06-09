@@ -1,3 +1,6 @@
+// TODO: Actually implement the list and remove this ASAP
+#![allow(clippy::all)]
+
 /*! A safe, linked binary search tree (BST)
 
 # About
@@ -42,7 +45,7 @@ where
         }
     }
 
-    /** Sets the root of the tree */
+    // /** Sets the root of the tree */
     //pub fn set_root(&mut self, data: T) {
     //    self.root.data = Some(data)
     //}
@@ -68,7 +71,9 @@ where
     pub fn attach(&mut self, _left: Pos<T>, _right: Pos<T>) {}
 
     /** WARNNING: Unimplemented */
-    pub fn remove(&mut self, _p: Pos<T>) {}
+    pub fn remove(&mut self, p: Pos<T>) {
+        let _ = p;
+    }
 
     /** Returns the number of nodes in the tree */
     pub fn size(&self) -> usize {
@@ -116,11 +121,12 @@ where
 
     /** Returns the number of children for a given node */
     fn num_children(&self, node: Self::Position) -> Option<usize> {
-        if let Some(n) = self.children(node) {
-            Some(n.len())
-        } else {
-            None
-        }
+        self.children(node).map(|n| n.len())
+        //if let Some(n) = self.children(node) {
+        //    Some(n.len())
+        //} else {
+        //    None
+        //}
     }
 
     /** Returns a collection of the node's children */
@@ -150,7 +156,7 @@ where
         node == self.root
     }
 
-    /**  */
+    /** Depth... */
     fn depth(&self, node: Self::Position) -> Option<usize> {
         let mut d = 1;
         let mut cursor = node.clone();
@@ -161,7 +167,7 @@ where
         Some(d)
     }
 
-    /**  */
+    /** Height... */
     fn height(&self, node: Self::Position) -> Option<usize> {
         let mut h = 0;
         if let Some(c) = self.children(node) {

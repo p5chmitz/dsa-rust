@@ -33,7 +33,7 @@ impl<'a> List<'a> {
             size: 0,
         }
     }
-    pub fn is_empty(self) -> bool {
+    pub fn is_empty(&self) -> bool {
         self.size == 0
     }
     /** Takes a name and optional score, creates a entry, and inserts it into the list;
@@ -52,7 +52,8 @@ impl<'a> List<'a> {
             self.size
         } else {
             (0..=self.size)
-                .find(|&j| self.data[j].as_ref().map_or(true, |n| n.score <= score))
+                //.find(|&j| self.data[j].as_ref().map_or(true, |n| n.score <= score))
+                .find(|&j| self.data[j].as_ref().is_none_or(|n| n.score <= score))
                 .unwrap_or(self.size)
         };
         // Shift elements to make room for the new entry
@@ -99,9 +100,11 @@ impl<'a> List<'a> {
         // Uses Iterator::find() to identify the index of an entry that matches the name input;
         // No special syntax: this block has an awkwardly long find expression
         if let Some(i) = (0..=self.size).find(|&i| {
+            //self.data[i]
+            //    .as_ref()
+            //    .map_or(false, |entry| entry.name == name) // Finds matching name or returns false
             self.data[i]
-                .as_ref()
-                .map_or(false, |entry| entry.name == name) // Finds matching name or returns false
+                .as_ref().is_some_and(|entry| entry.name == name) // Finds matching name or returns false
         }) {
             // If a match is found shift entries to the left to fill the gap
             for j in i..self.size {
@@ -138,12 +141,11 @@ impl<'a> List<'a> {
     /** Prints the Podium list; If you supply true the function prints the entire list,
     if you supply false the function just prints the top three spots */
     pub fn print_full(&self, print_all: bool) {
-        let length: usize;
-        if print_all == true {
-            length = self.data.len()
+        let length = if print_all {
+            self.data.len()
         } else {
-            length = 3
-        }
+            3
+        };
         for (i, entry) in self.data.iter().enumerate() {
             // Only prints the first three podium entries
             if i >= length {
@@ -157,7 +159,7 @@ impl<'a> List<'a> {
                 println!("{:>2}: {:<8} ", i + 1, fmtd.0)
             }
         }
-        println!("")
+        println!()
     }
     /** Formats PodiumEntry instances for output */
     fn format(&self, entry: &Entry) -> (String, String) {

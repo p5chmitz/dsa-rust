@@ -1,5 +1,5 @@
 /////////////////////////////////////////
-/** A sorted, Vec-based priority queue */
+/* A sorted, Vec-based priority queue */
 /////////////////////////////////////////
 
 // A sorted, array-based priority queue
@@ -67,7 +67,7 @@ mod sorted_list {
         //NOTE: Provides a wrapper for Vec::pop() which runs in O(1) time
         fn dequeue(&mut self) -> Option<V> {
             if let Some(v) = self.data.pop() {
-                return Some(v.value);
+                Some(v.value)
             } else {
                 None
             }
@@ -82,17 +82,25 @@ mod sorted_list {
         }
 
         fn compare(one: Self::Entry, two: Self::Entry) -> isize {
-            if one.key < two.key {
-                -1
-            } else if one.key == two.key {
-                0
-            } else {
-                1
+            //if one.key < two.key {
+            //    -1
+            //} else if one.key == two.key {
+            //    0
+            //} else {
+            //    1
+            //}
+            use std::cmp::Ordering;
+            match one.key.cmp(&two.key) {
+                Ordering::Less => -1,
+                Ordering::Equal => 0,
+                Ordering::Greater => 1,
             }
+
         }
 
-        fn check_key(key: &K) -> bool {
-            key == key
+        fn check_key(_key: &K) -> bool {
+            //key == key
+            true
         }
     }
 }

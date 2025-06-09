@@ -1,5 +1,5 @@
 /////////////////////////////////////
-/** A vector-based stack (wrapper) */
+/* A vector-based stack (wrapper) */
 /////////////////////////////////////
 
 /** Vec itself can be used as a stack with push, pop, and last;
@@ -112,7 +112,7 @@ mod raw {
                 ']' | '}' | ')' => {
                     // Checks that all closing symbols have a matching opener,
                     // if it does, the opener is popped
-                    if symbols.len() == 0 {
+                    if symbols.is_empty() {
                         panic!("Error: Unexpected closing symbol");
                     } else {
                         let check = *symbols.last().expect("Error: No symbols on stack");
@@ -130,7 +130,7 @@ mod raw {
             }
         }
         // Checks that all opening symbols have a matching closer
-        if symbols.len() > 0 {
+        if !symbols.is_empty() {
             panic!("Error 003: Missing closing symbol")
         }
         true

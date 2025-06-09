@@ -93,7 +93,9 @@ pub fn word_freq(file: &str, num: usize) {
 
     // Prints the last X number of entries
     let total = sorted.len();
-    let start = if total > num { total - num } else { 0 }; // Avoid underflow
+    //let start = if total > num { total - num } else { 0 }; // Avoid underflow
+    // clippy wants:
+    let start = total.saturating_sub(num);
 
     let mut i = start;
     while i < total {

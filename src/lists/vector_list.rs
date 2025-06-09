@@ -45,7 +45,7 @@ impl Podium {
             }
         }
         // Inserts the entry at the appropriate index
-        self.data.insert(insert_index as usize, entry);
+        self.data.insert(insert_index, entry);
         self.size += 1;
     }
     /** Removes the entry at the index and shifts all remaining elements up by one
@@ -73,21 +73,20 @@ impl Podium {
     /** Prints the Podium list; If you supply true the function prints the entire list,
     if you supply false the function just prints the top three spots */
     pub fn print_full(&self, print_all: bool) {
-        let length: usize;
-        if print_all == true {
-            length = self.data.len()
+        let length: usize = if print_all {
+            self.data.len()
         } else {
-            length = 3
-        }
+            3
+        };
         for (i, entry) in self.data.iter().enumerate() {
             // Only prints the first three podium entries
             if i >= length {
                 break;
             }
-            let entry = self.format(&entry);
+            let entry = self.format(entry);
             println!("{:>2}: {:<8} {:>6}", i + 1, entry.0, entry.1)
         }
-        println!("")
+        println!()
     }
     /** Constructs a new PodiumEntry instance */
     fn build(name: String, score: Option<i32>) -> PodiumEntry {
@@ -134,7 +133,7 @@ pub fn example() {
     let names_vec = ["Peter", "Dingus", "Brain", "Bobson"];
     let scores_vec = [Some(1223), None, Some(616), Some(42069)];
     for i in 0..names_vec.len() {
-        podium.add(names_vec[i].to_string(), scores_vec[i as usize]);
+        podium.add(names_vec[i].to_string(), scores_vec[i]);
     }
     println!("Initial results:");
     podium.print_full(true);

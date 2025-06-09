@@ -9,7 +9,7 @@ There are better ways to do this. Specifically, an index-backed graph crate woul
 The base [GenTree] structure is sparse and only contains basic operations for constructors and metadata retrieval. Most of the magic happens in the [CursorMut] struct. Both structs rely on a [Position] struct which provides a safe handle to all the raw pointers required to make tree go brrr.
 
 # Example
-This section presents an algorithm that builds a tree from a `Vec` of custom `Heading` objects that contain a level and a heading value. Assume the inputs to the algorithm start at level 1 with the first (and lowest) level in the `Vec<Heading>` list being 2. The result is a single, empty root node represented by `[]`. 
+This section presents an algorithm that builds a tree from a `Vec` of custom `Heading` objects that contain a level and a heading value. Assume the inputs to the algorithm start at level 1 with the first (and lowest) level in the `Vec<Heading>` list being 2. The result is a single, empty root node represented by `[]`.
 ```text
     []
     │
@@ -119,6 +119,7 @@ pub struct Position<T> {
 }
 impl<T> Position<T> {
     /** Internal constructor only:
+
     Creates a safe handle to `Node<T>` and returns it as a `Position<T>`.
     Marked as unsafe because it takes a *mut which is the caller's
     responsibility to ensure is not null. */
@@ -142,7 +143,8 @@ impl<T> Position<T> {
         }
     }
 
-    fn _get_data(&self) -> Option<&T> {
+    /** Returns an immutable reference to the data at the Position, if Some. */
+    pub fn get_data(&self) -> Option<&T> {
         if let Ok(ptr) = self.as_ptr() {
             unsafe { (*ptr).data.as_ref() }
         } else {
@@ -150,14 +152,20 @@ impl<T> Position<T> {
         }
     }
 
-    //pub fn temp(data: T) -> Self {
-    //    Position {
-    //        // NonNull::new() automatically wraps the pointer in Option
-    //        ptr: NonNull::new(Box::into_raw(Node::build(Some(data)))),
-    //        _phantom: PhantomData,
-    //    }
+    /** Replaces the Node data for the given Position
 
-    //}
+    NOTE: Experimental */
+    fn _replace(&mut self, data: T) -> Option<T> {
+        if let Ok(ptr) = self.as_ptr() {
+            unsafe {
+                let boxed_node: Box<Node<T>> = Box::from_raw(ptr);
+                (*ptr).data = Some(data);
+                boxed_node.data
+            }
+        } else {
+            None
+        }
+    }
 }
 impl<T> Clone for Position<T> {
     fn clone(&self) -> Self {
@@ -248,8 +256,8 @@ impl<T> GenTree<T> {
     //    unsafe { Position::new(Box::into_raw(boxed)) }
     //}
 
-    /** Returns an immutable reference to a Node's data at the specified Position,
-    if it exists */
+    // /** Returns an immutable reference to a Node's data at the specified Position,
+    // if it exists */
     //pub fn get(&self, node: &Position<T>) -> Option<&T> {
     //    // Imperative approach
     //    if let Ok(n) = node.as_ptr() {
@@ -341,8 +349,8 @@ impl<T> GenTree<T> {
     //    }
     //}
 
-    // /** Returns true if the given position is the tree's root. 
-    // 
+    // /** Returns true if the given position is the tree's root.
+    //
     //WARNING: Unsafe */
     //pub unsafe fn is_root(&self, node: Position<T>) -> bool {
     //    // Sloppy
@@ -402,7 +410,6 @@ impl<T> GenTree<T> {
     //    }
     //    Some(h + 1)
     //}
-    
 }
 
 impl<T> Drop for GenTree<T> {
@@ -441,18 +448,13 @@ pub struct CursorMut<'a, T> {
     tree: &'a mut GenTree<T>,
 }
 
-impl<'a, T> CursorMut<'a, T> {
-
+impl<T> CursorMut<'_, T> {
     // METADATA
     ///////////
 
     /** Returns true if the Node under the curosr is the tree's root. */
     pub fn is_root(&self) -> bool {
-        if self.node.as_ptr().ok() == self.tree.root().as_ptr().ok() {
-            true
-        } else {
-            false
-        }
+        self.node.as_ptr().ok() == self.tree.root().as_ptr().ok()
     }
 
     /** Returns true if the Node under the curosr has data. */
@@ -552,7 +554,6 @@ impl<'a, T> CursorMut<'a, T> {
         self.tree.size += 1;
     }
 
-
     /** Deletes the node at the current cursor position,
     adds all children to the parent (if Some), and returns the deleted Node.
     If the cursor is at the tree's root, this just deletes the Node's data, leaving None.
@@ -560,16 +561,16 @@ impl<'a, T> CursorMut<'a, T> {
     pub fn delete(&mut self) -> Option<T> {
         // Gets a raw pointer to self
         let self_ptr = self.node.ptr.unwrap().as_ptr();
-    
+
         // Transfers the self.chilren to parent.children, if Some
         unsafe {
             if let Some(parent_position) = &(*self_ptr).parent {
                 let parent_ptr = parent_position.as_ptr().unwrap();
-    
+
                 // Get mutable references to the parent and self children vecs
                 let parent_children = &mut (*parent_ptr).children;
                 let self_children = &mut (*self_ptr).children;
-    
+
                 // Remove self from parent's children Vec
                 if let Some(index) = parent_children
                     .iter()
@@ -577,37 +578,36 @@ impl<'a, T> CursorMut<'a, T> {
                 {
                     parent_children.remove(index);
                 }
-    
+
                 // Move each self.child to the parent's children Vec
                 parent_children.append(self_children);
-    
+
                 // Update their parent pointers
                 for child in parent_children.iter_mut() {
                     (*child.as_ptr().unwrap()).parent = Some(Position::new(parent_ptr));
                 }
 
                 // Move the cursor up to the parent
-                self.jump(&parent_position);
-    
+                self.jump(parent_position);
+
                 // Save original pointer to access deleted data
                 // Takes ownership so Box can be automatically dropped
-                let boxed_node: Box<Node<T>> = Box::from_raw(self_ptr); 
-    
+                let boxed_node: Box<Node<T>> = Box::from_raw(self_ptr);
+
                 // Return the deleted node's data
                 boxed_node.data
-
             } else {
                 None
             }
         }
     }
 
-    /** Same as `CursorMut::delete()` but for an arbitrary cursor position.
-    
-    Deletes the node at the current cursor position,
-    adds all children to the parent (if Some), and returns the deleted Node.
-    If the cursor is at the tree's root, this just deletes the Node's data, leaving None.
-    Moves the cursor to the parent, if Some */
+    // /** Same as `CursorMut::delete()` but for an arbitrary cursor position.
+    //
+    // Deletes the node at the current cursor position,
+    // adds all children to the parent (if Some), and returns the deleted Node.
+    // If the cursor is at the tree's root, this just deletes the Node's data, leaving None.
+    // Moves the cursor to the parent, if Some */
     //pub fn delete_node(&mut self, node: Position<T>) Option<Node<T>> {}
 
     // /** Returns an immutable reference to the parent position for the Node at
@@ -656,7 +656,7 @@ impl<'a, T> CursorMut<'a, T> {
     //    }
     //}
 
-    /** Moves the cursor up a generation, if Some. Trying to ascend past the root results in an error. */
+    // /** Moves the cursor up a generation, if Some. Trying to ascend past the root results in an error. */
     //pub fn ascend(&mut self) -> Result<(), String> {
 
     //    // Finds current position
@@ -679,33 +679,32 @@ impl<'a, T> CursorMut<'a, T> {
     //        Err("Error: Cannot ascend past root".to_string())
     //    }
     //}
-pub fn ascend(&mut self) -> Result<(), String> {
-    if let Some(ptr) = self.node.as_ptr().ok() {
-        // SAFETY: ptr is a valid pointer to a Node<T>
-        let parent = unsafe { (*ptr).parent.clone() };
+    pub fn ascend(&mut self) -> Result<(), String> {
+        if let Ok(ptr) = self.node.as_ptr() {
+            // SAFETY: ptr is a valid pointer to a Node<T>
+            let parent = unsafe { (*ptr).parent.clone() };
 
-        if let Some(parent_ptr) = parent {
-            self.node = parent_ptr;
-            Ok(())
+            if let Some(parent_ptr) = parent {
+                self.node = parent_ptr;
+                Ok(())
+            } else {
+                Err("Error: Cannot ascend past root".to_string())
+            }
         } else {
-            Err("Error: Cannot ascend past root".to_string())
+            Err("Error: No current node to ascend from".to_string())
         }
-    } else {
-        Err("Error: No current node to ascend from".to_string())
     }
-}
     /** Returns a list of owned descendant (child) Positions for the current cursor node. */
     pub fn children(&self) -> Vec<Position<T>> {
         let Some(ptr) = self.node.as_ptr().ok() else {
             return vec![];
         };
-    
+
         unsafe {
             let node = &*ptr;
             node.children.clone()
         }
     }
-
 }
 
 #[cfg(test)]
@@ -713,42 +712,73 @@ mod tests {
 
     #[test]
     /** Creates this tree to test properties
-    	[]
-    	├── Landlocked
-    	│   ├── Switzerland
-    	│   │   └── Geneva
-    	│   │       └── Old Town
-    	│   │           └── Cathédrale Saint-Pierre
-    	│   └── Bolivia
-    	│       └── []
-    	│           └── []
-    	│               ├── Puerta del Sol
-    	│               └── Puerta de la Luna
-    	└── Islands
-    	    ├── Marine
-    	    │   └── Australia
-    	    └── Fresh Water
+        []
+        ├── Landlocked
+        │   ├── Switzerland
+        │   │   └── Geneva
+        │   │       └── Old Town
+        │   │           └── Cathédrale Saint-Pierre
+        │   └── Bolivia
+        │       └── []
+        │           └── []
+        │               ├── Puerta del Sol
+        │               └── Puerta de la Luna
+        └── Islands
+            ├── Marine
+            │   └── Australia
+            └── Fresh Water
     */
     fn basic() {
-        use super::{
-            builder, 
-            builder::Heading,
-            GenTree,
-            Position
-        };
+        use super::{builder, builder::Heading, GenTree, Position};
         let tree_vec = vec![
-            Heading{level: 2, title: "Landlocked".to_string()},
-            Heading{level: 3, title: "Switzerland".to_string()},
-            Heading{level: 4, title: "Geneva".to_string()},
-            Heading{level: 5, title: "Old Town".to_string()},
-            Heading{level: 6, title: "Cathédrale Saint-Pierre".to_string()},
-            Heading{level: 3, title: "Bolivia".to_string()},
-            Heading{level: 6, title: "Puerta del Sol".to_string()},
-            Heading{level: 6, title: "Puerta de la Luna".to_string()},
-            Heading{level: 2, title: "Islands".to_string()},
-            Heading{level: 3, title: "Marine".to_string()},
-            Heading{level: 4, title: "Australia".to_string()},
-            Heading{level: 3, title: "Fresh Water".to_string()}
+            Heading {
+                level: 2,
+                title: "Landlocked".to_string(),
+            },
+            Heading {
+                level: 3,
+                title: "Switzerland".to_string(),
+            },
+            Heading {
+                level: 4,
+                title: "Geneva".to_string(),
+            },
+            Heading {
+                level: 5,
+                title: "Old Town".to_string(),
+            },
+            Heading {
+                level: 6,
+                title: "Cathédrale Saint-Pierre".to_string(),
+            },
+            Heading {
+                level: 3,
+                title: "Bolivia".to_string(),
+            },
+            Heading {
+                level: 6,
+                title: "Puerta del Sol".to_string(),
+            },
+            Heading {
+                level: 6,
+                title: "Puerta de la Luna".to_string(),
+            },
+            Heading {
+                level: 2,
+                title: "Islands".to_string(),
+            },
+            Heading {
+                level: 3,
+                title: "Marine".to_string(),
+            },
+            Heading {
+                level: 4,
+                title: "Australia".to_string(),
+            },
+            Heading {
+                level: 3,
+                title: "Fresh Water".to_string(),
+            },
         ];
 
         // Constructs tree ignoring the first heading
@@ -760,12 +790,12 @@ mod tests {
 
         let mut cursor = tree.cursor_mut();
         // Tests that root is empty with is_some() and is_none()
-        assert!(!cursor.is_some()); 
-        assert!(cursor.is_none()); 
-        
+        assert!(!cursor.is_some());
+        assert!(cursor.is_none());
+
         // Tests num_children()
         assert_eq!(cursor.num_children(), 2); // Root has [Landlocked, Islands]
-        
+
         // Tests children(), jump(), and get_data()
         let kids = cursor.children();
         let mut kids_iter = kids.iter();
@@ -777,7 +807,7 @@ mod tests {
         let curr: Position<Heading> = cursor.current().clone(); // Passes the torch
         let data = cursor.get_data().unwrap();
         assert_eq!(*data.title, "Islands".to_string());
-        
+
         // Jumps down a generation to [Marine, Fresh Water]
         cursor.jump(&curr);
         let new_kids = cursor.children();
@@ -785,7 +815,7 @@ mod tests {
         cursor.jump(kids_iter.next().unwrap()); // Moves to first child
         let data = cursor.get_data().unwrap();
         assert_eq!(*data.title, "Marine".to_string());
-        
+
         // Jumps down a generation, for fun
         let new_kids = cursor.children(); // Gets cursor's chidlren
         let mut kids_iter = new_kids.iter(); // Creates an iterator
@@ -811,40 +841,81 @@ mod tests {
         assert_eq!(*data.title, "Islands".to_string());
 
         // Tests delete()
-        let mut deleted = String::new(); // Creates placeholder
-        // Iterates through the current position to find the Heading to delete,
-        // deletes the Marine Heading, and jumps 
-        for child in cursor.children() {
-            if let Some(val) = child._get_data() {
-                // Once Marine is spotted, jumps the cursor there,
-                // deletes Marine, pushing Australia up under Islands,
-                // and the delete() function jumps the cursor back up to Islands
-                if val.title == "Marine".to_string() {
-                    cursor.jump(&child);
-                    deleted = cursor.delete().unwrap().title;
-                    break
-                }
+        // Creates placeholder Heading
+        let mut deleted = Heading {
+            title: String::new(),
+            level: 0,
+        };
+        // Iterates through the child position's under the cursor
+        // looking for a matching Heading; Once found, jumps to that position,
+        // and deletes the Heading; The delete() operation automatically jumps
+        // the cursor to the parent of the deleted position
+        for position in cursor.children() {
+            if position.get_data().unwrap().title == "Marine".to_string() {
+                cursor.jump(&position);
+                deleted = cursor.delete().unwrap();
             }
         }
         // Tests that the correct Heading was deleted
-        assert_eq!(deleted, "Marine".to_string());
+        assert_eq!(deleted.level, 3);
+        assert_eq!(deleted.title, "Marine".to_string());
 
         // Tests that the cursor got bumped up to Islands
         let data = cursor.get_data().unwrap();
-        assert_eq!(*data.title, "Islands".to_string());
+        assert_eq!(data.title, "Islands".to_string());
 
         // Tests that the Islands node has the correct children
         let mut kids = Vec::new();
         assert_eq!(cursor.children().len(), 2);
         for child in cursor.children() {
-            let title = child._get_data().unwrap().title.clone();
+            let title = child.get_data().unwrap().title.clone();
             kids.push(title)
         }
-        assert_eq!(kids, vec!["Fresh Water".to_string(), "Australia".to_string()]);
+        assert_eq!(kids, ["Fresh Water".to_string(), "Australia".to_string()]);
+    }
 
+    // THIS IS WHY WE CANT HAVE NICE THINGS
+    #[test]
+    fn dangle() {
+        use super::{builder, builder::Heading, GenTree, Position};
+        let one = vec![
+            Heading {
+                level: 1,
+                title: "Landlocked".to_string(),
+            },
+            Heading {
+                level: 2,
+                title: "Switzerland".to_string(),
+            },
+        ];
+        let two = vec![
+            Heading {
+                level: 1,
+                title: "Bolivia".to_string(),
+            },
+            Heading {
+                level: 2,
+                title: "Zimbabwe".to_string(),
+            },
+        ];
+
+        // Creates a tree, Position, and CursorMut
+        let mut outer_tree: GenTree<Heading> = builder::construct(0, one);
+        let mut _pos: Position<Heading> = outer_tree.root();
+        let mut cursor = outer_tree.cursor_mut();
+
+        {
+            let inner_tree: GenTree<Heading> = builder::construct(0, two);
+            _pos = inner_tree.root();
+            cursor.jump(&_pos);
+        }
+
+        // UB: Attempts to access dangling pointer on CursorMut::get_data()
+        // and Position::get_data() :(
+        //let _oopsie = cursor.get_data();
+        //let _oopsie = _pos.get_data();
     }
 }
-
 
 pub mod builder {
 
@@ -971,19 +1042,19 @@ pub mod builder {
     printing each node's title and children with appropriate box drawing components */
     fn preorder(cursor: &mut CursorMut<Heading>, prefix: &str) {
         let children = cursor.children();
-    
+
         if !children.is_empty() {
             let mut index = children.len();
-    
+
             for child_pos in children {
                 index -= 1;
-    
+
                 // Create a CursorMut from the child Position
                 let mut child_cursor = CursorMut {
                     node: child_pos,
                     tree: cursor.tree,
                 };
-    
+
                 // Access data at child position
                 if let Some(child_data) = child_cursor.get_data() {
                     if index == 0 {
@@ -1002,12 +1073,12 @@ pub mod builder {
     Contains logic to print [] on empty trees for more appealing presentation */
     fn pretty_print(name: &str, position: &mut CursorMut<Heading>) {
         let children = &position.children();
-        if children.len() == 0 {
+        if children.is_empty() {
             println!("📄 {}\n\t[]\n", name); // Empty trees
         } else {
             println!("📄 {}\n\t│", name);
             preorder(position, "");
-            println!("");
+            println!();
         }
     }
 
@@ -1030,7 +1101,7 @@ pub mod builder {
                         println!("{}", path.display());
                         let parsed = parse(path);
                         let mut name: String = parsed.0;
-                        if name == "" {
+                        if name.is_empty() {
                             if let Some(n) = path
                                 .file_name()
                                 .expect("Error extracting file name")

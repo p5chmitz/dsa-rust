@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-/** A horribly unsafe doubly-linked list */
+/* A horribly unsafe doubly-linked list */
 ///////////////////////////////////////////
 
 /** A raw pointer to some Node */
@@ -23,21 +23,16 @@ impl<'a> Node<'a> {
         })
     }
 }
-/** The List API includes the following functions:
- - new() -> List
- - insert(&mut self, node: Box<Node>)
- - remove(&mut self, name: String)
- - iter(&self) -> Iter
- - print(&self)
- - print_rev(&self)
-*/
+
+/** The List API */
 pub struct List<'a> {
     head: Link<'a>,
     tail: Link<'a>,
     length: usize,
 }
 impl<'a> List<'a> {
-    // Creates a new list
+
+    /** Creates a new list */
     pub fn new() -> List<'a> {
         List {
             head: None,
@@ -45,6 +40,7 @@ impl<'a> List<'a> {
             length: 0,
         }
     }
+
     /** Inserts a node, sorted by its score */
     pub fn insert(&mut self, node: Box<Node<'a>>) {
         // Gets a raw, mutable pointer to the (new) unique heap object
@@ -122,8 +118,9 @@ impl<'a> List<'a> {
             }
         }
     }
+
     /** Attempts to set a node's score by first matching the name via remove(),
-     * and if successful, inserting a new node */
+    and if successful, inserting a new node */
     pub fn set_score(&mut self, name: &'a str, score: Option<i32>) -> Result<(), String> {
         println!("Attempts to set score for {}", name);
         //match self.remove(name) {
@@ -136,12 +133,17 @@ impl<'a> List<'a> {
         //}
         //
         // Or, if you're good at Rust
-        self.remove(name).and_then(|_| {
+        //self.remove(name).and_then(|_| {
+        //    let node = Node::new(name, score);
+        //    self.insert(node);
+        //    Ok(())
+        // Or, if you're actually good at Rust
+        self.remove(name).map(|_| {
             let node = Node::new(name, score);
             self.insert(node);
-            Ok(())
         })
     }
+
     /** Removes a node at a provided index */
     pub fn remove(&mut self, name: &str) -> Result<(), String> {
         let mut current = self.head;
@@ -149,7 +151,7 @@ impl<'a> List<'a> {
             while let Some(current_ptr) = current {
                 let current_node = &mut *current_ptr;
 
-                if (*current_node).name == name {
+                if (current_node).name == name {
                     // Removes head Node
                     if current_node.prev.is_none() {
                         self.head = current_node.next;
@@ -184,12 +186,14 @@ impl<'a> List<'a> {
             //println!("Node not found: {}", name);
         }
     }
+
     pub fn iter(&self) -> Iter<'a> {
         Iter {
             next: self.head.as_ref().map(|&ptr| unsafe { &*ptr }),
             prev: self.tail.as_ref().map(|&ptr| unsafe { &*ptr }),
         }
     }
+
     pub fn print_fwd(&self, rev: bool) {
         let none = "";
         if rev {
@@ -216,6 +220,7 @@ impl<'a> List<'a> {
         println!()
     }
 }
+
 pub struct Iter<'a> {
     next: Option<&'a Node<'a>>,
     prev: Option<&'a Node<'a>>,
@@ -234,14 +239,16 @@ impl<'a> Iterator for Iter<'a> {
     //    }
     //}
     fn next(&mut self) -> Option<Self::Item> {
-        self.next.take().map(|current| {
+        //self.next.take().map(|current| {
+        //    self.next = current.next.as_ref().map(|&ptr| unsafe { &*ptr });
+        //    current
+        self.next.take().inspect(|current| {
             self.next = current.next.as_ref().map(|&ptr| unsafe { &*ptr });
-            current
         })
     }
 }
 // Enables the use of rev() on Iterator
-impl<'a> DoubleEndedIterator for Iter<'a> {
+impl DoubleEndedIterator for Iter<'_> {
     //fn next_back(&mut self) -> Option<Self::Item> {
     //    if let Some(current) = self.prev {
     //        self.prev = current.prev.as_ref().map(|&ptr| unsafe { &*ptr });
@@ -251,13 +258,15 @@ impl<'a> DoubleEndedIterator for Iter<'a> {
     //    }
     //}
     fn next_back(&mut self) -> Option<Self::Item> {
-        self.prev.take().map(|current| {
+        //self.prev.take().map(|current| {
+        //    self.prev = current.prev.as_ref().map(|&ptr| unsafe { &*ptr });
+        //    current
+        self.prev.take().inspect(|current| {
             self.prev = current.prev.as_ref().map(|&ptr| unsafe { &*ptr });
-            current
         })
     }
 }
-impl<'a> Drop for List<'a> {
+impl Drop for List<'_> {
     /** List destructor */
     fn drop(&mut self) {
         unsafe {

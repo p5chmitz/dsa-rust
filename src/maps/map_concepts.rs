@@ -13,7 +13,9 @@ performing a bit shift operation and printing the result as bit and integer valu
 pub fn bit_shift(value: &str) {
     for mut v in value.bytes() {
         print!("{:08b} ({}) -> ", v, v);
-        v = (v << 5) | (v >> 3);
+        //v = (v << 5) | (v >> 3);
+        // clippy wants a funciton tho
+        v = v.rotate_right(3);
         println!("{:08b} ({v})", v);
     }
 }
@@ -30,10 +32,12 @@ pub fn hash_code(key: &str) -> u32 {
     for word in key.bytes() {
         print!("{:08b} -> ", word);
         hash = hash.wrapping_add(word as u32);
-        hash = (hash << 5) | (hash >> 27);
+        //hash = (hash << 5) | (hash >> 27);
+        // clippy wants a function
+        hash = hash.rotate_left(5);
         println!("{:032b}", hash);
     }
-    return hash;
+    hash
 }
 #[test]
 fn hash_code_test() {
@@ -48,7 +52,7 @@ use crate::maps::hash_lib;
 
 /** Linear probe calculates A[(h(k) + f(i)) mod N] where f(i) == 1
 Assumes there is always going to be a valid index */
-fn linear_probe(v: &Vec<Option<&str>>, key: &str) -> usize {
+fn linear_probe(v: &[Option<&str>], key: &str) -> usize {
     // Example instance values
     let prime = 13;
     let scale = 4;
@@ -73,7 +77,7 @@ fn linear_probe(v: &Vec<Option<&str>>, key: &str) -> usize {
 }
 /// Linear probe calculates `A[location] = A[(h(k) + f(i)) mod N]`, where i > 0 and f(i) == i^2
 /// Assumes there is always going to be a valid index
-pub fn quadratic_probe(v: &Vec<Option<&str>>, key: &str) -> usize {
+pub fn quadratic_probe(v: &[Option<&str>], key: &str) -> usize {
     // Example instance values
     let prime = 13;
     let scale = 4;

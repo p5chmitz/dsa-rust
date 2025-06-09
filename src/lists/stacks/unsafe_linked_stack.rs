@@ -1,5 +1,5 @@
 ////////////////////////////////////////
-/** A horribly unsafe stack (y tho?!) */
+/* A horribly unsafe stack (y tho?!) */
 ////////////////////////////////////////
 
 // A raw pointer to some Frame
@@ -30,11 +30,13 @@ impl Stack {
     }
     /** Returns the head Frame, if it exists */
     pub fn peek(&self) -> Option<char> {
-        if let Some(v) = self.head {
-            unsafe { Some((*v).symbol) }
-        } else {
-            None
-        }
+        //if let Some(v) = self.head {
+        //    unsafe { Some((*v).symbol) }
+        //} else {
+        //    None
+        //}
+        self.head.map(|v| unsafe { (*v).symbol })
+
     }
     /** Inserts a frame */
     pub fn push(&mut self, frame: Box<Frame>) {
@@ -48,8 +50,7 @@ impl Stack {
 
         // Resets the stack's head and increments its size
         self.head = Some(new_frame_ptr);
-        self.length += 1;
-        return;
+        self.length += 1
     }
     /** Removes and returns the head frame */
     pub fn pop(&mut self) -> Option<Frame> {
@@ -76,7 +77,7 @@ impl Stack {
             println!("{:>2}: {:<2}", counter, e.symbol);
             counter += 1;
         }
-        println!("")
+        println!()
     }
 }
 pub struct Iter<'a> {
@@ -86,9 +87,10 @@ impl<'a> Iterator for Iter<'a> {
     type Item = &'a Frame;
     /** Returns each Frame in the list until there are None */
     fn next(&mut self) -> Option<Self::Item> {
-        self.next.take().map(|current| {
+        //self.next.take().map(|current| {
+        self.next.take().inspect(|current| {
             self.next = current.next.as_ref().map(|&ptr| unsafe { &*ptr });
-            current
+            //current
         })
     }
 }
@@ -127,14 +129,12 @@ pub fn balance(s: String) -> bool {
                     panic!("Error: Unexpected closing symbol");
                 }
                 // Else check for and pop the matching opener
-                else {
-                    if let Some(check) = symbols.peek() {
-                        if (check == '[' && e == ']')
-                            || (check == '{' && e == '}')
-                            || (check == '(' && e == ')')
-                        {
-                            symbols.pop();
-                        }
+                else if let Some(check) = symbols.peek() {
+                    if (check == '[' && e == ']')
+                        || (check == '{' && e == '}')
+                        || (check == '(' && e == ')')
+                    {
+                        symbols.pop();
                     }
                 }
             }

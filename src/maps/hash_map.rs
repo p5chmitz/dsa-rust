@@ -1,5 +1,5 @@
 //////////////////
-/** Gone hashin */
+/* Gone hashin */
 //////////////////
 
 // HASHING FUNCTIONS
@@ -11,7 +11,9 @@ performing a bit shift operation and printing the result as bit and integer valu
 pub fn bit_shift(value: &str) {
     for mut v in value.bytes() {
         print!("{:08b} ({}) -> ", v, v);
-        v = (v << 5) | (v >> 3);
+        //v = (v << 5) | (v >> 3);
+        // clippy wants a function
+        v = v.rotate_right(3);
         println!("{:08b} ({v})", v);
     }
 }
@@ -28,10 +30,12 @@ pub fn hash_code(key: &str) -> u32 {
     for word in key.bytes() {
         print!("{:08b} -> ", word);
         hash = hash.wrapping_add(word as u32);
-        hash = (hash << 5) | (hash >> 27);
+        //hash = (hash << 5) | (hash >> 27);
+        // clippy wants a function
+        hash = hash.rotate_left(5);
         println!("{:032b}", hash);
     }
-    return hash;
+    hash
 }
 #[test]
 fn hash_code_test() {
@@ -51,8 +55,8 @@ use std::hash::{Hash, Hasher};
 pub fn hash<T: Hash + Debug + ?Sized>(key: &T) -> u64 {
     let mut hasher = DefaultHasher::new();
     key.hash(&mut hasher); // Hash::hash()
-    let digest = hasher.finish(); // Hasher::finish()
-    digest
+    hasher.finish() // Hasher::finish()
+    
 }
 
 /** Does the same thing as hasher_0 but feeds individual bytes which produces a
@@ -62,8 +66,7 @@ pub fn hash_1(key: &str) -> u64 {
     for e in key.bytes() {
         hasher.write_u8(e)
     }
-    let digest = hasher.finish();
-    digest
+    hasher.finish()
 }
 
 // COMPRESSION
@@ -162,12 +165,10 @@ pub fn mad_compression(key: u64, len: usize) -> u64 {
     //(((key * a) + b) % p) % len
 
     // Apply wrapping * and + to prevent overflow
-    let wrapped_value = (key.wrapping_mul(a))
+    (key.wrapping_mul(a))
         .wrapping_add(b)
         .wrapping_rem(p)
-        .wrapping_rem(len as u64);
-
-    wrapped_value
+        .wrapping_rem(len as u64)
 }
 
 // CHAINING HASH TABLE WITH DIVISION COMPRESSION
@@ -204,11 +205,7 @@ impl<K: Hash + Debug + PartialEq, V: PartialEq + Clone> HashMap<K, V> {
 
     /** Returns a Boolean indicating whether the HashTable is empty */
     pub fn is_empty(&self) -> bool {
-        if self.size == 0 {
-            true
-        } else {
-            false
-        }
+        self.size == 0
     }
 
     /** Returns the value `v` associated with key `k` */
@@ -256,6 +253,7 @@ impl<K: Hash + Debug + PartialEq, V: PartialEq + Clone> HashMap<K, V> {
     /** Internal function that grows the base vector to the next prime larger than
     double the length of the original vector, rehashes and compresses hashes
     for new distribution */
+    #[allow(clippy::manual_flatten)]
     fn grow(&mut self) {
         // Create a new base vector with_capacity and resize_with to ensure all
         // indexes exist, otherwise you could push to an index that doesn't

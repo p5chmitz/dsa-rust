@@ -4,14 +4,15 @@ use std::collections::hash_map::DefaultHasher;
 use std::fmt::Debug;
 use std::hash::{Hash, Hasher};
 
-pub trait AbstractMap<K, V>
+pub trait AbstractMap<K, Q, V>
 where
     K: Hash + Debug,
+    Q: ?Sized,
 {
     // Core functions
 
     /** Returns the value associated with the specified key, if the entry exists */
-    fn get<Q: ?Sized>(&self, key: &Q) -> Option<&V>
+    fn get(&self, key: &Q) -> Option<&V>
     where
         K: Borrow<Q>,
         Q: Hash + Debug;
@@ -23,13 +24,13 @@ where
     /** Removes the entry associated with the specified key;
     Only actually removed/cleaned up for chaining solutions,
     open addressing solutions use "defunct" markers that "leak" data */
-    fn remove<Q: ?Sized>(&mut self, key: Q) -> Option<V>
+    fn remove(&mut self, key: Q) -> Option<V>
     where
         K: Borrow<Q>,
         Q: Hash + Debug;
 
     /** Returns true if the map contains the specified key */
-    fn contains<Q: ?Sized>(&self, key: &Q) -> bool
+    fn contains(&self, key: &Q) -> bool
     where
         K: Borrow<Q>,
         Q: Hash + Debug;
@@ -63,7 +64,7 @@ pub trait HashTable {
     }
 
     fn division_compression(key: usize, len: usize) -> usize {
-        key % len as usize
+        key % len
     }
 
     fn is_prime(n: usize) -> bool {
@@ -113,6 +114,6 @@ pub trait HashTable {
         shift: usize,
         capacity: usize,
     ) -> usize {
-        (hash.wrapping_mul(scale as usize)).wrapping_add(shift) % (prime) % (capacity)
+        (hash.wrapping_mul(scale)).wrapping_add(shift) % (prime) % (capacity)
     }
 }

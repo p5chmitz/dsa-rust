@@ -16,6 +16,8 @@ pub fn recursion(n: i32) {
 /** My (iterative) version of a binary search implementation;
  * Takes a sorted array and a key and returns either Some(index) or None */
 pub fn binary_search(a: &[i32], key: i32) -> Option<i32> {
+    use std::cmp::Ordering;
+
     // Sets initial position of the search boundaries
     let mut left = 0;
     let mut right = a.len() - 1;
@@ -25,16 +27,25 @@ pub fn binary_search(a: &[i32], key: i32) -> Option<i32> {
     // returns None
     while left <= right {
         let mid = (left + right) / 2;
-        if a[mid] == key {
-            return Some(mid as i32);
-        } else if a[mid] > key {
-            right = mid - 1;
-        } else {
-            left = mid + 1;
+        match a[mid].cmp(&key) {
+            Ordering::Equal => return Some(mid as i32),
+            Ordering::Greater => right = mid - 1,
+            Ordering::Less => left = mid + 1,
         }
+        //if a[mid] == key {
+        //    return Some(mid as i32);
+        //} else if a[mid] > key {
+        //    right = mid - 1;
+        //} else {
+        //    left = mid + 1;
+        //}
+        //match key {
+        //    val if val == a[mid] => Some(mid as i32),
+        //    _ => Some(0)
+        //};
         println!("Guess index: {}", &mid);
     }
-    return None;
+    None
 }
 
 #[test]

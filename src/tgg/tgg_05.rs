@@ -15,28 +15,38 @@ pub fn factorial_0(mut n: u32) -> u32 {
         let nex = factorial_0(n - 1);
         n *= nex;
     };
-    return n;
+    n
 }
 // Translated from the book's Java example in O(n) time
 // Note that this version uses a signed integer primitive so the function
 // also includes a bounds check for values < 0.
-pub fn factorial_1(n: i32) -> i32 {
-    if n < 0 {
-        println!("Error: Cannot compute factorials for n < 0");
-        return n;
-    } else if n == 0 {
-        return 1;
-    } else {
-        return n * factorial_1(n - 1);
-    }
-}
+// Clippy wants a match statement tho
+//pub fn factorial_1(n: i32) -> i32 {
+//    //use std::cmp::Ordering;
+//    //match n.cmp(&0) {
+//    //    Ordering::Equal => return 1,
+//    //    Ordering::Less => {
+//    //        println!("Error: Cannot compute factorials for n < 0");
+//    //        return n;
+//    //    },
+//    //    _ => return n * factorial_1(n - 1),
+//    //}
+//    if n < 0 {
+//        println!("Error: Cannot compute factorials for n < 0");
+//        return n;
+//    } else if n == 0 {
+//        return 1;
+//    } else {
+//        return n * factorial_1(n - 1);
+//    }
+//}
 // After analyzing the book's example (cheating)
 /** Recursive implementation of a factorial calculator up to 12! in O(n) time */
 pub fn factorial_2(n: u32) -> u32 {
     if n <= 1 {
         return n;
     }
-    return n * factorial_2(n - 1);
+    n * factorial_2(n - 1)
 }
 // Refactoring the recursive function for an iterative one
 /** Iterative implementation of a factorial calculator up to 12! in O(n) time */
@@ -62,23 +72,31 @@ pub fn factorial_4(n: u32) -> u32 {
  * Returns the index of the target within a given array, if present.
  * Otherwise the function returns -1. */
 pub fn bin_search_0(a: &Vec<i32>, t: i32, left: i32, right: i32) -> i32 {
+    use std::cmp::Ordering;
+
     // Recursive base case
     if left > right {
-        return -1;
+        -1
     } else {
         let mid = (left + right) / 2;
-        if t == a[mid as usize] {
-            return mid as i32;
-        } else if t < a[mid as usize] {
-            return bin_search_0(&a, t, left, mid - 1);
-        } else {
-            return bin_search_0(&a, t, mid + 1, right);
+        //if t == a[mid as usize] {
+        //    return mid as i32;
+        //} else if t < a[mid as usize] {
+        //    return bin_search_0(&a, t, left, mid - 1);
+        //} else {
+        //    return bin_search_0(&a, t, mid + 1, right);
+        //}
+        // clippy wants match block
+        match t.cmp(&a[mid as usize]) {
+            Ordering::Equal => mid,
+            Ordering::Less => bin_search_0(a, t, left, mid - 1),
+            Ordering::Greater => bin_search_0(a, t, mid + 1, right),
         }
     }
 }
 pub fn bin_search_0_wrapper(a: &Vec<i32>, target: i32) -> i32 {
     let right = a.clone().len() as i32 - 1;
-    return bin_search_0(a, target, 0, right);
+    bin_search_0(a, target, 0, right)
 }
 // The recursive binary search algorithm represents tail recursion.
 // Even though Rust (likely) reimplements this automatically this is done
@@ -86,20 +104,27 @@ pub fn bin_search_0_wrapper(a: &Vec<i32>, target: i32) -> i32 {
 /** Iterative reimplementation of a recursive binary search algorithm in O(log n) time.
  * This algorithm takes a referenced vec and returns the index of the target, if it exists.
  * Otherwise it returns -1 to indicate that the target is not in the vec. */
-pub fn bin_search_1(data: &Vec<i32>, target: i32) -> i32 {
+pub fn bin_search_1(data: &[i32], target: i32) -> i32 {
     let mut low = 0;
-    let mut high = data.clone().len() - 1;
+    let mut high = data.len() - 1;
     while low <= high {
         let mid: usize = (low + high) / 2;
-        if target == data[mid] {
-            return mid as i32;
-        } else if target < data[mid] {
-            high = mid - 1
-        } else {
-            low = mid + 1
+        //if target == data[mid] {
+        //    return mid as i32;
+        //} else if target < data[mid] {
+        //    high = mid - 1
+        //} else {
+        //    low = mid + 1
+        //}
+        // clippy wants a match block tho
+        use std::cmp::Ordering;
+        match target.cmp(&data[mid]) {
+            Ordering::Equal => return mid as i32,
+            Ordering::Less => high = mid - 1,
+            Ordering::Greater => low = mid + 1,
         }
     }
-    return -1;
+    -1
 }
 #[test]
 pub fn bin_search_test() {
@@ -136,15 +161,18 @@ pub fn disk_usage(root: &Path) -> u64 {
         println!("  {:>7}B  {}", size, root.display());
         return size;
     }
-    return dir_size;
+    dir_size
 }
 
 // Sum of array of integers to n indexes in O(n) time using linear recursion
 // Iterative implementation (so easy, so intuitive)
-pub fn array_sum_0(v: Vec<i32>) -> i32 {
+pub fn array_sum_0(v: &[i32]) -> i32 {
     let mut sum = 0;
-    for e in 0..v.len() {
-        sum += v[e]
+    //for e in 0..v.len() {
+    //    sum += v[e]
+    //}
+    for (i, _) in v.iter().enumerate() {
+        sum += v[i]
     }
     sum
 }
@@ -159,25 +187,36 @@ pub fn array_sum_1(v: Vec<i32>) -> i32 {
 // Recursive implementation (is dumb)
 pub fn array_sum_2(data: &Vec<i32>, n: usize) -> i32 {
     if n == 0 {
-        return data[0];
+        data[0]
     } else {
-        return array_sum_2(&data, n - 1) + &data[n];
+        array_sum_2(data, n - 1) + data[n]
     }
 }
 // Sum of an array of integers to n in O(n) time using O(log n) space with binary recursion
 pub fn array_sum_4(data: Vec<i32>) -> i32 {
     let h = data.clone().len() - 1;
     fn array_sum_3(data: Vec<i32>, low: usize, high: usize) -> i32 {
-        if low > high {
-            0
-        } else if low == high {
-            return data[low];
-        } else {
-            let mid = (low + high) / 2;
-            return array_sum_3(data.clone(), low, mid) + array_sum_3(data, mid + 1, high);
+        //if low > high {
+        //    0
+        //} else if low == high {
+        //    return data[low];
+        //} else {
+        //    let mid = (low + high) / 2;
+        //    return array_sum_3(data.clone(), low, mid) + array_sum_3(data, mid + 1, high);
+        //}
+        // clippy wants a match block tho
+        use std::cmp::Ordering;
+        match low.cmp(&high) {
+            Ordering::Equal => data[low],
+            Ordering::Greater => 0,
+            Ordering::Less => {
+                let mid = (low + high) / 2;
+                array_sum_3(data.clone(), low, mid) + array_sum_3(data, mid + 1, high)
+            }
+
         }
     }
-    return array_sum_3(data, 0, h);
+    array_sum_3(data, 0, h)
 }
 // Represents a public interface for the unsightly recursive implementation in array_sum_3()
 //pub fn array_sum_4(data: Vec<i32>) -> i32 {
@@ -187,8 +226,8 @@ pub fn array_sum_4(data: Vec<i32>) -> i32 {
 #[test]
 pub fn array_sum_test() {
     // Iterative impelmentation test
-    let t = vec![6, 7, 8, 9];
-    assert_eq!(30, array_sum_0(t));
+    let t = [6, 7, 8, 9];
+    assert_eq!(30, array_sum_0(&t));
     // Recursive implementation test
     // Dumb, error prone implementation
     let t = vec![6, 7, 8, 9];
@@ -214,15 +253,16 @@ pub fn array_reversal_0(mut v: Vec<i32>) -> Vec<i32> {
         low += 1;
     }
     println!("Reversed: {:?}", v);
-    return v;
+    v
 }
 // Linear recursion to reverse the elements of an array in place
 // (with liberal type conversion)
 pub fn array_reversal_1(v: &mut Vec<i32>, low: i32, high: i32) -> &mut Vec<i32> {
     if low < high {
-        let temp = v[low as usize];
-        v[low as usize] = v[high as usize];
-        v[high as usize] = temp;
+        //let temp = v[low as usize];
+        //v[low as usize] = v[high as usize];
+        //v[high as usize] = temp;
+        v.swap(low as usize, high as usize);
         array_reversal_1(v, low + 1, high - 1);
     }
     v
@@ -230,9 +270,10 @@ pub fn array_reversal_1(v: &mut Vec<i32>, low: i32, high: i32) -> &mut Vec<i32> 
 // Recursive reimplementation but everything is usize
 pub fn array_reversal_2(v: &mut Vec<usize>, low: usize, high: usize) -> &mut Vec<usize> {
     if low < high {
-        let temp = v[low];
-        v[low] = v[high];
-        v[high] = temp;
+        //let temp = v[low];
+        //v[low] = v[high];
+        //v[high] = temp;
+        v.swap(low, high);
         array_reversal_2(v, low + 1, high - 1);
     }
     v
@@ -267,14 +308,14 @@ pub fn powers_1(x: u32, mut product: u32, n: u32) -> u32 {
         product *= x;
         return powers_1(x, product, n - 1);
     }
-    return product;
+    product
 }
 // Transling the book's Java example that runs in O(n) time
 pub fn powers_2(x: u32, n: u32) -> u32 {
     if n > 1 {
         return x * powers_2(x, n - 1);
     }
-    return x;
+    x
 }
 // Reimplementation using binary recursion that computes powers in O(log n) time
 // Relies on truncation in integer division; if n is even the result is x^n, and

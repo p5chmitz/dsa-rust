@@ -53,13 +53,12 @@ impl<T> Stack<T> {
         let mut new_head = ptr;
         new_head.next = self.head.take();
         self.head = Some(new_head);
-        self.length += 1;
-        return;
+        self.length += 1
     }
 
     /// Returns a reference to the data at the head of the stack, if Some
     pub fn peek(&self) -> Option<&T> {
-        if let Some(s) = &(*self).head {
+        if let Some(s) = &self.head {
             Some(&s.data)
         } else {
             None
@@ -100,16 +99,14 @@ pub mod safe_stack {
                         panic!("Error: Unexpected closing symbol");
                     }
                     // Else check for and pop the matching opener
-                    else {
-                        if let Some(check) = symbols.peek() {
-                            // matches the next element with the top of the stack
-                            // and pops it if theres a match
-                            if (*check == '[' && element == ']')
-                                || (*check == '{' && element == '}')
-                                || (*check == '(' && element == ')')
-                            {
-                                symbols.pop();
-                            }
+                    else if let Some(check) = symbols.peek() {
+                        // matches the next element with the top of the stack
+                        // and pops it if theres a match
+                        if (*check == '[' && element == ']')
+                            || (*check == '{' && element == '}')
+                            || (*check == '(' && element == ')')
+                        {
+                            symbols.pop();
                         }
                     }
                 }

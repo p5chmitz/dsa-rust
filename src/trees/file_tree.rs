@@ -25,5 +25,5 @@ pub fn disk_usage(root: &Path) -> u64 {
         println!("  {:>7}B  {}", size, root.display());
         return size;
     }
-    return dir_size;
+    dir_size
 }
