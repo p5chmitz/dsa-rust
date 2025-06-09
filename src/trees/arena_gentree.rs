@@ -1,10 +1,12 @@
+#![allow(dead_code)]
+
 pub struct Position {
     ptr: usize,
 }
 impl Clone for Position {
     fn clone(&self) -> Self {
         Position {
-            ptr: self.ptr.clone(),
+            ptr: self.ptr,
         }
     }
 }
@@ -23,6 +25,11 @@ struct Node<T> {
 pub struct GenTree<T> {
     arena: Vec<Node<T>>,
     size: usize,
+}
+impl<T> Default for GenTree<T> {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 impl<T> GenTree<T> {
     /** Creates a new GenTree */
@@ -56,7 +63,7 @@ impl<T> GenTree<T> {
     // All of the tings implemented on CursorMut
     ////////////////////////////////////////////
 
-    /** Returns true if the cursor's parent is None */
+    // /** Returns true if the cursor's parent is None */
     //pub fn is_root(&self) -> bool {
     //    self.arena[0].parent.is_none()
     //}
@@ -78,7 +85,7 @@ impl<T> GenTree<T> {
     //pub fn get_data(&self) -> Option<Ref<'_, T>> {}
     pub fn get_data(&self, position: usize) -> Option<&T> {
         if let Some(val) = &self.arena[position].data {
-            Some(&val)
+            Some(val)
         } else {
             None
         }
@@ -94,7 +101,7 @@ impl<T> GenTree<T> {
             parent: if index == 0 { None } else { Some(position) },
             children: Vec::new(),
             data: Some(data),
-            index,
+            index: 0
         });
 
         // Push the new Node's index to the parent's list of children
@@ -120,7 +127,7 @@ impl<T> GenTree<T> {
         let data = self.arena[position.ptr].data.take();
 
         // Gets the deleted Node's parent's position
-        let parent_pos = self.arena[position.ptr].parent.clone();
+        let parent_pos = self.arena[position.ptr].parent;
 
         // Move all of the deleted Node's children up a generation, if theres a parent
         if let Some(parent_node) = parent_pos {
@@ -280,7 +287,7 @@ mod tests {
         // For some reason this statement causes Miri to take much longer than necessary!
         // As a result, this cfg prevents it from running with Miri
         //#[cfg(not(miri))]
-        eprintln!("{:#?}", tree);
+        //eprintln!("{:#?}", tree);
         let mut cursor = tree.root();
 
         // Tests that the root contains data
@@ -332,8 +339,8 @@ mod tests {
         assert!(tree.ascend(cursor).is_err()); // Cannot ascend() past root
 
         // Descends to Islands to test delete()
-        let kids = tree.children(cursor); // Gets cursor's chidlren
-        let mut kids_iter = kids.iter(); // Creates an iterator
+        //let kids = tree.children(cursor); // Gets cursor's chidlren
+        //let mut kids_iter = kids.iter(); // Creates an iterator
                                          //cursor.jump(kids_iter.next().unwrap()); // Moves to Landlocked
                                          //cursor.jump(kids_iter.next().unwrap()); // Moves to Islands
                                          //{
