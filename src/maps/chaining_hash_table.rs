@@ -19,6 +19,11 @@ pub struct ChainingHashTable<K, V> {
     data: Vec<Option<Vec<Entry<K, V>>>>,
     size: usize,
 }
+impl<K: Hash + Debug + PartialEq, V: PartialEq + Clone> Default for ChainingHashTable<K, V> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 impl<K: Hash + Debug + PartialEq, V: PartialEq + Clone> ChainingHashTable<K, V> {
     /** Creates a new HashTable */
     pub fn new() -> ChainingHashTable<K, V> {
@@ -35,17 +40,13 @@ impl<K: Hash + Debug + PartialEq, V: PartialEq + Clone> ChainingHashTable<K, V> 
 
     /** Returns a Boolean indicating whether the HashTable is empty */
     pub fn is_empty(&self) -> bool {
-        if self.size == 0 {
-            true
-        } else {
-            false
-        }
+        self.size == 0 
     }
 
     /** Returns the value `v` associated with key `k` */
     pub fn get(&self, key: K) -> Option<&V> {
         let hashed = hash_lib::hash(&key);
-        let location: usize = hash_lib::division_compression(hashed, self.data.len()) as usize;
+        let location: usize = hash_lib::division_compression(hashed, self.data.len());
         if let Some(bucket) = &self.data[location] {
             for e in bucket {
                 let chain_key_hash = hash_lib::hash(&e.key);
@@ -73,7 +74,7 @@ impl<K: Hash + Debug + PartialEq, V: PartialEq + Clone> ChainingHashTable<K, V> 
 
         // Finds the correct insertion location
         let location: usize =
-            hash_lib::division_compression(hash_lib::hash(&key), self.data.len()) as usize;
+            hash_lib::division_compression(hash_lib::hash(&key), self.data.len());
 
         // Creates a new Entry
         let entry = Entry::new(key, value);
@@ -100,16 +101,14 @@ impl<K: Hash + Debug + PartialEq, V: PartialEq + Clone> ChainingHashTable<K, V> 
         new_base.resize_with(new_capacity, || None);
 
         // Move entries from self.data into new_base
-        for bucket in self.data.drain(..) {
-            if let Some(mut chain) = bucket {
-                // Vec::drain transfers ownership with no need to clone
-                for entry in chain.drain(..) {
-                    let rehash =
-                        hash_lib::division_compression(hash_lib::hash(&entry.key), new_capacity);
-                    match &mut new_base[rehash as usize] {
-                        Some(existing) => existing.push(entry),
-                        None => new_base[rehash as usize] = Some(vec![entry]),
-                    }
+        for mut bucket in self.data.drain(..).flatten() {
+            // Vec::drain transfers ownership with no need to clone
+            for entry in bucket.drain(..) {
+                let rehash =
+                    hash_lib::division_compression(hash_lib::hash(&entry.key), new_capacity);
+                match &mut new_base[rehash] {
+                    Some(existing) => existing.push(entry),
+                    None => new_base[rehash] = Some(vec![entry]),
                 }
             }
         }
@@ -121,7 +120,7 @@ impl<K: Hash + Debug + PartialEq, V: PartialEq + Clone> ChainingHashTable<K, V> 
     /**  Removes the entry `(k, v)` associated with key `k` */
     pub fn remove(&mut self, key: K) {
         let hashed = hash_lib::hash(&key);
-        let location: usize = hash_lib::division_compression(hashed, self.data.len()) as usize;
+        let location: usize = hash_lib::division_compression(hashed, self.data.len());
         if let Some(bucket) = &mut self.data[location] {
             bucket.retain(|e| e.key != key);
             if bucket.is_empty() {
@@ -163,7 +162,7 @@ impl<K: Hash + Debug + PartialEq, V: PartialEq + Clone> ChainingHashTable<K, V> 
     the presence of a key with a null/None value */
     pub fn contains(&self, key: K) -> bool {
         let hashed = hash_lib::hash(&key);
-        let location: usize = hash_lib::division_compression(hashed, self.data.len()) as usize;
+        let location: usize = hash_lib::division_compression(hashed, self.data.len());
         if let Some(bucket) = &self.data[location] {
             for e in bucket.iter() {
                 if e.key == key {
