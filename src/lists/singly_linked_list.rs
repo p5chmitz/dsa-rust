@@ -137,6 +137,11 @@ pub struct LinkedList<T> {
     head: Option<Box<Node<T>>>,
     length: usize,
 }
+impl<T: Clone> Default for LinkedList<T> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 impl<T: Clone> LinkedList<T> {
     /// Creates a new list
     pub fn new() -> LinkedList<T> {
