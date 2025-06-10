@@ -193,30 +193,57 @@ None: 2.203727308s
 For: 1.947812524s
 
 */
-#[allow(clippy::type_complexity)]
-fn _empirical_test() {
+//#[allow(clippy::type_complexity)]
+//fn _empirical_test() {
+//    use std::time::{Duration, Instant};
+//
+//    let allocations = [100, 10_000, 100_000_000];
+//    let runs = 100;
+//    // TODO: Clippy isn't happy about this
+//    let methods: Vec<(&str, fn(usize) -> CircularQueue<char>)> = vec![(
+//        "For",
+//        CircularQueue::new as fn(usize) -> CircularQueue<char>,
+//    )];
+//
+//    for &n in &allocations {
+//        println!("\n{}x", n);
+//
+//        for &(method_name, method) in &methods {
+//            let mut avg = Duration::new(0, 0);
+//            for _ in 0..runs {
+//                let start_time = Instant::now();
+//                let _t: CircularQueue<char> = method(n);
+//                let duration = start_time.elapsed();
+//                avg += duration;
+//            }
+//            println!("{}: {:?}", method_name, avg / runs);
+//        }
+//    }
+//}
+// To avoid Clippy warning suppression:
+pub fn empirical_test() {
     use std::time::{Duration, Instant};
 
     let allocations = [100, 10_000, 100_000_000];
     let runs = 100;
-    // TODO: Clippy isn't happy about this
-    let methods: Vec<(&str, fn(usize) -> CircularQueue<char>)> = vec![(
-        "For",
-        CircularQueue::new as fn(usize) -> CircularQueue<char>,
-    )];
+
+    // Use closures to avoid function pointer type
+    let methods = [("For", |n| CircularQueue::<char>::new(n))];
 
     for &n in &allocations {
         println!("\n{}x", n);
 
-        for &(method_name, method) in &methods {
-            let mut avg = Duration::new(0, 0);
-            for _ in 0..runs {
-                let start_time = Instant::now();
-                let _t: CircularQueue<char> = method(n);
-                let duration = start_time.elapsed();
-                avg += duration;
-            }
-            println!("{}: {:?}", method_name, avg / runs);
+        for &(name, constructor) in &methods {
+            let total_duration = (0..runs)
+                .map(|_| {
+                    let start = Instant::now();
+                    let _queue = constructor(n);
+                    start.elapsed()
+                })
+                .sum::<Duration>();
+
+            let avg = total_duration / runs;
+            println!("{}: {:?}", name, avg);
         }
     }
 }

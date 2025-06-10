@@ -160,6 +160,11 @@ fn main() {
             // Generic List ADT
             //println!("\nGeneric List ADT:");
             //lists::dynamic_array_list::visualize();
+
+            // vec_circ_queue empirical test
+            // NOTE: May take quite some time!!! (1-2mins on a Ryzen 5 7640U)
+            //println!("\x1b[1;34mEmpirical test for vec_circ_queue:\x1b[0m");
+            //lists::queues::vec_circ_queue::empirical_test();
         }
 
         // TREES
