@@ -1,14 +1,34 @@
-/*! An unsafe, owned, doubly-linked list
+/*! A doubly-linked list implementation over raw pointers
 
 # About
-Even in 2025 you still hear stories about coding interviews that involve linked lists, yet the world has mostly moved on from them, opting instead to use contiguous storage structures that take advantage of cache locality. So why is there so much lore around what is otherwise a simple structure? This module attempts to illustrate the delicate (and slightly painful) operations necessary to safely manage multiple sets of raw, `unsafe` pointers in Rust.
+Even in 2025 you still hear stories about coding interviews that involve linked lists despite the fact that the world has mostly moved on from them. Most programs opt instead to use contiguous storage structures that take advantage of cache locality and minimal allocations despite some hard coping with amortized `O(1)` "add" operations. So why do linked lists remain? What gives these simple structures such rich lore? The reality is that its probably just a simple litmus test to ensure you were awake in your CS courses. Linked lists are traditionally introduced early on in CS programs because they provide a good introduction to the foundational concepts required to build more complex structures, such as managing references (and/or pointers) correctly (and soundly in languages that use pointers).
 
-Your friends all told you this was a bad idea, but I made the sacrifice to find out why so you don't have to.
+Rust takes a notoriously different approach to pointers and memory safety from languages like C/C++ which can make otherwise simple pointer-based structures unusually difficult for Rust novices. Singly-linked lists are easy to build with safe, beginner-friendly Rust code because each node only requires a single reference in an adjacent node. Using the [`Box`](Box) type to create pointers in singly-linked lists neatly follows Rust's "one mutable reference or many immutable references" borrowing rules. It's in doubly-linked lists where you have to start keeping multiple mutable references to an object where things get necessarily tricky. 
 
-#### Design
-The module consists of two primary structs; the [`LinkedList`] and [`CursorMut`].
+One option for safe code is to use smart pointers like [`RefCell`](std::cell::RefCell) that provide [interior mutability](https://doc.rust-lang.org/reference/interior-mutability.html). You may even choose to wrap it in a [`Rc`](std::rc::Rc) type for multiple ownership, but this approach gets unwieldy fast and requires runtime checks which may incur undesirable performance hits<sup>[1]</sup>. 
+                                                                                
+Pragmatically speaking, the humble linked list only really excels in situations where you need _lots_ of list alterations (think splices and splits), so you want a structure that is as performant as possible. The natural conclusion is that you must dip into the shadows of `unsafe` Rust with either [`*mut T`](https://doc.rust-lang.org/std/primitive.pointer.html) or [`NonNull`](std::ptr::NonNull) pointers to get those _blazingly fast_... linked lists.
 
-# The `LinkedList` Struct
+This module attempts to illustrate the delicate operations necessary to safely manage multiple sets of raw, `unsafe` pointers in Rust. Your friends all told you this was a bad idea, but I made the sacrifice to find out why so you don't have to.
+
+<sup>[1]</sup> See the chapter on `Rc<RefCell<T>>` in the famous [Learning Rust With Entirely Too Many Linked Lists](https://rust-unofficial.github.io/too-many-lists/fourth.html) book for details.
+
+# Design
+The module consists of two primary structs; the [`LinkedList`] and [`CursorMut`]. The list works by storing links to (private) `Node` structs. The `LinkedList` struct itself contains links to the list's head, its tail, and its length, which is simply the number of nodes the list contains. You do not operate on nodes directly, but rather through list and cursor operations. Each node contains data, a link to the previous node, and a link to the  next node. An empty list contains no nodes, but as soon as you add a single node, that node becomes the list's head _and_ tail node. Because each node contains links to previous and next nodes, a list with a single node effectively contains two "ghost" (sentinel) nodes in front of and behind the single list node.
+
+```text
+    None <- A -> None
+```
+
+The "ghost" nodes dont have any data or any links, which provides a natural stopping point for attempts to move beyond the head or tail of the list. You can remove or replace the head and tail nodes, but you cannot define what lays beyond until you get there. 👻 Ultimately, this is a poetic and long-winded way to say that the list does not wrap or provide circular buffering.
+
+The list takes on a more familiar shape once you start adding nodes.
+
+```text
+    None <- A <-> B <-> C -> None
+```
+
+#### The `LinkedList` Struct
 The [`LinkedList`] struct contains methods for basic list operations. These operations allow you to use
 the list as an unsorted linked list, a stack, or a queue with insert and remove operations
 on both the front and tail of the list in `O(1)` time.
@@ -34,29 +54,109 @@ on both the front and tail of the list in `O(1)` time.
    }
 ```
 
-# The `CursorMut` Struct
-The module's second major struct is [`CursorMut`]. This mutable cursor type that adds positional list functionality.
-Out of the box the cursor contains functions for splitting and splicing lists.
+#### The `CursorMut` Struct
+Rob Pike has famously claimed to have never written a program with cursors. Unfortunately for me, I'm not as clever as Rob Pike, so this module's second major struct is [`CursorMut`]. This mutable cursor type adds positional functionality to the list and contains functions for splitting and splicing lists, and range operations.
+
+```rust
+    use dsa_rust::lists::doubly_linked_list::LinkedList;
+
+    // First list
+    let mut first = LinkedList::new();
+    first.push_tail("a");
+    first.push_tail("b");
+    first.push_tail("c");
+    assert_eq!(first.peek_head(), Some(&"a"));
+    assert_eq!(first.peek_tail(), Some(&"c"));
+
+    // Second list
+    let mut second = LinkedList::new();
+    second.push_tail("1");
+    second.push_tail("2");
+    second.push_tail("3");
+    second.push_tail("4");
+    assert_eq!(second.peek_head(), Some(&"1"));
+    assert_eq!(second.peek_tail(), Some(&"4"));
+
+    // Spliced
+    // Postcondition: [1, 2, a, b, c, 3, 4]
+    let mut cur = second.cursor_mut();
+    cur.move_next(); // 0
+    cur.move_next(); // 1
+    cur.splice_after(first);
+    assert_eq!(second.peek_head(), Some(&"1"));
+    assert_eq!(second.peek_tail(), Some(&"4"));
+
+    eprint!("All together now:  [");
+    for (i, e) in second.iter().enumerate() {
+        eprint!("{e}");
+        if i == second.len() - 1 {
+            eprintln!("]");
+        } else {
+            eprint!(", ");
+        }
+    }
+
+    // Range split
+    // Postcondition: [1, 2] [a, b, c, 3, 4]
+    let mut cur = second.cursor_mut();
+    cur.move_next(); // 0
+    cur.move_next(); // 1
+    let mut new_list = cur.split_after(); // splits after "2"
+    assert_eq!(new_list.peek_head(), Some(&"a"));
+    assert_eq!(new_list.peek_tail(), Some(&"4"));
+
+    // Postcondition: [1, 2] [a, b, c] [3, 4]
+    let mut new_cur = new_list.cursor_mut();
+    new_cur.move_next(); // 0
+    new_cur.move_next(); // 1
+    new_cur.move_next(); // 2
+    let new_back = new_cur.split_after(); // splits again after "c"
+
+    // Reassembles the two numbered lists
+    // Postcondition: [1, 2, 3, 4] [a, b, c]
+    cur.splice_after(new_back); 
+    drop(cur);
+
+    // Makes sure everything is as it seems
+    assert_eq!(new_list.peek_head(), Some(&"a"));
+    assert_eq!(new_list.peek_tail(), Some(&"c"));
+    assert_eq!(second.peek_head(), Some(&"1"));
+    assert_eq!(second.peek_tail(), Some(&"4"));
+
+    // Prints everything, in case you're a visual learner like me
+    eprint!("Split numbers:  [");
+    for (i, e) in second.iter().enumerate() {
+        eprint!("{e}");
+        if i == second.len() - 1 {
+            eprintln!("]");
+        } else {
+            eprint!(", ");
+        }
+    }
+    eprint!("Split letters:  [");
+    for (i, e) in new_list.iter().enumerate() {
+        eprint!("{e}");
+        if i == new_list.len() - 1 {
+            eprintln!("]");
+        } else {
+            eprint!(", ");
+        }
+    }
+    //panic!("Uncomment to show me them beautiful lists");
+```
 */
 
-// NonNull is essentially a wrapper for *mut
-// You can deref a NonNull with as_ptr()
-//use std::ptr::NonNull;
-// Recommended when using raw pointers over generic types
-//use std::marker::PhantomData;
-
-/// Creates a raw pointer to some Node
+// Creates a raw pointer to some Node
 type Link<T> = Option<*mut Node<T>>;
-//type Link<T> = Option<NonNull<Node<T>>>;
 
 #[derive(Debug)]
-pub struct Node<T> {
+struct Node<T> {
     data: T,
     prev: Link<T>,
     next: Link<T>,
 }
 /// # About
-/// See the [module-level documentation](`crate::lists::doubly_linked_list`) for more details.
+/// All operations run in `O(1)` time unless otherwise noted. See the [module-level documentation](`crate::lists::doubly_linked_list`) for more information.
 #[derive(Debug)]
 pub struct LinkedList<T> {
     head: Link<T>,
@@ -78,11 +178,12 @@ impl<T> LinkedList<T> {
         }
     }
 
-    /** Inserts a node at the head of the list in O(1) time;
-    Use like a push(k) or add(k) operation for a stack */
+    /// Inserts a node at the head of the list.
+    ///
+    /// Can be used like a `push(k)` or `add(k)` operation for a stack.
     pub fn push_head(&mut self, element: T) {
-        unsafe {
-            // Creates a NonNull<Node<T>> wrapper from a *mut pointer to the (new) unique heap object
+            // Creates a NonNull<Node<T>> wrapper from a *mut pointer to the 
+            // (new) unique heap object
             let new_node_wrapper: *mut Node<T> = Box::into_raw(Box::new(Node {
                 data: element,
                 prev: None,
@@ -91,11 +192,12 @@ impl<T> LinkedList<T> {
 
             // If there are already elements in the list...
             if let Some(node) = self.head {
-                //println!("Inserts new head");
                 // Sets the new node's next pointer to the current head
-                (*new_node_wrapper).next = self.head;
+                // SAFETY: New node was just allocated and is not aliased
+                unsafe { (*new_node_wrapper).next = self.head };
                 // Sets the original head's prev pointer to the new node
-                (*node).prev = Some(new_node_wrapper); // Unsafe
+                // SAFETY: self.head guaranteed to be non-null
+                unsafe { (*node).prev = Some(new_node_wrapper) };
             }
             // Inserts into empty list
             else {
@@ -107,22 +209,22 @@ impl<T> LinkedList<T> {
             // Resets the list's head and increments the list size
             self.head = Some(new_node_wrapper);
             self.len += 1;
-        }
     }
 
-    /** Returns a reference to the data at the list's head, if any */
+    /// Returns a reference to the data at the list's head, 
+    /// if the list has a head node.
     pub fn peek_head(&self) -> Option<&T> {
-        unsafe {
-            if let Some(node_ptr) = self.head {
-                let node = &(*node_ptr).data;
-                Some(node)
-            } else {
-                None
-            }
+        if let Some(node_ptr) = self.head {
+            // SAFETY: Creates an immutable reference to a guaranteed non-null 
+            // allocation with properly initialized data field
+            let node = unsafe { &(*node_ptr).data };
+            Some(node)
+        } else {
+            None
         }
     }
 
-    /** Returns a reference to the data at the list's tail, if any */
+    /// Returns a reference to the data at the list's tail, if the list has a tail.
     pub fn peek_tail(&self) -> Option<&T> {
         unsafe {
             if let Some(node_ptr) = self.tail {
@@ -134,63 +236,57 @@ impl<T> LinkedList<T> {
         }
     }
 
-    /** Returns an owned value of the head Node's data in O(1) time;
-    Use like a pop() or a dequeue() operation for a stack or queue */
+    /// Returns an owned value of the head Node's data.
+    /// Use like a `pop()` or a `dequeue()` operation for a stack or queue.
     pub fn pop_head(&mut self) -> Option<T> {
         if let Some(head_ptr) = self.head {
-            let boxed_node: Box<Node<T>> = unsafe { Box::from_raw(head_ptr) }; // takes ownership
-            self.head = boxed_node.next; // Resets the LinkedList head to the original head's next pointer
+            // Takes ownership
+            // SAFETY: 
+            let boxed_node: Box<Node<T>> = unsafe { Box::from_raw(head_ptr) };
+            // Resets the list head to the original head's next pointer
+            self.head = boxed_node.next;
             self.len -= 1;
-            return Some(boxed_node.data); // Returns the old head's data
+            // Returns the old head's data
+            return Some(boxed_node.data); 
         }
         None
     }
 
-    /** Inserts a node at the tail of the list in O(1) time;
-    Use like an enqueue(k) operation for a queue */
+    /// Inserts a node at the tail of the list. Use like an `enqueue()` 
+    /// operation for a queue.
     pub fn push_tail(&mut self, element: T) {
-        unsafe {
-            // Creates a NonNull<Node<T>> wrapper from a *mut pointer to the (new) unique heap object
-            let new_node_wrapper: *mut Node<T> = Box::into_raw(Box::new(Node {
-                data: element,
-                prev: None,
-                next: None,
-            })); // Unsafe
+        // Creates a raw *mut pointer to the (new) unique heap object
+        let new_node_wrapper: *mut Node<T> = Box::into_raw(Box::new(Node {
+            data: element,
+            prev: None,
+            next: None,
+        }));
 
-            // If there are already elements in the list...
-            if let Some(node) = self.tail {
-                //println!("Inserts new tail");
-                // Sets the new node's prev pointer to the current tail
-                (*new_node_wrapper).prev = self.tail;
-                // Sets the original tail's next pointer to the new node
-                (*node).next = Some(new_node_wrapper); // Unsafe
-            }
-            // Inserts into empty list
-            else {
-                //println!("Inserts at tail");
-                // Sets the list's head and tail pointers to the new node
-                self.head = Some(new_node_wrapper);
-            }
-
-            // Resets the list's tail and increments the list size
-            self.tail = Some(new_node_wrapper);
-            self.len += 1;
+        // Case 1: If there are already elements in the list...
+        if let Some(node) = self.tail {
+            // Sets the new node's prev pointer to the current tail
+            // SAFETY:
+            unsafe { (*new_node_wrapper).prev  = self.tail };
+            // Sets the original tail's next pointer to the new node
+            // SAFETY:
+            unsafe { (*node).next = Some(new_node_wrapper) };
         }
+        // Case 2: Inserts into empty list
+        else {
+            // Sets the list's head and tail pointers to the new node
+            self.head = Some(new_node_wrapper);
+        }
+
+        // Resets the list's tail and increments the list size
+        self.tail = Some(new_node_wrapper);
+        self.len += 1;
     }
 
-    /** Removes and returns the tail node of the list in O(1) time */
-    //pub fn pop_tail(&mut self) -> Option<T> {
-    //    if let Some(tail_ptr) = self.tail {
-    //        let boxed_node: Box<Node<T>> = unsafe { Box::from_raw(tail_ptr) }; // takes ownership
-    //        self.tail = boxed_node.prev; // Resets the LinkedList tail to the original tail's next pointer
-    //        self.len -= 1;
-    //        return Some(boxed_node.data); // Returns the old tails's data
-    //    }
-    //    None
-    //}
+    /// Removes and returns the tail node of the list.
     pub fn pop_tail(&mut self) -> Option<T> {
         if let Some(tail_ptr) = self.tail {
-            let boxed_node: Box<Node<T>> = unsafe { Box::from_raw(tail_ptr) }; // Takes ownership
+            // Takes ownership
+            let boxed_node: Box<Node<T>> = unsafe { Box::from_raw(tail_ptr) };
 
             // Update list tail pointer
             self.tail = boxed_node.prev;
@@ -209,17 +305,17 @@ impl<T> LinkedList<T> {
         None
     }
 
-    /** Returns the length of the list */
+    /// Returns the length of the list.
     pub fn len(&self) -> usize {
         self.len
     }
 
-    /** Returns a Boolean indicating whether the list is empty */
+    /// Returns a Boolean indicating whether the list is empty.
     pub fn is_empty(&self) -> bool {
         self.head.is_none()
     }
 
-    /** Clears all elements from the list in O(n) time */
+    /// Clears all elements from the list in `O(n)` time.
     pub fn clear(&mut self) {
         //while self.iter().next.is_some() {
         //    self.pop_head();
@@ -227,20 +323,21 @@ impl<T> LinkedList<T> {
         while self.pop_head().is_some() {}
     }
 
-    /** Returns an iterator of references to data in the list's nodes as list.iter() */
+    /// Returns an iterator of references to data in the list's nodes as 
+    /// `list.iter()`.
     pub fn iter(&self) -> Iter<T> {
         Iter {
-            next: self.head,                   // Correct: Uses the same type as LinkedList<T>
-            _marker: std::marker::PhantomData, // Needed for lifetime tracking
+            next: self.head,   
+             // Needed for lifetime tracking
+            _marker: std::marker::PhantomData,
         }
     }
 
     //iter_rev() -> Iter
-
     //pub fn contains(&T) -> bool {}
     //pub fn find(&T) -> Link<T> {}
 
-    /** Acts like a constructor for a cursor */
+    /// Acts like a constructor for a cursor.
     pub fn cursor_mut(&mut self) -> CursorMut<T> {
         CursorMut {
             cursor: None,
@@ -251,14 +348,17 @@ impl<T> LinkedList<T> {
 }
 
 pub struct Iter<'a, T> {
-    next: Link<T>,                            // aka Option<*mut Node<T>>
-    _marker: std::marker::PhantomData<&'a T>, // Ensures correct lifetime tracking
+    // Link, aka Option<*mut Node<T>>
+    next: Link<T>,
+    // Ensures correct lifetime tracking
+    _marker: std::marker::PhantomData<&'a T>,
 }
 impl<'a, T> Iterator for Iter<'a, T> {
     type Item = &'a T;
 
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(current) = self.next {
+            // SAFETY: 
             unsafe {
                 self.next = (*current).next; // Move to next node
                 Some(&(*current).data) // Return reference to data
@@ -270,9 +370,12 @@ impl<'a, T> Iterator for Iter<'a, T> {
 }
 
 impl<T> Drop for LinkedList<T> {
-    /** LinkedList destructor */
+    // LinkedList destructor works by popping each node into a Box
+    // which contains its own Drop semantics and cleans everything
+    // up nicely for us.
     fn drop(&mut self) {
         while self.pop_head().is_some() {}
+        // Manual implementation
         //unsafe {
         //    let mut current_node_ptr = self.head;
         //    while let Some(ptr) = current_node_ptr {
@@ -290,97 +393,114 @@ impl<T> Drop for LinkedList<T> {
     }
 }
 
-/** Its the great cursor, Charlie Brown! */
+/// # About
+/// Its the great cursor, Charlie Brown!
+/// See the [module-level documentation](`crate::lists::doubly_linked_list`) for more information.
 pub struct CursorMut<'a, T> {
     cursor: Link<T>,
     list: &'a mut LinkedList<T>,
     index: Option<usize>,
 }
 impl<T> CursorMut<'_, T> {
-    /// Returns `true` if the cursor contains a Node pointer
-    ///
-    /// **Note**: The pointer may not be valid or safe to dereference
+
+    /// Returns `true` if the cursor contains a Node pointer.
     pub fn is_some(&self) -> bool {
         self.cursor.is_some()
     }
 
-    /// Returns `true` if the cursor does not contain a Node pointer
+    /// Returns `true` if the cursor does not contain a Node pointer.
     pub fn is_none(&self) -> bool {
         self.cursor.is_none()
     }
 
     /// Returns the "index" to the current list node in a zero-indexed sequence
-    pub fn index(&self) -> Option<usize> {
+    fn _index(&self) -> Option<usize> {
         self.index
     }
 
-    /** Moves the cursor "forward" (from head to tail) starting from a ghost node */
+    /// Advances the cursor to the next node in the list, moving from head to tail.
+    /// If the cursor is at the ghost (pre-head) position and the list is 
+    /// non-empty, it moves to the head. The function is a no-op if the cursor 
+    /// is already at the tail or the list is empty.
     pub fn move_next(&mut self) {
+        // Case 1) The current position is real, follow the next pointer
         if let Some(cur) = self.cursor {
-            unsafe {
-                // We're on a real element, go to its next
-                self.cursor = (*cur).next;
-                if self.cursor.is_some() {
-                    *self.index.as_mut().unwrap() += 1;
-                } else {
-                    // We just walked to the ghost, no more index
-                    self.index = None;
-                }
+            // SAFETY: The next pointer is to either Some or None, 
+            // but always valid.
+            self.cursor = unsafe { (*cur).next };
+            // If Some, go there
+            if self.cursor.is_some() {
+                *self.index.as_mut().unwrap() += 1;
+            // If None, do nothing
+            } else {
+                self.index = None;
+                // no-op
             }
+        // Case 2) The current position isn't real and the list is not
+        // empty, the next logical position must be the list's head
         } else if !self.list.is_empty() {
-            // The cursor is at the ghost, and theres nowhere else
-            // to go but to the head
             self.cursor = self.list.head;
             self.index = Some(0)
+        // Case 3) The cursor is at the ghost, but the list is empty, 
+        // so theres nowhere to go and nothing to do
         } else {
-            // The cursor is at the ghost, but theres nowhere to go
+            // no-op
         }
     }
 
-    /** Moves "backward" (from tail to head) */
+    /// Advances the cursor to the previous node in the list, 
+    /// moving from head to tail. The function is a no-op if the cursor 
+    /// is already at the head or the list is empty.
     pub fn move_prev(&mut self) {
+        // Case 1) The current position is real, follow the prev pointer
         if let Some(cur) = self.cursor {
-            unsafe {
-                // We're on a real element, go to its previous (front)
-                self.cursor = (*cur).prev;
-                if self.cursor.is_some() {
-                    *self.index.as_mut().unwrap() -= 1;
-                } else {
-                    // We just walked to the ghost, no more index
-                    self.index = None;
-                }
+            // SAFETY: The prev pointer is to either Some or None,
+            // but always valid.
+            self.cursor = unsafe { (*cur).prev };
+            // If Some, go there
+            if self.cursor.is_some() {
+                *self.index.as_mut().unwrap() -= 1;
+            // If None, do nothing
+            } else {
+                self.index = None;
+                // no-op
             }
+        // Case 2) The current position isn't real and the list is not empty,
+        // the next logical position must be the list's tail
         } else if !self.list.is_empty() {
-            // The cursor is at the ghost, and theres nowhere else
-            // to go but to the tail
             self.cursor = self.list.tail;
             self.index = Some(self.list.len - 1)
+        // Case 3) The cursor is at the ghost, but theres nowhere to go
         } else {
-            // The cursor is at the ghost, but theres nowhere to go
+            // no-op
         }
     }
 
-    /** Returns a mutable reference to the data at the current position;
-    It is necessary to return a _mutable_ reference to retain the elision
-    rule checks */
+    /// Returns a mutable reference to the data at the current position.
+    /// It is necessary to return a _mutable_ reference to retain the elision
+    /// rule checks.
     pub fn current(&mut self) -> Option<&mut T> {
-        unsafe { self.cursor.map(|node| &mut (*node).data) }
+        self.cursor.map(|node| {
+            // SAFETY: node only gets dereferenced if cursor is Some,
+            // so its assumed to point to a valid and properly initialized Node
+            unsafe { &mut (*node).data }
+        })
     }
 
-    /** Returns a mutable reference to the data at the next node's position;
-    It is necessary to return a _mutable_ reference to retain the elision
-    rule checks */
+    /// Returns a mutable reference to the data at the next node's position.
+    /// It's necessary to return a _mutable_ reference to retain the elision
+    /// rule checks.
     pub fn peek_next(&mut self) -> Option<&mut T> {
-        unsafe {
-            let next = if let Some(cur) = self.cursor {
-                (*cur).next
-            } else {
-                // Ghost case, try to use the list's head pointer
-                self.list.head
-            };
-            // Yield the data if the next node exists
-            next.map(|node| &mut (*node).data)
-        }
+        let next = if let Some(cur) = self.cursor {
+            // SAFETY:
+            unsafe { (*cur).next }
+        } else {
+            // Ghost case, try to use the list's head pointer
+            self.list.head
+        };
+        // Yield the data if the next node exists
+        // SAFETY:
+        unsafe { next.map(|node| &mut (*node).data) }
     }
 
     /** Returns a mutable reference to the data at the previous node's position;
@@ -411,7 +531,7 @@ impl<T> CursorMut<'_, T> {
     /// 
     /// Precondition:
     /// 
-    /// ```test
+    /// ```text
     ///     self.head -> A <-> C <- self.tail
     ///                        ^
     ///                     cursor
@@ -419,7 +539,7 @@ impl<T> CursorMut<'_, T> {
     /// 
     /// Postcondition:
     /// 
-    /// ```test
+    /// ```text
     ///     self.head -> A <-> B <-> C <- self.tail
     ///                              ^
     ///                           cursor
@@ -958,7 +1078,7 @@ mod list_tests {
         cur.move_next(); // 0
         cur.move_next(); // 1
         cur.move_next(); // 2
-        assert_eq!(cur.index(), Some(2));
+        //assert_eq!(cur.index(), Some(2));
         assert_eq!(cur.current(), Some(&mut "a"));
 
         // Tests the pop operations
@@ -1054,33 +1174,33 @@ mod list_tests {
         cur.move_next(); // 0
         cur.move_next(); // 1
         cur.move_next(); // 2
-        assert_eq!(cur.index(), Some(2));
+        assert_eq!(cur._index(), Some(2));
         assert_eq!(cur.current(), Some(&mut "a"));
 
         cur.move_prev(); // 1
         cur.move_prev(); // 0
-        assert_eq!(cur.index(), Some(0));
+        assert_eq!(cur._index(), Some(0));
         assert_eq!(cur.current(), Some(&mut "c"));
 
         // Moves beyond the list.head to the ghost node
         cur.move_prev(); // Boo! 👻
-        assert_eq!(cur.index(), None);
+        assert_eq!(cur._index(), None);
         assert_eq!(cur.current(), None);
 
         // Wraps back around!
         cur.move_prev(); // 2
-        assert_eq!(cur.index(), Some(2));
+        assert_eq!(cur._index(), Some(2));
         assert_eq!(cur.current(), Some(&mut "a"));
 
         // Next is the ghost, but peek doesn't change the current position
         let peek = cur.peek_next();
         assert_eq!(peek, None);
-        assert_eq!(cur.index(), Some(2));
+        assert_eq!(cur._index(), Some(2));
         assert_eq!(cur.current(), Some(&mut "a"));
 
         let peek = cur.peek_prev();
         assert_eq!(peek, Some(&mut "b"));
-        assert_eq!(cur.index(), Some(2));
+        assert_eq!(cur._index(), Some(2));
         assert_eq!(cur.current(), Some(&mut "a"));
     }
 
