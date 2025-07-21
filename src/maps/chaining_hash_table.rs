@@ -1,4 +1,14 @@
-/*! Safe chaining hash table with division compression */
+/*! Safe chaining hash table with division compression 
+
+# About
+
+# Design
+
+# Example
+
+```rust
+```
+*/
 
 use crate::maps::hash_lib;
 use std::fmt::Debug;
@@ -40,7 +50,7 @@ impl<K: Hash + Debug + PartialEq, V: PartialEq + Clone> ChainingHashTable<K, V> 
 
     /** Returns a Boolean indicating whether the HashTable is empty */
     pub fn is_empty(&self) -> bool {
-        self.size == 0 
+        self.size == 0
     }
 
     /** Returns the value `v` associated with key `k` */
@@ -73,8 +83,7 @@ impl<K: Hash + Debug + PartialEq, V: PartialEq + Clone> ChainingHashTable<K, V> 
         }
 
         // Finds the correct insertion location
-        let location: usize =
-            hash_lib::division_compression(hash_lib::hash(&key), self.data.len());
+        let location: usize = hash_lib::division_compression(hash_lib::hash(&key), self.data.len());
 
         // Creates a new Entry
         let entry = Entry::new(key, value);
