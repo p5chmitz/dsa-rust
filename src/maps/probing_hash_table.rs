@@ -1,5 +1,11 @@
 /*! Safe open addressing hash table with MAD compression and quadratic probing
 
+# About
+
+# Design
+
+# Example
+
 ```rust
 
     use dsa_rust::maps::probing_hash_table::ProbingHashTable;
@@ -120,7 +126,7 @@ impl<K, V> Default for ProbingHashTable<K, V>
 where
     K: Clone + Debug + Hash + PartialEq,
     V: Clone + PartialEq + std::fmt::Debug,
- {
+{
     fn default() -> Self {
         Self::new()
     }
@@ -307,9 +313,7 @@ where
 
     // Compresses the hash using the MAD algorithm
     fn compress(&self, hash: usize) -> usize {
-        (hash.wrapping_mul(self.scale)).wrapping_add(self.shift)
-            % (self.prime)
-            % (self.data.len())
+        (hash.wrapping_mul(self.scale)).wrapping_add(self.shift) % (self.prime) % (self.data.len())
     }
 
     /** Internal function that grows the base (storage) vector to the next prime
@@ -343,9 +347,8 @@ where
         for e in &mut self.data {
             if let Some(v) = e.take() {
                 // MAD compression algorithm
-                let mut location: usize = ((hash_lib::hash(&v.key))
-                    .wrapping_mul(self.scale))
-                .wrapping_add(self.shift)
+                let mut location: usize = ((hash_lib::hash(&v.key)).wrapping_mul(self.scale))
+                    .wrapping_add(self.shift)
                     % (self.prime)
                     % (new_capacity);
 
