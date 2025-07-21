@@ -73,11 +73,7 @@ impl Podium {
     /** Prints the Podium list; If you supply true the function prints the entire list,
     if you supply false the function just prints the top three spots */
     pub fn print_full(&self, print_all: bool) {
-        let length: usize = if print_all {
-            self.data.len()
-        } else {
-            3
-        };
+        let length: usize = if print_all { self.data.len() } else { 3 };
         for (i, entry) in self.data.iter().enumerate() {
             // Only prints the first three podium entries
             if i >= length {

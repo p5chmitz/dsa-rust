@@ -1,4 +1,5 @@
 pub mod arena_gentree;
+pub mod bin_heap;
 pub mod file_tree;
 pub mod linked_bst;
 pub mod safe_linked_gentree;

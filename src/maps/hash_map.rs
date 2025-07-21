@@ -56,7 +56,6 @@ pub fn hash<T: Hash + Debug + ?Sized>(key: &T) -> u64 {
     let mut hasher = DefaultHasher::new();
     key.hash(&mut hasher); // Hash::hash()
     hasher.finish() // Hasher::finish()
-    
 }
 
 /** Does the same thing as hasher_0 but feeds individual bytes which produces a

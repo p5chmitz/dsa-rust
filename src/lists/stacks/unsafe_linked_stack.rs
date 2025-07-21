@@ -36,7 +36,6 @@ impl Stack {
         //    None
         //}
         self.head.map(|v| unsafe { (*v).symbol })
-
     }
     /** Inserts a frame */
     pub fn push(&mut self, frame: Box<Frame>) {

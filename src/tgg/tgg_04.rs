@@ -96,7 +96,7 @@ pub fn prefix_average_1(avg: &[f32]) -> Vec<f32> {
     }
     rtn
 }
- #[test]
+#[test]
 fn prefix_avg() {
     let v = &[1.0, 2.0, 3.0, 4.0];
     let avg = &[1.0, 1.5, 2.0, 2.5];

@@ -1,6 +1,7 @@
-/////////////////////////////////////////
-/* A sorted, Vec-based priority queue */
-/////////////////////////////////////////
+//! A sorted, Vec-based priority queue
+//!
+//! #About
+//!
 
 // A sorted, array-based priority queue
 mod sorted_list {
@@ -95,7 +96,6 @@ mod sorted_list {
                 Ordering::Equal => 0,
                 Ordering::Greater => 1,
             }
-
         }
 
         fn check_key(_key: &K) -> bool {

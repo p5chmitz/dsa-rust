@@ -213,7 +213,6 @@ pub fn array_sum_4(data: Vec<i32>) -> i32 {
                 let mid = (low + high) / 2;
                 array_sum_3(data.clone(), low, mid) + array_sum_3(data, mid + 1, high)
             }
-
         }
     }
     array_sum_3(data, 0, h)
