@@ -8,7 +8,7 @@ mod trees;
 
 use crate::lists::queues::{singly_linked_queue, vec_circ_queue, vec_queue, vecdeque_queue};
 use crate::lists::stacks::{safe_linked_stack, unsafe_linked_stack, vector_stack};
-use crate::lists::{array_list, doubly_linked_list, doubly_linked_list_2, vector_list};
+use crate::lists::{array_list, doubly_linked_list, vector_list};
 use crate::trees::unsafe_linked_general_tree;
 
 use crate::tgg::{tgg_04, tgg_05};
@@ -128,12 +128,12 @@ fn main() {
         Some("lists") => {
             // Static array list implementation
             println!("\x1b[1;34mStatic array list:\x1b[0m");
-            //array_list::example();
+            lists::array_list::example();
             println!();
 
             // Vector list implementation
             println!("\x1b[1;34mVector list:\x1b[0m");
-            vector_list::example();
+            //lists::vector_list::example();
             println!();
 
             // Dynamic array list implementation
@@ -144,27 +144,24 @@ fn main() {
 
             // Singly linked list
             println!("\x1b[1;34mSingly-linked list:\x1b[0m");
-            //lists::singly_linked_list::example();
+            lists::singly_linked_list::example();
+            println!();
 
             // Doubly linked list
             println!("\x1b[1;34mDoubly-linked list:\x1b[0m");
-            doubly_linked_list_2::example();
+            lists::doubly_linked_list::example();
             println!();
-            //println!("\nDoubly-linked list (with NonNull):");
-            //doubly_linked_list_2::example();
 
             // Queues
             //println!("\nQueues:");
-            //lists::queues::vec_circ_queue::empirical_test();
+            println!("\x1b[1;34mCircular queue:\x1b[0m");
+            lists::queues::vec_circ_queue::example();
+            println!();
 
-            // Generic List ADT
-            //println!("\nGeneric List ADT:");
-            //lists::dynamic_array_list::visualize();
-
-            // vec_circ_queue empirical test
             // NOTE: May take quite some time!!! (1-2mins on a Ryzen 5 7640U)
             //println!("\x1b[1;34mEmpirical test for vec_circ_queue:\x1b[0m");
             //lists::queues::vec_circ_queue::empirical_test();
+
         }
 
         // TREES
@@ -262,6 +259,20 @@ fn main() {
             println!("\x1b[1;34mGeneric linked list:\x1b[0m");
             lists::doubly_linked_list::example();
             println!();
+        }
+
+        // MISC
+        ///////
+        Some("misc") => {
+
+            println!("\x1b[1;34mHeap sort:\x1b[0m");
+            //trees::safe_linked_gentree_builder::navigator(1, path);
+            println!();
+
+            println!("\x1b[1;34mPriority queue:\x1b[0m");
+            //trees::safe_linked_gentree_builder::navigator(1, path);
+            println!();
+            
         }
 
         // Everything else
