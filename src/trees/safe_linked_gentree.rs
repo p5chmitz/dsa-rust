@@ -1,7 +1,7 @@
 /*! A safe, linked, n-ary tree implementation
 
 # About
-Following classical DSA curricula, this implementation relies on pointers for the structure's composition and navigation. This module explores the use of reference counting and interior mutability through the [Rc] and [RefCell] types (respectively) for a safe, positional implementation that avoids dangling pointers and reference cycles for proper [Drop] semantics. 
+Following classical DSA curricula, this implementation relies on pointers for the structure's composition and navigation. This module explores the use of reference counting and interior mutability through the [Rc] and [RefCell] types (respectively) for a safe, positional implementation that avoids dangling pointers and reference cycles for proper [Drop] semantics.
 
 Reference counting provides a synchronous, deterministic form of memory management that acts like a garbage collector and prevents dangling pointers by automatically managing lifetimes. The structure is able to keep objects alive until their reference count hits zero, potentially even after they've gone out of their original scope. To avoid memory leaks caused by reference cycles, tree nodes use strong `Rc` pointers for children and [Weak] pointers for parent links. This ensures the tree can be correctly dropped recursively from the top down.
 
@@ -416,11 +416,14 @@ impl<'a, T> CursorMut<'a, T> {
             .unwrap_or_default()
     }
 
-    /** Deletes the node at the current cursor position in `O(c)` time where `c`
-    is the number of children for the given node; Adds all children to the parent
-    (if `Some`), and returns the deleted `Node`; If the cursor is at the tree's
-    root, this just deletes the `Node`'s data, leaving `None`; Moves the cursor
-    to the parent, if `Some` */
+    /// Warning: Broken! Does not handle root deletion properly.
+    ///
+    /// Removes the node at the current cursor position and returns its data,
+    /// if Some. Operation executes in `O(c)` time where `c` is the number of
+    /// children for the given node; Adds all children to the parent
+    /// (if `Some`), and returns the deleted `Node`; If the cursor is at the tree's
+    /// root, this just deletes the `Node`'s data, leaving `None`; Moves the cursor
+    /// to the parent, if `Some` */
     pub fn delete(&mut self) -> Option<T> {
         let self_pos = self.node.clone();
         let self_rc = self_pos.ptr.clone()?;
@@ -624,7 +627,6 @@ mod tests {
         assert_eq!(cursor.depth(), 2);
         assert_eq!(cursor.height(), 2);
 
-
         // Jumps down a generation, for fun
         let new_kids = cursor.children(); // Gets cursor's chidlren
         let mut kids_iter = new_kids.iter(); // Creates an iterator
@@ -726,7 +728,6 @@ mod tests {
             let inner_tree: GenTree<Heading> = construct(0, two.clone());
             _pos = inner_tree.root();
             cursor.jump(&_pos);
-
         }
 
         // No more UB!!
@@ -742,13 +743,10 @@ mod tests {
             let inner_tree: GenTree<Heading> = construct(0, two);
             pos = inner_tree.root();
             cursor.jump(&pos);
-
-
         }
 
         // No more UB!!
         cursor.get_data();
         _pos.get_data();
-
     }
 }
