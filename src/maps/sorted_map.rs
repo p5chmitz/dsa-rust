@@ -87,7 +87,7 @@ impl<K, V> Default for SortedMap<K, V>
 where
     K: Debug + PartialEq + Ord,
     V: PartialEq,
- {
+{
     fn default() -> Self {
         Self::new()
     }
@@ -97,7 +97,6 @@ where
     K: Debug + PartialEq + Ord,
     V: PartialEq,
 {
-
     /** Every structure needs a constructor */
     pub fn new() -> SortedMap<K, V> {
         SortedMap {
@@ -116,8 +115,9 @@ where
         self.size
     }
 
-    /** Convenience wrapper for busy recursive signature method that does all the real work;
-    NOTE: Calling function must handle case of entering first entry into empty list */
+    /// Convenience wrapper for busy recursive signature method that does all the real work.
+    /// Uses a binary search algorithm to find indexes in `O(log(n))` time.
+    /// NOTE: Calling function must handle case of entering first entry into empty list
     fn find_index(&self, target: &K) -> usize {
         let right: usize = self.data.len() - 1;
         Self::find_index_rec(&self.data, target, 0, right)
@@ -145,6 +145,7 @@ where
         }
     }
 
+    ///  Gets the value associated with the provided key in `O(log(n))` time, if it exists in the map.
     pub fn get(&self, key: K) -> Option<&V> {
         let j: usize = self.find_index(&key);
         if self.data[j].is_some() && self.data[j].as_ref().unwrap().key == key {
@@ -153,7 +154,7 @@ where
         None
     }
 
-    /** Inserts an entry into the map while maintaining sorted order by key */
+    /// Inserts an entry into the map while maintaining sorted order by key in `O(log(n))` time.
     pub fn put(&mut self, key: K, value: V) -> Option<Entry<K, V>> {
         // First entry
         if self.data.is_empty() {
@@ -180,6 +181,8 @@ where
         }
     }
 
+    /// Removes and returns the entry associated with a given key in _O(log(n))_ time.
+    /// TODO: The take() operation leaves None, which prevents _O(n)_ shifts, but isn't very clean.
     pub fn remove(&mut self, key: K) -> Option<Entry<K, V>> {
         let j: usize = self.find_index(&key);
         if self.data[j].is_some() && self.data[j].as_ref().unwrap().key == key {
