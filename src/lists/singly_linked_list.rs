@@ -4,7 +4,7 @@
 The primary goal with this implementation is to offer a simple linked list with no `unsafe` code. The list does this with `Box`-type pointers to owned, heap-allocated objects.
 
 #### Design
-This exceedingly simple, safe, singly-linked list consists of one primary [LinkedList] struct that contains stack and queue operations.
+This exceedingly simple, safe, singly-linked list consists of one primary [LinkedList] struct that provides stack and queue operations.
 
 The list operates on a single, private `Node` struct that contains only a `data` field (generic over `T`) and a `next` pointer as `Option<Box<Node<T>>>`. Due to the owned nature of the pointers and safe-code-only design restriction, _it is not possible to sort this list in place_.
 
@@ -284,4 +284,8 @@ fn singly_linked_list_sort() {
 
     assert_eq!(list.peek().unwrap(), &163); // head of unsorted list
     assert_eq!(sorted_list.peek().unwrap(), &3); // head of sorted list
+}
+
+pub fn example() {
+    //TODO
 }
