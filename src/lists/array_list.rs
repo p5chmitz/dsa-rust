@@ -150,7 +150,7 @@ impl Podium {
 
     /** Constructs a new Podium entry */
     fn entry(name: String, score: Option<usize>) -> Entry {
-        let score = score.unwrap_or_default(); 
+        let score = score.unwrap_or_default();
         Entry {
             name,
             score: Some(score),
@@ -227,4 +227,8 @@ pub fn array_list_test() {
         format!("Index out of bounds: {} is out of the range 0..=9", oob),
         podium.remove(oob).unwrap_err()
     );
+}
+
+pub fn example() {
+    //TODO
 }
