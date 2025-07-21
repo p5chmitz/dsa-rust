@@ -104,7 +104,8 @@ impl<'a> List<'a> {
             //    .as_ref()
             //    .map_or(false, |entry| entry.name == name) // Finds matching name or returns false
             self.data[i]
-                .as_ref().is_some_and(|entry| entry.name == name) // Finds matching name or returns false
+                .as_ref()
+                .is_some_and(|entry| entry.name == name) // Finds matching name or returns false
         }) {
             // If a match is found shift entries to the left to fill the gap
             for j in i..self.size {
@@ -141,11 +142,7 @@ impl<'a> List<'a> {
     /** Prints the Podium list; If you supply true the function prints the entire list,
     if you supply false the function just prints the top three spots */
     pub fn print_full(&self, print_all: bool) {
-        let length = if print_all {
-            self.data.len()
-        } else {
-            3
-        };
+        let length = if print_all { self.data.len() } else { 3 };
         for (i, entry) in self.data.iter().enumerate() {
             // Only prints the first three podium entries
             if i >= length {
