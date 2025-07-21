@@ -3,6 +3,9 @@
 # About
 This simple, safe, Vec-based circular queue is mostly just a fun experiment, but can be used for situations in which you need a fixed-sized buffer with FIFO logic. The circular queue can be used to provide a solution to the [Josephus problem](https://en.wikipedia.org/wiki/Josephus_problem).
 
+# Design
+Rust takes its types (and its type safety) seriously. Array's must have a known size at compile time, forcing any array-backed structure's size hard coded. `[T; N]`
+
 This example illustrates the circular queue logic. The example provides a queue postcondition for enqueue/dequeue operations to illustrate the state of the list after each operation. Remember that `enqueue()` adds to the _back_, and `dequeue()` removes from the _front_ of the queue.
 ```rust
 
@@ -18,9 +21,9 @@ This example illustrates the circular queue logic. The example provides a queue 
    //  <-> a <-> b <-> c <->
    //      ^           ^
    //   front        back
-   q.enqueue('a').unwrap();
-   q.enqueue('b').unwrap();
-   q.enqueue('c').unwrap();
+   q.enqueue('a');
+   q.enqueue('b');
+   q.enqueue('c');
 
    // The queue is at capacity, and the queue hasn't shifted
    assert_eq!(q.peek().unwrap(), &'a');
@@ -29,7 +32,7 @@ This example illustrates the circular queue logic. The example provides a queue 
    assert_eq!(q.back(), 2);
 
    // The queue cannot take additional elements
-   assert!(q.enqueue('d').is_err());
+   assert!(q.enqueue_with_check('d').is_err());
 
    // Remove the head node and check changes:
    // Postcondition:
@@ -93,6 +96,10 @@ This example illustrates the circular queue logic. The example provides a queue 
 ```
 */
 
+/// # About
+/// All functions operate in `O(1)` time unless otherwise noted.
+///
+/// See the [module-level documentation](`crate::lists::queues::vec_circ_queue`) for more information.
 pub struct CircularQueue<T> {
     data: Vec<Option<T>>, // Store elements as `Option` to allow reusing slots
     front: usize,
@@ -100,9 +107,9 @@ pub struct CircularQueue<T> {
     size: usize,
     capacity: usize,
 }
-/** NOTE: All functions operation in O(1) time */
 impl<T> CircularQueue<T> {
-    /** Creates a queue that contains (at least) `capacity` number of elements */
+    /// Creates a queue that contains (at least) `capacity` number of elements,
+    /// and initializes all positions to `None` in `O(n)` time.
     pub fn new(capacity: usize) -> CircularQueue<T> {
         let mut data = Vec::with_capacity(capacity);
         // Fills the vec with None
@@ -121,33 +128,53 @@ impl<T> CircularQueue<T> {
         }
     }
 
-    /** Returns the index representing the "front" of the queue */
+    /// Returns the index representing the front of the queue.
     pub fn front(&self) -> usize {
         self.front
     }
 
-    /** Returns the index representing the "back" of the queue */
+    /// Returns the index representing the back of the queue.
     pub fn back(&self) -> usize {
         self.back
     }
 
-    /** Returns the number of elements in the queue */
+    /// Returns the number of elements in the queue.
     pub fn size(&self) -> usize {
         self.size
     }
 
-    /** Returns the capacity of the queue */
+    /// Returns the total capacity of the queue.
+    ///
+    /// This is the maximum number of elements the queue can hold,
+    /// determined at instantiation. It does not reflect the number of
+    /// currently available slots. To find the number of free slots,
+    /// subtract the current size from the capacity.
     pub fn capacity(&self) -> usize {
         self.capacity
     }
 
-    /** Returns a reference to the front of the queue */
+    /// Returns a reference to the front of the queue.
     pub fn peek(&self) -> Option<&T> {
         self.data[self.front].as_ref()
     }
 
-    /** Adds an element to the back of the queue in O(1) time */
-    pub fn enqueue(&mut self, item: T) -> Result<(), &str> {
+    /// Adds an element to the back of the queue. This operation has no size or
+    /// capacity checks for efficiency and performance, may overwrite existing
+    /// slots. Use the `enqueue_with_check()` operation to prevent data overwrites
+    /// at the slight performance cost of an additional runtime check.
+    pub fn enqueue(&mut self, item: T) {
+        // Calculates the next available positionm, writes to it, and increases size
+        self.back = (self.front + self.size) % self.capacity;
+        self.data[self.back] = Some(item);
+        self.size += 1;
+    }
+
+    /// Adds an element to the back of the queue. This operation checks that
+    /// there is sufficient queue capacity to add an element and errors if you
+    /// attempt to add more elements than the queue's capacity. The
+    /// `enqueue()` operation is slightly more performanant but does not
+    /// automatically prevent overwrites.
+    pub fn enqueue_with_check(&mut self, item: T) -> Result<(), &str> {
         // Ensures that the queue cannot take more elements than its capacity
         if self.size == self.capacity {
             return Err("Queue is full");
@@ -159,7 +186,7 @@ impl<T> CircularQueue<T> {
         Ok(())
     }
 
-    /** Removes and returns the front element of the queue in O(1) time */
+    /// Removes and returns the front element of the queue, if an element exists.
     pub fn dequeue(&mut self) -> Option<T> {
         // Checks if queue is empty and returns proper None
         if self.size == 0 {
@@ -246,4 +273,8 @@ pub fn empirical_test() {
             println!("{}: {:?}", name, avg);
         }
     }
+}
+
+pub fn example() {
+    //TODO
 }
