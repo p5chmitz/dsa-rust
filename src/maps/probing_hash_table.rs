@@ -1,8 +1,11 @@
-/*! Safe open addressing hash table with MAD compression and quadratic probing
+/*! Safe, open addressing hash table with MAD compression and quadratic probing
 
 # About
 
 # Design
+The put operation overwrites any value for identical keys.
+
+Currently the entry must be [Clone] 
 
 # Example
 
@@ -181,7 +184,9 @@ where
         }
     }
 
-    /// Takes a key and returns a Boolean indicating whether its in the map
+    /// Takes a key and returns a Boolean indicating whether its in 
+    /// the map. The temporal complexity is _O(1)_ expected, as the map
+    /// maintains a [laod factor](https://www.headyimage.com/cs/dsa/maps/#collision-handling-schemes) of <=.5. 
     pub fn contains(&self, key: K) -> bool {
         let hash = Self::hash(&key);
         let mut location = self.compress(hash);
@@ -215,24 +220,25 @@ where
         }
     }
 
-    /** Adds entry `(k, v)`, overwriting any value `v` associated with an
-    existing key `k`, returns old value. If a new addition increases the map's
-    load factor above the designated threshhold of 0.5 the map resizes */
+    /// Adds entry `(k, v)`, overwriting any value `v` associated with an
+    /// existing key `k`, returns old value. If a new addition increases 
+    /// the map's load factor above the designated threshhold of 0.5 
+    /// the map resizes.
     pub fn put(&mut self, key: K, value: V) -> Option<Entry<K, V>> {
         // Checks if the addition will bring the load factor above threshold
         if ((self.size) as f64 + 1.0) / self.data.len() as f64 >= 0.5 {
             self.grow();
         }
 
-        // Hashes and compresses key to get the initial bucket
+        // Hashes and compresses key to produce a unique value
         let hash = Self::hash(&key);
-        let bucket = self.compress(hash);
+        let compressed_key = self.compress(hash);
 
         // Finds the correct insertion location using probing
         // Searches the map for key:
         // if >= 0, overwrite the location and return the old Entry,
         // if < 0, insert new entry at that location, return None
-        let location = self.find_index(bucket, &key);
+        let location = self.find_index(compressed_key, &key);
 
         // Creates a new Entry and inserts it
         let entry = Entry::new(key, value);
@@ -252,9 +258,9 @@ where
         old_entry
     }
 
-    /** Removes an entry from the map by key; The secret, though, is that
-    the data "leaks", meaning its no longer available but it doesn't
-    technically get removed either ¯\_(ツ)_/¯ */
+    /// Removes an entry from the map by key; The secret, though, is that
+    /// the data "leaks", meaning its no longer available but it doesn't
+    /// technically get removed either. ¯\_(ツ)_/¯
     pub fn remove(&mut self, key: K) -> Option<Entry<K, V>> {
         let hash = Self::hash(&key);
         let bucket = self.compress(hash);
@@ -316,16 +322,16 @@ where
         (hash.wrapping_mul(self.scale)).wrapping_add(self.shift) % (self.prime) % (self.data.len())
     }
 
-    /** Internal function that grows the base (storage) vector to the next prime
-    larger than double the length of the original vector, rehashes and compresses
-    hashes for new distribution */
+    /// Grows the base (storage) vector to the next prime larger than 
+    /// double the length of the original vector, rehashes and compresses 
+    /// hashes for new distribution.
     fn grow(&mut self) {
-        // Create a new base vector with_capacity() and resize_with() to ensure
-        // all indexes exist, otherwise you could push to an index that doesn't
-        // exist causing a panic
-        // NOTE: Vec::resize_with() may result in "hidden allocation" despite description
-        // that indicates that the function resizes "in place", initializes
-        // new_base with all None values
+        // Create a new base vector with_capacity() and resize_with() 
+        // to ensure all indexes exist, otherwise you could push to an 
+        // index that doesn't exist causing a panic.
+        // NOTE: Vec::resize_with() may result in "hidden allocation" 
+        // despite description that indicates that the function resizes 
+        // "in place", initializes new_base with all None values.
         let new_capacity = hash_lib::next_prime(self.data.len() * 2);
         let mut new_base: Vec<Option<Entry<K, V>>> = Vec::with_capacity(new_capacity);
         new_base.resize_with(new_capacity, || None);
@@ -384,7 +390,8 @@ fn probing_hash_table_test() {
     assert_eq!(map.ctrl.len(), 5);
 
     let fetch = map.get("Peter").unwrap();
-    assert_eq!(*fetch, 40 as u8);
+    //assert_eq!(*fetch, 40 as u8);
+    assert_eq!(*fetch, 40);
 
     // Illustrates that the map grows correctly
     map.put("Brain", 39); // Grows the map
@@ -398,14 +405,16 @@ fn probing_hash_table_test() {
     assert_eq!(map.data.len(), 23);
 
     // Illustrates that contains() works as intended
-    assert_eq!(map.contains("Dingus"), true);
+    assert!(map.contains("Dingus"));
 
     // Illustrates that put() returns old values and
     // overwrites existing values upon collision...
     let collision = map.put("Peter", 41).unwrap();
-    assert_eq!(collision.value, 40 as u8);
+    //assert_eq!(collision.value, 40 as u8);
+    assert_eq!(collision.value, 40);
     let new_val = map.get("Peter").unwrap();
-    assert_eq!(*new_val, 41 as u8);
+    //assert_eq!(*new_val, 41 as u8);
+    assert_eq!(*new_val, 41);
     // Without increasing the list size
     assert_eq!(map.size, 6);
 
