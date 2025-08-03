@@ -154,12 +154,12 @@ where
         None
     }
 
-    /// Inserts an entry into the map while maintaining sorted order by key in `O(log(n))` time.
+    /// Inserts an entry into the map while maintaining sorted order by key in _O(n)_ (_n/2_ average) time.
     pub fn put(&mut self, key: K, value: V) -> Option<Entry<K, V>> {
         // First entry
         if self.data.is_empty() {
             let new: Entry<K, V> = Entry::new(key, value);
-            self.data.insert(0, Some(new));
+            self.data.insert(0, Some(new)); // Results in O(n) resize operations
             self.size += 1;
             return None;
         }
@@ -175,7 +175,7 @@ where
             Some(old)
         } else {
             let new: Entry<K, V> = Entry::new(key, value);
-            self.data.insert(index, Some(new));
+            self.data.insert(index, Some(new)); // Results in O(n) resize operations
             self.size += 1;
             None
         }

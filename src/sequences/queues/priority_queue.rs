@@ -1,7 +1,9 @@
-//! A sorted, Vec-based priority queue
-//!
-//! #About
-//!
+/*! A sorted, Vec-based priority queue
+
+# About
+Naive implementation of a priority queue that requires _O(n)_ operations for most things.
+
+*/
 
 // A sorted, array-based priority queue
 mod sorted_list {

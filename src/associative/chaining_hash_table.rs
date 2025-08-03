@@ -1,8 +1,26 @@
 /*! Safe chaining hash table with division compression 
 
 # About
+This structure represents a relatively simple way to implement a hash map. The structure relies on chaining for collision handling which allocates separate `Vec` structures for each node.
 
 # Design
+The structure's primary backing structure [ChainingHashTable<K, V>](crate::map::ChainingHashTable::ChainingHashTable) contains a `data` field of type `Vec<Option<Vec<Entry<K, V>>>>`. The nested `Vec`s provide hash collision provention, and in practice might look something like the following:
+```
++----------------------------------------+
+| Index | Contents                       |
+|-------+--------------------------------|
+|   1   | None                           |
+|   2   | None                           |
+|   3   | Some((Peter, 45), (Bryan, 67)) |
+|   5   | None                           |
+|   6   | None                           |
+|   7   | Some((Cork, 103))              |
+|   8   | Some((Bobson, 12))             |
+|   9   | None                           |
+|   10  | Some((Flank, 23))              |
+|   11  | None                           |
++----------------------------------------+
+```
 
 # Example
 
