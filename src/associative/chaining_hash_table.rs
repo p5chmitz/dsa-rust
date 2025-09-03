@@ -1,11 +1,12 @@
-/*! Safe chaining hash table with division compression 
+/*! Safe chaining hash table with division compression
 
 # About
 This structure represents a relatively simple way to implement a hash map. The structure relies on chaining for collision handling which allocates separate `Vec` structures for each node.
 
 # Design
-The structure's primary backing structure [ChainingHashTable<K, V>](crate::map::ChainingHashTable::ChainingHashTable) contains a `data` field of type `Vec<Option<Vec<Entry<K, V>>>>`. The nested `Vec`s provide hash collision provention, and in practice might look something like the following:
-```
+The structure's primary backing structure [ChainingHashTable<K, V>](crate::associative::ChainingHashTable::ChainingHashTable) contains a `data` field of type `Vec<Option<Vec<Entry<K, V>>>>`. The nested `Vec`s provide hash collision provention, and in practice might look something like the following:
+
+```text
 +----------------------------------------+
 | Index | Contents                       |
 |-------+--------------------------------|
@@ -28,7 +29,7 @@ The structure's primary backing structure [ChainingHashTable<K, V>](crate::map::
 ```
 */
 
-use crate::maps::hash_lib;
+use crate::associative::hash_lib;
 use std::fmt::Debug;
 use std::hash::Hash;
 
@@ -286,7 +287,7 @@ fn chaining_hash_table_test() {
     assert_eq!(map.size, 1);
     assert_eq!(map.data.len(), 2);
     let fetch = map.get("Peter").unwrap();
-    assert_eq!(*fetch, 41 as u8);
+    assert_eq!(*fetch, 41_u8);
 
     // Illustrates that the map grows correctly
     map.put("Brain", 39); // Grows the map
@@ -300,9 +301,9 @@ fn chaining_hash_table_test() {
     assert_eq!(map.data.len(), 23);
 
     // Illustrates that remove() works as intended
-    assert_eq!(map.contains("Dingus"), true);
+    assert!(map.contains("Dingus"));
     map.remove("Dingus");
-    assert_eq!(map.contains("Dingus"), false);
+    assert!(!map.contains("Dingus"));
 }
 
 pub fn example() {
@@ -319,24 +320,24 @@ pub fn example() {
     // Prints a debug version of the map
     println!("Debug print of the whole shebang:\n");
     for e in map.iter() {
-        println!("{:?}", e)
+        println!("{e:?}")
     }
 
     let value = map.get("Peter").unwrap();
-    println!("\nmap.get(\"Peter\"): {}", value);
+    println!("\nmap.get(\"Peter\"): {value}");
 
     // Its now iterable!!!
     println!("Iterating over all entries:");
     for e in map.iter() {
-        println!("\t{:?}", e)
+        println!("\t{e:?}")
     }
     println!("\nNow just the keys:");
     for k in map.iter().keys() {
-        println!("\t{}", k)
+        println!("\t{k}")
     }
     println!("\nNow just the values:");
     for v in map.iter().values() {
-        println!("\t{}", v)
+        println!("\t{v}")
     }
 
     // Does the same thing with public methods
@@ -352,6 +353,6 @@ pub fn example() {
 
     println!("\nIts all over now:");
     for e in map.iter() {
-        println!("{:?}", e)
+        println!("{e:?}")
     }
 }
