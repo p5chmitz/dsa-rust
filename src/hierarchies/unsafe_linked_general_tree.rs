@@ -237,6 +237,11 @@ pub struct GenTree<T> {
     root: Position<T>,
     size: usize,
 }
+impl<T> Default for GenTree<T> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 impl<T> GenTree<T> {
     /** Instantiates a new Tree with a default root */
     pub fn new() -> GenTree<T> {
@@ -851,7 +856,7 @@ mod tests {
         // and deletes the Heading; The delete() operation automatically jumps
         // the cursor to the parent of the deleted position
         for position in cursor.children() {
-            if position.get_data().unwrap().title == "Marine".to_string() {
+            if position.get_data().unwrap().title == "Marine" {
                 cursor.jump(&position);
                 deleted = cursor.delete().unwrap();
             }
@@ -923,7 +928,7 @@ pub mod builder {
     use std::fs::File;
     use std::io::{BufRead, BufReader};
 
-    use crate::trees::unsafe_linked_general_tree::{CursorMut, GenTree};
+    use crate::hierarchies::unsafe_linked_general_tree::{CursorMut, GenTree};
     use std::path::Path;
 
     #[derive(Debug, PartialEq)]
@@ -1059,10 +1064,10 @@ pub mod builder {
                 if let Some(child_data) = child_cursor.get_data() {
                     if index == 0 {
                         println!("\t{}└── {}", prefix, child_data.title);
-                        preorder(&mut child_cursor, &format!("{}    ", prefix));
+                        preorder(&mut child_cursor, prefix);
                     } else {
                         println!("\t{}├── {}", prefix, child_data.title);
-                        preorder(&mut child_cursor, &format!("{}│   ", prefix));
+                        preorder(&mut child_cursor, prefix);
                     }
                 }
             }
@@ -1074,9 +1079,9 @@ pub mod builder {
     fn pretty_print(name: &str, position: &mut CursorMut<Heading>) {
         let children = &position.children();
         if children.is_empty() {
-            println!("📄 {}\n\t[]\n", name); // Empty trees
+            println!("📄 {name}\n\t[]\n"); // Empty trees
         } else {
-            println!("📄 {}\n\t│", name);
+            println!("📄 {name}\n\t│");
             preorder(position, "");
             println!();
         }
