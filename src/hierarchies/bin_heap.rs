@@ -6,17 +6,17 @@ This structure represents a min heap (by default). This means that elements with
 Push and pop operations are guaranteed to run in `O(log(n))` time, but sorting is amortized to `O(n * log(n))` time, which is exacerbated by reverse-sorted inputs.
 
 # Design
-A `Vec`-backed structure is particularly appropriate for heap implementation due to the complete binary tree invariant. Complete binary trees allow you to infer a lot of information in an indexed structure that you would not get with a linked structure. 
+A `Vec`-backed structure is particularly appropriate for heap implementation due to the complete binary tree invariant. Complete binary trees allow you to infer a lot of information in an indexed structure that you would not get with a linked structure.
 
-- With a complete tree you know that the maximum depth (height) of the tree is always always ⌊log2(`n`)⌋ where `n` is the number of elements in the heap. 
+- With a complete tree you know that the maximum depth (height) of the tree is always always ⌊log2(`n`)⌋ where `n` is the number of elements in the heap.
 
-- Finding an insert point is always `O(1)` in an indexed structure with a known length. Finding an insert point in a linked backing structure requires `O(log(n))` traversal. 
+- Finding an insert point is always `O(1)` in an indexed structure with a known length. Finding an insert point in a linked backing structure requires `O(log(n))` traversal.
 
-- Element types (parent, left child, and right child) can be determined by a mathematical relationship in the backing structure. For example, for index `i`, if `heap[i] == root`, then `i + 1 == root.left`, and `i + 2 == root.right`. This can be extended to any element in the heap such that left children are always `2i + 1`, and right children are always `2i + 2`, and parents are always `(i - 1) / 2`. 
+- Element types (parent, left child, and right child) can be determined by a mathematical relationship in the backing structure. For example, for index `i`, if `heap[i] == root`, then `i + 1 == root.left`, and `i + 2 == root.right`. This can be extended to any element in the heap such that left children are always `2i + 1`, and right children are always `2i + 2`, and parents are always `(i - 1) / 2`.
 
 - You also know that indexes in a heap with backing structure `list` contain `(list.len() / 2)..list.len()` leaf nodes, and all indexes `0..(list.len() / 2)` are parent nodes. This, of course, relies on _integer division_ (division in which all remainders are truncated/discarded, not rounded).
 
-For a visual example, consider the following layout: 
+For a visual example, consider the following layout:
 | Index | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9  |  10 | 11 |
 |-------|---|---|---|---|---|---|---|---|---|----|-----|----|
 | Value | A | B | C | D | E | F | G | H | I | J  |  K  | L  |
@@ -28,13 +28,13 @@ This produes the following heap structure:
        B           C
      /   \        / \
     D     E      F   G
-   / \   / \    /   
+   / \   / \    /
   H   I J   K  L
 ```
 You can clearly see that nodes at indexes 6 through 11 are leaf nodes, corresponding to the range
 `(list.len() / 2)..list.len()` when `list.len() == 12`. Conversely, indexes 0 through 5 are parent nodes, corresponding to the range `0..(list.len() / 2)`.
 
-You can also see that all indexes of the form `2i + 1` are left children. E.g. indexes [1, 3, 5, 7, 9, 11] are all left children. The parent of a node at index `i` is always at `(i - 1) / 2`, which produces the mapping: 
+You can also see that all indexes of the form `2i + 1` are left children. E.g. indexes [1, 3, 5, 7, 9, 11] are all left children. The parent of a node at index `i` is always at `(i - 1) / 2`, which produces the mapping:
 
 ```text
     M = { (0,3), (1,2), (2,2), (3,2), (4,2), (5,1) }
@@ -43,7 +43,7 @@ You can also see that all indexes of the form `2i + 1` are left children. E.g. i
 # Example
 
 ```rust
-    use dsa_rust::trees::bin_heap::BinHeap;
+    use dsa_rust::hierarchies::bin_heap::BinHeap;
 
     // Defines an arbitrary entry object
     // NOTE: Clone is only necessary for from_slice() and list reuse
@@ -103,7 +103,7 @@ You can also see that all indexes of the form `2i + 1` are left children. E.g. i
     assert_eq!(heap.pop().unwrap().title, "Peter");
     assert_eq!(heap.pop().unwrap().title, "Sleve");
 
-    // Option 2: from_vec() in O(n) time, clones purely for 
+    // Option 2: from_vec() in O(n) time, clones purely for
     // list reuse in this test
     let mut heap = BinHeap::from_vec(list.clone());
     assert_eq!(heap.pop().unwrap().title, "Peter");
@@ -150,7 +150,7 @@ You can also see that all indexes of the form `2i + 1` are left children. E.g. i
 /// # About
 /// It's `Vec` with a brand new dress.
 ///
-/// See the [module-level documentation](crate::trees::bin_heap) for more information.
+/// See the [module-level documentation](crate::hierarchies::bin_heap) for more information.
 #[derive(Debug)]
 pub struct BinHeap<T>
 where
@@ -161,15 +161,15 @@ where
 }
 impl<T> Default for BinHeap<T>
 where
-    T: Ord
- {
+    T: Ord,
+{
     fn default() -> Self {
         Self::new()
     }
 }
 impl<T> BinHeap<T>
 where
-    T: Ord
+    T: Ord,
 {
     // PUBLIC API
     /////////////
@@ -190,10 +190,12 @@ where
         }
     }
 
-    /// A "heapify" operation that creates a `BinHeap` from any slice of entries 
+    /// A "heapify" operation that creates a `BinHeap` from any slice of entries
     /// in `O(n)` time. The entries must be `Clone`.
-    pub fn from_slice(list: &[T]) -> Self 
-        where T: Clone {
+    pub fn from_slice(list: &[T]) -> Self
+    where
+        T: Clone,
+    {
         let mut heap = BinHeap::new();
         heap.arena = Vec::from(list);
         let start = (list.len() / 2).saturating_sub(1);
@@ -203,7 +205,7 @@ where
         heap
     }
 
-    /// A "heapify" operation that creates a `BinHeap` from a `Vec<T>` in `O(n)` 
+    /// A "heapify" operation that creates a `BinHeap` from a `Vec<T>` in `O(n)`
     /// time. `T` does not need to be `Clone`.
     pub fn from_vec(list: Vec<T>) -> Self {
         let size = list.len();
@@ -231,7 +233,7 @@ where
         self.sift_up(self.arena.len() - 1);
     }
 
-    /// Returns an immutable reference to the data at the top of the heap 
+    /// Returns an immutable reference to the data at the top of the heap
     /// in `O(1)` time.
     pub fn peek(&self) -> Option<&T> {
         if self.arena.is_empty() {
@@ -247,29 +249,31 @@ where
             let node = self.arena.swap_remove(0); // O(1)
             self.sift_down(0); // O(log(n))
             Some(node)
-        } else { None }
+        } else {
+            None
+        }
     }
 
     // UTILITIES
     ////////////
 
-    /// Sifts a node upward from the given index in the tree to maintain the 
+    /// Sifts a node upward from the given index in the tree to maintain the
     /// heap property.
     fn sift_up(&mut self, mut index: usize) {
         // Only sift up if the element is not the root (index 0)
         while index > 0 {
             // Calculate the parent's index
             let parent_index = (index - 1) / 2;
-    
-            // For a Min-Heap: If the current node's priority is LESS than its 
+
+            // For a Min-Heap: If the current node's priority is LESS than its
             // parent's, swap.
-            // For a Max-Heap: If the current node's priority is GREATER than 
+            // For a Max-Heap: If the current node's priority is GREATER than
             // its parent's, swap.
             // Switch < to > for max heap
             if self.arena[index] < self.arena[parent_index] {
                 self.arena.swap(index, parent_index);
                 // Move up to the parent's old position to continue sifting
-                index = parent_index; 
+                index = parent_index;
             } else {
                 break; // No-op, heap is heapy 🍃🧘
             }
@@ -281,23 +285,21 @@ where
         loop {
             let left_child = 2 * index + 1;
             let right_child = 2 * index + 2;
-            let mut target = index; 
+            let mut target = index;
 
-            // 1) Finds a target index to swap. Sibling order is not guaranteed, 
-            // but you still need to check both children to ensure heap property 
+            // 1) Finds a target index to swap. Sibling order is not guaranteed,
+            // but you still need to check both children to ensure heap property
             // when sifting
             //
             // NOTE: (Adjust < to > for a max heap)
-            if left_child < self.arena.len()
-                && self.arena[left_child] < self.arena[target] {
+            if left_child < self.arena.len() && self.arena[left_child] < self.arena[target] {
                 target = left_child;
             }
-            if right_child < self.arena.len()
-                && self.arena[right_child] < self.arena[target] { 
+            if right_child < self.arena.len() && self.arena[right_child] < self.arena[target] {
                 target = right_child;
             }
-            
-            // 2) If the target is not equal to the index, do the swap operation 
+
+            // 2) If the target is not equal to the index, do the swap operation
             // and continue sifting, otherwise the heap property is true
             if target != index {
                 self.arena.swap(index, target);
@@ -311,42 +313,44 @@ where
     /// Sorts a mutable slice into ascending order in place via (max) heap operations in `O(n * log(n))` time.
     ///
     /// ```rust
-    /// use dsa_rust::trees::bin_heap::BinHeap;
+    /// use dsa_rust::hierarchies::bin_heap::BinHeap;
     /// let mut v = Vec::from([8, 6, 7, 5, 3, 0, 9]);
     /// BinHeap::heap_sort(&mut v);
     /// assert_eq!(v, [0, 3, 5, 6, 7, 8, 9]);
     /// ```
-    pub fn heap_sort(list: &mut [T]) 
-        where T: Ord {
+    pub fn heap_sort(list: &mut [T])
+    where
+        T: Ord,
+    {
         let len = list.len();
-    
+
         // Transform the list into a heap in O(n) time
         for i in (0..len / 2).rev() {
             Self::generic_sift_down(list, i, len); // O(log(n))
         }
-    
+
         // Sort the heap by sifting/sorting in place in O(n * log(n))
         for end in (1..len).rev() {
             list.swap(0, end);
             Self::generic_sift_down(list, 0, end); // O(log(n))
         }
     }
-    
-    /// Essentially the as sift_down but takes a list (not a heap as self), and 
+
+    /// Essentially the as sift_down but takes a list (not a heap as self), and
     /// performs max heap sifting instead of default min heap sifting.
     fn generic_sift_down(list: &mut [T], mut root: usize, end: usize) {
         loop {
             let left = 2 * root + 1;
             let right = 2 * root + 2;
             let mut largest = root;
-    
+
             if left < end && list[left] > list[largest] {
                 largest = left;
             }
             if right < end && list[right] > list[largest] {
                 largest = right;
             }
-    
+
             if largest != root {
                 list.swap(root, largest);
                 root = largest;
@@ -364,8 +368,7 @@ mod tests {
 
     #[test]
     fn min_heap_test() {
-
-        // Defines an arbitrary entry object, 
+        // Defines an arbitrary entry object,
         // NOTE: Clone is only necessary for from_slice() usage
         //#[derive(Clone, Debug, Eq, PartialEq)]
         #[derive(Clone, Debug, Eq, PartialEq, PartialOrd)]
@@ -476,12 +479,11 @@ mod tests {
         assert_eq!(heap.pop().unwrap().0.title, "Dichael");
         assert_eq!(heap.pop().unwrap().0.title, "Sleve");
         assert_eq!(heap.peek().unwrap().0.title, "Peter");
-
     }
 
     #[test]
     // Tests two approaches to heap sort:
-    // 1) Creating a separate binary heap buffer, pushing values, and popping 
+    // 1) Creating a separate binary heap buffer, pushing values, and popping
     //    them back to a third sorted list.
     // 2) Treating the backing list as the buffer for in-place heap creation
     //    and sorting via pop & swap loop.
@@ -506,7 +508,5 @@ mod tests {
         let mut v = Vec::from([6, 5, 8, 3]);
         BinHeap::heap_sort(&mut v);
         assert_eq!(v, [3, 5, 6, 8]);
-
     }
-
 }
