@@ -72,6 +72,3 @@ where
     //fn attach(p, t1, t2)
     //fn remove(p)
 }
-
-// GenTree
-//
