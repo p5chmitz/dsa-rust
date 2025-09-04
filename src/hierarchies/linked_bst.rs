@@ -1,12 +1,13 @@
-// TODO: Actually implement the list and remove this ASAP
-#![allow(clippy::all)]
-
 /*! A safe, linked binary search tree (BST)
 
 # About
+
+# Design
+
+# Example
 */
 
-use crate::trees::traits::{BinaryTree, Tree};
+use crate::hierarchies::traits::{BinaryTree, Tree};
 
 /** Owned non-null pointer to Node; Functions as a position */
 type Pos<T> = Box<Node<T>>;
@@ -27,11 +28,19 @@ pub struct BinTree<T: std::cmp::PartialEq> {
     root: Box<Node<T>>, // No Option because
     size: usize,
 }
+impl<T> Default for BinTree<T>
+where
+    T: std::cmp::PartialEq,
+{
+    fn default() -> Self {
+        Self::new()
+    }
+}
 impl<T> BinTree<T>
 where
     T: std::cmp::PartialEq,
 {
-    /** Creates a new generic binary tree */
+    /// Creates a new generic binary tree.
     pub fn new() -> BinTree<T> {
         let node: Node<T> = Node {
             parent: None,
@@ -51,27 +60,31 @@ where
     //}
 
     /** Adds a left node to a parent */
-    pub fn add_left(&mut self, mut ancestor: Pos<T>, node: Pos<T>) {
+    pub fn add_left(&mut self, mut ancestor: Node<T>, node: Pos<T>) {
         ancestor.left = Some(node);
     }
 
     /** Adds a right node to a parent */
-    pub fn add_right(&mut self, mut ancestor: Pos<T>, node: Pos<T>) {
+    pub fn add_right(&mut self, mut ancestor: Node<T>, node: Pos<T>) {
         ancestor.right = Some(node);
     }
 
-    /** WARNNING: Unimplemented
-
-    Overwrites the data at a given node (position) */
-    pub fn set(&mut self, _p: Pos<T>, _node: T) -> Result<(), String> {
+    /// Overwrites the data at a given node (position) */
+    ///
+    /// WARNING: Unimplmented
+    pub fn set(&mut self, _p: Node<T>, _node: T) -> Result<(), String> {
         Ok(())
     }
 
-    /** WARNNING: Unimplemented */
-    pub fn attach(&mut self, _left: Pos<T>, _right: Pos<T>) {}
+    ///
+    ///
+    /// WARNING: Unimplmented
+    pub fn attach(&mut self, _left: Node<T>, _right: Node<T>) {}
 
-    /** WARNNING: Unimplemented */
-    pub fn remove(&mut self, p: Pos<T>) {
+    ///
+    ///
+    /// WARNING: Unimplmented
+    pub fn remove(&mut self, p: Node<T>) {
         let _ = p;
     }
 
