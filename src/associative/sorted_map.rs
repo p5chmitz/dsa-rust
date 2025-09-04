@@ -3,7 +3,7 @@
 # About
 
  ```rust
-    use dsa_rust::maps::sorted_map::SortedMap;
+    use dsa_rust::associative::sorted_map::SortedMap;
 
     // Establishes a baseline map
     let list = vec![
