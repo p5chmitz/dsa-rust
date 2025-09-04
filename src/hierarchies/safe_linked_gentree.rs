@@ -31,7 +31,7 @@ This section presents an algorithm that builds a tree from a `Vec` of custom `He
         └── Fresh Water
 ```
 ```rust
-    use dsa_rust::trees::safe_linked_gentree::GenTree;
+    use dsa_rust::hierarchies::safe_linked_gentree::GenTree;
 
     struct Heading {
         level: usize,
@@ -95,20 +95,22 @@ This section presents an algorithm that builds a tree from a `Vec` of custom `He
 use std::cell::{Ref, RefCell};
 use std::rc::{Rc, Weak};
 
-/** The `Position` struct provides a safe, lightweight handle to `Node` data.
-All meaningful accessors and mutators appear on the [CursorMut] struct. */
+/// The `Position` struct provides a safe, lightweight handle to `Node` data.
+/// All meaningful accessors and mutators appear on the [CursorMut] struct.
+// Position only contains private members, but must be public due to its
+// presence as a CursorMut return type.
 pub struct Position<T> {
     ptr: Option<Rc<RefCell<Node<T>>>>,
 }
 impl<T> Position<T> {
-    /** Creates a handle to Node and returns it as a Position.*/
+    /// Creates a handle to Node and returns it as a Position.
     fn new(ptr: Node<T>) -> Self {
         Position {
             ptr: Some(Rc::new(RefCell::new(ptr))),
         }
     }
 
-    /** Returns an reference to the data at the Position, if Some. */
+    /// Returns an reference to the data at the Position, if Some.
     fn get_data(&self) -> Option<Ref<T>> {
         let node_ref: Ref<Node<T>> = self.ptr.as_ref()?.borrow();
         Ref::filter_map(node_ref, |node| node.data.as_ref()).ok()
@@ -117,7 +119,7 @@ impl<T> Position<T> {
         //} else { None }
     }
 
-    /** Returns the Node from a Position, if Some */
+    /// Returns the Node from a Position, if Some.
     //fn get_node(&self) -> Ref<Node<T>> {
     //    self.ptr.as_ref().unwrap().borrow()
     //}
@@ -125,7 +127,7 @@ impl<T> Position<T> {
         self.ptr.as_ref().map(|rc| rc.borrow())
     }
 
-    /** Returns the Position for the current Position's parent, if Some. */
+    /// Returns the Position for the current Position's parent, if Some.
     //fn get_parent_pos(&self) -> Option<Position<T>> {
     //    if let Some(parent) = self.ptr.as_ref().unwrap().borrow().parent.clone() {
     //        Some(parent)
@@ -165,16 +167,16 @@ impl<T> std::fmt::Debug for Position<T> {
     }
 }
 
-/** Internal-only struct that represents the heart of the general tree. The `Node`
-struct contains strong pointers to children, but weak pointers to parent nodes
-for proper drop semantics to avoid reference cycles. */
+/// Internal-only struct that represents the heart of the general tree. The `Node`
+/// struct contains strong pointers to children, but weak pointers to parent nodes
+/// for proper drop semantics to avoid reference cycles.
 struct Node<T> {
     parent: Option<Weak<RefCell<Node<T>>>>,
     children: Vec<Position<T>>, // Always exists for a Node, even if empty
     data: Option<T>,
 }
 impl<T> Node<T> {
-    /** Builds a new Node and returns its position */
+    /// Builds a new Node and returns its position.
     fn root(data: Option<T>) -> Node<T> {
         Node {
             parent: None,
@@ -183,7 +185,7 @@ impl<T> Node<T> {
         }
     }
 
-    /** Creates a new `Node` with given data for the given `Position` */
+    /// Creates a new `Node` with given data for the given `Position`.
     fn new(parent: &Position<T>, data: T) -> Node<T> {
         Node {
             //parent: Some(parent.clone()),
@@ -194,23 +196,22 @@ impl<T> Node<T> {
     }
 }
 
-/** The `GenTree` struct represents a positional, linked-based general
-tree structure that contains a pointer to the root node and the structure's size.
-The genericity of the struct means you'll have to explicitly type the
-tree at instantiation.
-
-Most of the major accessors and mutators appear on the [CursorMut] struct.
-
-Example:
-```example
-    // Creates a tree over Heading objects
-    let mut tree: GenTree<Heading> = GenTree::<Heading>::new();
-
-    // Creates a CursorMut to navigate/mutate the tree,
-    // starting at the root node
-    let mut cursor = tree.cursor_mut();
-```
-*/
+/// The `GenTree` struct represents a positional, linked-based general
+/// tree structure that contains a pointer to the root node and the structure's size.
+/// The genericity of the struct means you'll have to explicitly type the
+/// tree at instantiation.
+///
+/// Most of the major accessors and mutators appear on the [CursorMut] struct.
+///
+/// Example:
+/// ```example
+///     // Creates a tree over Heading objects
+///     let mut tree: GenTree<Heading> = GenTree::<Heading>::new();
+///
+///     // Creates a CursorMut to navigate/mutate the tree,
+///     // starting at the root node
+///     let mut cursor = tree.cursor_mut();
+/// ```
 #[derive(Debug)]
 pub struct GenTree<T> {
     root: Position<T>,
@@ -222,18 +223,18 @@ impl<T> Default for GenTree<T> {
     }
 }
 impl<T> GenTree<T> {
-    /** Instantiates a new `GenTree` */
+    /// Instantiates a new `GenTree`.
     pub fn new() -> GenTree<T> {
         let root: Position<T> = Position::new(Node::root(None));
         GenTree { root, size: 0 }
     }
 
-    /** Returns the `Position` of the tree's root */
+    /// Returns the `Position` of the tree's root.
     pub fn root(&self) -> Position<T> {
         self.root.clone()
     }
 
-    /** Creates a `CursorMut` starting at the tree's root */
+    /// Creates a `CursorMut` starting at the tree's root.
     pub fn cursor_mut(&mut self) -> CursorMut<T> {
         CursorMut {
             node: self.root.clone(),
@@ -241,7 +242,7 @@ impl<T> GenTree<T> {
         }
     }
 
-    /** Creates a `CursorMut` from a given `Position` */
+    /// Creates a `CursorMut` from a given `Position`.
     pub fn cursor_from(&mut self, position: Position<T>) -> CursorMut<T> {
         CursorMut {
             node: position,
@@ -496,9 +497,8 @@ impl<'a, T> CursorMut<'a, T> {
 mod tests {
 
     // Both basic and dangle tests use the tree builder
-    use crate::trees::safe_linked_gentree_builder::{construct, Heading};
-
     use super::{GenTree, Position};
+    use crate::hierarchies::safe_linked_gentree_builder::{construct, Heading};
 
     #[test]
     /** Creates this tree to test properties
@@ -572,6 +572,11 @@ mod tests {
 
         // Constructs tree ignoring the first heading
         let mut tree: GenTree<Heading> = construct(1, tree_vec);
+
+        assert!(tree.root.get_parent_pos().is_none());
+        assert!(tree.root().ptr.is_some());
+        let p = tree.root();
+        let _ = p.get_data();
 
         // Tests root() -> Position<T>
         // By identity (using custom PartialEq ipml)
@@ -672,8 +677,8 @@ mod tests {
         // and deletes the Heading; The delete() operation automatically jumps
         // the cursor to the parent of the deleted position
         for position in cursor.children().iter() {
-            if position.get_data().unwrap().title == "Marine".to_string() {
-                cursor.jump(&position);
+            if position.get_data().unwrap().title == "Marine" {
+                cursor.jump(position);
                 deleted = cursor.delete().unwrap();
             }
         }
