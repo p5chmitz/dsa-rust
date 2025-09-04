@@ -12,11 +12,11 @@ pub fn file_reader(file: &str) -> String {
         Ok(mut file) => match file.read_to_string(&mut file_contents) {
             Ok(_) => {}
             Err(err) => {
-                eprintln!("Error reading file: {}", err);
+                eprintln!("Error reading file: {err}");
             }
         },
         Err(err) => {
-            eprintln!("Error opening file: {}", err);
+            eprintln!("Error opening file: {err}");
         }
     }
     file_contents
@@ -46,7 +46,8 @@ incrementing the count when encountering duplicates;
 The function then outputs the map back to a list that can be sorted for
 different analytical purposes */
 pub fn word_freq(file: &str, num: usize) {
-    use std::collections::HashMap;
+    //use std::collections::HashMap;
+    use crate::associative::probing_hash_table::HashMap;
 
     let contents = file_reader(file);
     let parsed = parse_words(contents);
@@ -56,7 +57,8 @@ pub fn word_freq(file: &str, num: usize) {
         let word = w.to_lowercase();
         let count = map.get(&word);
         let new_count = count.unwrap_or(&0) + 1;
-        map.insert(word, new_count);
+        //map.insert(word, new_count); // std HashMap uses insert()
+        map.put(word, new_count); // My HashMap uses put()
     }
     // Analyze the map
     //let mut max_count = 0;
@@ -101,5 +103,13 @@ pub fn word_freq(file: &str, num: usize) {
     while i < total {
         println!("{}: '{}' appears {} times", i + 1, sorted[i].0, sorted[i].1);
         i += 1;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn test() {
+        //word_freq()
     }
 }
