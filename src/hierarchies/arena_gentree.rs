@@ -170,6 +170,7 @@ impl<T> GenTree<T> {
         self.arena[position.get()].get_children()
     }
 
+    #[allow(clippy::style)]
     /// Removes a node at the given `Position` and returns its data.
     /// If the removed `Position` has a parent, all the deleted node's children
     /// get pushed to the deleted `Position`'s parent. If the deleted `Position`
@@ -363,7 +364,7 @@ mod tests {
 
     use super::*;
 
-    use crate::trees::arena_gentree::builder::{Heading, _construct};
+    use crate::hierarchies::arena_gentree::builder::{Heading, _construct};
 
     #[test]
     fn one() {
