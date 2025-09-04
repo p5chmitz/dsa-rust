@@ -5,7 +5,7 @@ use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
 
-use crate::trees::safe_linked_gentree::{CursorMut, GenTree};
+use crate::hierarchies::safe_linked_gentree::{CursorMut, GenTree};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Heading {
@@ -147,9 +147,9 @@ fn preorder(cursor: &mut CursorMut<Heading>, prefix: &str) {
                 }
             } // child_cursor.get_data() immutable borrow ends
             if index == 0 {
-                preorder(cursor, &format!("{}    ", prefix));
+                preorder(cursor, &format!("{prefix}    "));
             } else {
-                preorder(cursor, &format!("{}│   ", prefix));
+                preorder(cursor, &format!("{prefix}│   "));
             }
         }
     }
@@ -161,9 +161,9 @@ Contains logic to print [] on empty trees for more appealing presentation */
 fn pretty_print(name: &str, position: &mut CursorMut<Heading>) {
     let children = &position.children();
     if children.is_empty() {
-        println!("📄 {}\n\t[]\n", name); // Empty trees
+        println!("📄 {name}\n\t[]\n"); // Empty trees
     } else {
-        println!("📄 {}\n\t│", name);
+        println!("📄 {name}\n\t│");
         preorder(position, "");
         println!();
     }
