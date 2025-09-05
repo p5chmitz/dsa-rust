@@ -1,3 +1,6 @@
+// This module didn't make the library cut
+#![allow(dead_code)]
+
 //////////////////////////////////////
 /** A safe dynamic array-based list */
 //////////////////////////////////////
@@ -24,6 +27,11 @@ impl<'a> Clone for Entry<'a> {
 pub struct List<'a> {
     data: Vec<Option<Entry<'a>>>,
     size: usize,
+}
+impl<'a> Default for List<'a> {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 impl<'a> List<'a> {
     /** Creates a new generic list with capacity of 1 */
@@ -254,15 +262,15 @@ pub fn example() {
         Ok(_) => "Success".to_string(),
         Err(e) => e,
     };
-    println!("Attempt to remove {}: {}", name, result);
+    println!("Attempt to remove {name}: {result}");
     // 2) if let syntax
     name = "Remus";
     if let Err(result) = list.remove(name) {
-        println!("Attempt to remove {}: {}", name, result)
+        println!("Attempt to remove {name}: {result}")
     }
     // 3) silent
     name = "Chester";
-    println!("(Silent) attempt to remove {}: 🤫", name);
+    println!("(Silent) attempt to remove {name}: 🤫");
     list.remove("Chester").ok();
 
     // Using unwrap casuses panic on error
