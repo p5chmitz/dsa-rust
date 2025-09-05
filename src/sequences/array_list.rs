@@ -1,7 +1,7 @@
 /*! A simple array-based list illustration
 
 # About
-This is a map-like list used to explore how arrays work in Rust. This concept is
+This is a map-like list used to explore how arrays work in Rust. The idea is
 to use array primitives to construct a simple list of names with associated scores.
 
 The list maintains a sorted invariant. It is actually more efficient to periodically
@@ -224,7 +224,7 @@ pub fn array_list_test() {
     // Tests OOB logic with some random usize > (PODIUM_SIZE - 1)
     let oob = 10;
     assert_eq!(
-        format!("Index out of bounds: {} is out of the range 0..=9", oob),
+        format!("Index out of bounds: {oob} is out of the range 0..=9"),
         podium.remove(oob).unwrap_err()
     );
 }
