@@ -1,8 +1,7 @@
-#![allow(dead_code)]
+/*!
+This is a sandbox crate for chapter 1 of Data Structures and Algorithm Analysis in Java by Mark Allen Weiss
+*/
 
-/**
- * This is a sandbox crate for chapter 1 of Data Structures and Algorithm Analysis in Java by Mark Allen Weiss
- */
 pub fn recursion(n: i32) {
     // Defines base case
     if n >= 10 {
@@ -56,9 +55,6 @@ pub fn binary_search_test() {
         1, 4, 5, 6, 10, 12, 16, 21, 23, 24, 25, 27, 31, 32, 33, 35, 37, 39, 40, 41, 42, 43, 45, 47,
         49, 50, 51, 52, 54, 56, 57, 60, 61, 67, 70, 71, 72, 73, 74,
     ];
-    let result = match binary_search(&array, target) {
-        Some(index) => index,
-        None => 0,
-    };
+    let result = binary_search(&array, target).unwrap_or_default();
     assert_eq!(result, 37)
 }
