@@ -1,15 +1,12 @@
-#![allow(dead_code, unused_imports)]
+// Gross blanket warning suppression
+//#![allow(dead_code)]
 
-mod lists;
-mod maps;
-mod maw;
-mod tgg;
-mod trees;
-
-use crate::lists::queues::{singly_linked_queue, vec_circ_queue, vec_queue, vecdeque_queue};
-use crate::lists::stacks::{safe_linked_stack, unsafe_linked_stack, vector_stack};
-use crate::lists::{array_list, doubly_linked_list, vector_list};
-use crate::trees::unsafe_linked_general_tree;
+// Adding pub suppresses dead code warnings
+pub mod associative;
+pub mod hierarchies;
+pub mod maw;
+pub mod sequences;
+pub mod tgg;
 
 use crate::tgg::{tgg_04, tgg_05};
 
@@ -79,9 +76,9 @@ fn main() {
             let target = 4;
             let i = tgg::tgg_05::bin_search_0(&a, target, 0, (a.len() - 1) as i32);
             if i >= 0 {
-                println!("The target {} exists at index {}", target, i)
+                println!("The target {target} exists at index {i}")
             } else {
-                println!("The target {} does not exist within the array.", target)
+                println!("The target {target} does not exist within the array.")
             }
 
             // Sums the values of an array
@@ -95,14 +92,14 @@ fn main() {
             tgg_05::array_reversal_0(again);
             // Recursive impelmentation
             let mut again = vec![55, 66, 77, 88, 99];
-            println!("Recursive approach\nOriginal: {:?}", again);
+            println!("Recursive approach\nOriginal: {again:?}");
             let high = again.len() as i32 - 1; // Capture the # of indexes, not elements
             let recursive = tgg_05::array_reversal_1(&mut again, 0, high);
-            println!("Reversed: {:?}", recursive);
+            println!("Reversed: {recursive:?}");
 
             let n = 47;
             let seq = tgg::tgg_05::fib_0(n);
-            println!("Fib attempt: Sequence of {} elements: {:?}", n, seq);
+            println!("Fib attempt: Sequence of {n} elements: {seq:?}");
 
             // Ch 5 Extra Credit
             //------------------
@@ -125,77 +122,76 @@ fn main() {
 
         // LISTS
         ////////
-        Some("lists") => {
+        Some("sequences") => {
             // Static array list implementation
             println!("\x1b[1;34mStatic array list:\x1b[0m");
-            lists::array_list::example();
+            sequences::array_list::example();
             println!();
 
             // Vector list implementation
             println!("\x1b[1;34mVector list:\x1b[0m");
-            //lists::vector_list::example();
+            //sequences::vector_list::example();
             println!();
 
             // Dynamic array list implementation
             println!("\x1b[1;34mDynamic array list:\x1b[0m");
-            //array_lists::list_adt_driver_1();
-            lists::dynamic_array_list::example();
+            //array_sequences::list_adt_driver_1();
+            sequences::dynamic_array_list::example();
             println!();
 
             // Singly linked list
             println!("\x1b[1;34mSingly-linked list:\x1b[0m");
-            lists::singly_linked_list::example();
+            sequences::singly_linked_list::example();
             println!();
 
             // Doubly linked list
             println!("\x1b[1;34mDoubly-linked list:\x1b[0m");
-            lists::doubly_linked_list::example();
+            sequences::doubly_linked_list::example();
             println!();
 
             // Queues
             //println!("\nQueues:");
             println!("\x1b[1;34mCircular queue:\x1b[0m");
-            lists::queues::vec_circ_queue::example();
+            sequences::queues::vec_circ_queue::example();
             println!();
 
             // NOTE: May take quite some time!!! (1-2mins on a Ryzen 5 7640U)
             //println!("\x1b[1;34mEmpirical test for vec_circ_queue:\x1b[0m");
-            //lists::queues::vec_circ_queue::empirical_test();
-
+            //sequences::queues::vec_circ_queue::empirical_test();
         }
 
         // TREES
         ////////
-        Some("trees") => {
+        Some("hierarchies") => {
             let path = std::path::Path::new("src");
-            trees::file_tree::disk_usage(path);
+            hierarchies::file_tree::disk_usage(path);
             println!();
 
             println!("\x1b[1;34mUnsafe N-ary tree example:\x1b[0m");
-            let path = std::path::Path::new("./src/trees");
-            trees::unsafe_linked_general_tree::builder::navigator(1, path);
+            let path = std::path::Path::new("./src/hierarchies");
+            hierarchies::unsafe_linked_general_tree::builder::navigator(1, path);
             println!();
 
             println!("\x1b[1;34mSafe N-ary tree example:\x1b[0m");
-            let path = std::path::Path::new("./src/trees");
-            trees::safe_linked_gentree_builder::navigator(1, path);
+            let path = std::path::Path::new("./src/hierarchies");
+            hierarchies::safe_linked_gentree_builder::navigator(1, path);
             println!();
         }
 
         // MAPS
         ///////
-        Some("maps") => {
+        Some("associative") => {
             println!("\x1b[1;34mHashing examples:\x1b[0m");
             println!("Bit shifting");
-            maps::hash_map::bit_shift("Peter");
+            associative::hash_lib::visual_bit_shift("Peter");
             println!("\nHash code generator");
-            maps::hash_map::hash_code("Schmitz");
+            associative::hash_lib::visual_hash_code("Schmitz");
             println!("\nHash code generator (with Rust's default 64-bit hasher)");
             let s = "TypicalPassword123";
-            let v = maps::hash_map::hash(s);
+            let v = associative::hash_lib::hash(s);
             println!("Hash code for {s}: {v}");
             println!("\nHash code generator (feeding individual bytes to Rust's hasher)");
-            let v = maps::hash_map::hash_1(s);
+            let v = associative::hash_lib::hash_1(s);
             println!("Hash code for {s}: {v}");
             println!();
 
@@ -210,40 +206,43 @@ fn main() {
                 "Random number generation",
                 "Rust",
             ];
-            let mut hashes: Vec<u64> = Vec::new();
+            let mut hashes: Vec<usize> = Vec::new();
             for e in slices.iter() {
-                hashes.push(maps::hash_map::hash(e))
+                hashes.push(associative::hash_lib::hash(e))
             }
-            println!("Hashed values:\n\t{:?}\n\t{:?}\n", slices, hashes);
+            println!("Hashed values:\n\t{slices:?}\n\t{hashes:?}\n");
 
             // Simple division compression
-            let mut compressed: Vec<u64> = Vec::new();
+            let mut compressed: Vec<usize> = Vec::new();
             for e in hashes.iter() {
-                compressed.push(maps::hash_map::division_compression(*e, 11))
+                compressed.push(associative::hash_lib::division_compression(*e, 11))
             }
-            println!("Division compression:\n\t{:?}", compressed);
+            println!("Division compression:\n\t{compressed:?}");
 
             // MAD compression
-            let mut compressed: Vec<u64> = Vec::new();
+            let mut compressed: Vec<usize> = Vec::new();
             for e in hashes.iter() {
-                compressed.push(maps::hash_map::mad_compression(*e, 11))
+                compressed.push(associative::hash_lib::mad_compression(*e, 11))
             }
-            println!("MAD compression:\n\t{:?}", compressed);
+            println!("MAD compression:\n\t{compressed:?}");
             println!();
 
-            //println!("\x1b[1;34mMapped word frequency analysis:\x1b[0m");
-            ////maps::word_freq::word_freq("../../tech-docs/src/content/docs/cs/dsa/trees.md");
-            ////match File::open("./maps/word-freq-data.txt") {
+            println!("\x1b[1;34mMapped word frequency analysis:\x1b[0m");
+            associative::word_freq::word_freq(
+                "../../tech-docs/src/content/docs/cs/dsa/hierarchies.md",
+                100,
+            );
+            //match File::open("./associative/word-freq-data.txt") {
 
-            //println!("B Movie script:");
-            //maps::word_freq::word_freq("./src/maps/word-freq-data-b-movie.txt", 5);
-            //println!();
-            //println!("A Midsummer Night's Dream");
-            //maps::word_freq::word_freq("./src/maps/word-freq-data.txt", 5);
-            //println!();
+            println!("B Movie script:");
+            //crate::associative::word_freq::word_freq("./src/associative/word-freq-data-b-movie.txt", 5);
+            println!();
+            println!("A Midsummer Night's Dream");
+            //associative::word_freq::word_freq("./src/associative/word-freq-data.txt", 5);
+            println!();
 
             println!("\x1b[1;34mChaining hash map with division compression:\x1b[0m");
-            maps::chaining_hash_table::example();
+            associative::chaining_hash_table::example();
             println!();
 
             println!(
@@ -252,31 +251,44 @@ fn main() {
             let mut i = 1;
             for _ in 1..=1 {
                 println!("\nIteration: {i}");
-                maps::probing_hash_table::example();
+                associative::probing_hash_table::example();
                 i += 1;
             }
 
             println!("\x1b[1;34mGeneric linked list:\x1b[0m");
-            lists::doubly_linked_list::example();
+            sequences::doubly_linked_list::example();
             println!();
+
+            let v = [1, 2, 3, 4, 5, 6];
+            let double_v: Vec<i32> = v
+                .iter() // Returns an iterator over immutable references
+                .map(|x| x * 2) // Iterator adapter creates another iterator of mutated values
+                .collect(); // Transforms new iterator into a Vec of the type specified by the
+                            // binding
+            println!("Original: {v:?}\nMutated: {double_v:?}");
+
+            let mut count: std::collections::HashMap<char, u32> = std::collections::HashMap::new();
+            let word = "hello";
+            for k in word.chars() {
+                *count.entry(k).or_insert(0) += 1;
+            }
+            println!("Word: {word}\nChar count: {count:#?}");
         }
 
         // MISC
         ///////
         Some("misc") => {
-
             println!("\x1b[1;34mHeap sort:\x1b[0m");
-            //trees::safe_linked_gentree_builder::navigator(1, path);
+            //hierarchies::safe_linked_gentree_builder::navigator(1, path);
             println!();
 
             println!("\x1b[1;34mPriority queue:\x1b[0m");
-            //trees::safe_linked_gentree_builder::navigator(1, path);
+            //hierarchies::safe_linked_gentree_builder::navigator(1, path);
             println!();
-            
         }
 
         // Everything else
-        _ => eprintln!("Usage: cargo run [maw_01|tgg_04|tgg_05|lists|trees|maps]"),
+        _ => eprintln!("Usage: [maw_01|tgg_04|tgg_05|sequences|hierarchies|associative]"),
     }
 }
 
