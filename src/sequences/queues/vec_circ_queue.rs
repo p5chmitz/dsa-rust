@@ -9,7 +9,7 @@ Rust takes its types (and its type safety) seriously. Array's must have a known 
 This example illustrates the circular queue logic. The example provides a queue postcondition for enqueue/dequeue operations to illustrate the state of the list after each operation. Remember that `enqueue()` adds to the _back_, and `dequeue()` removes from the _front_ of the queue.
 ```rust
 
-   use dsa_rust::lists::queues::vec_circ_queue::CircularQueue;
+   use dsa_rust::sequences::queues::vec_circ_queue::CircularQueue;
 
    // The queue is a fixed size
    let mut q: CircularQueue<char> = CircularQueue::new(3);
@@ -258,7 +258,7 @@ pub fn empirical_test() {
     let methods = [("For", |n| CircularQueue::<char>::new(n))];
 
     for &n in &allocations {
-        println!("\n{}x", n);
+        println!("\n{n}x");
 
         for &(name, constructor) in &methods {
             let total_duration = (0..runs)
@@ -270,7 +270,7 @@ pub fn empirical_test() {
                 .sum::<Duration>();
 
             let avg = total_duration / runs;
-            println!("{}: {:?}", name, avg);
+            println!("{name}: {avg:?}");
         }
     }
 }

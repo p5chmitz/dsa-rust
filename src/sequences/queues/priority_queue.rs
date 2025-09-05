@@ -1,3 +1,6 @@
+// This module didn't make the library cut
+#![allow(dead_code)]
+
 /*! A sorted, Vec-based priority queue
 
 # About
@@ -7,7 +10,7 @@ Naive implementation of a priority queue that requires _O(n)_ operations for mos
 
 // A sorted, array-based priority queue
 mod sorted_list {
-    pub use crate::lists::queues::traits::PriorityQueue; // Re-exports the trait
+    pub use crate::sequences::queues::traits::PriorityQueue; // Re-exports the trait
 
     pub struct Entry<K, V> {
         key: K,
@@ -109,7 +112,7 @@ mod sorted_list {
 
 #[test]
 pub fn example() {
-    use crate::lists::queues::priority_queue::sorted_list::{PriorityQueue, SortedVecQueue};
+    use crate::sequences::queues::priority_queue::sorted_list::{PriorityQueue, SortedVecQueue};
 
     // Instantiates new list, declares the K and V types
     //let mut list: SortedVecQueue<usize, &str> = SortedVecQueue::new();
@@ -146,8 +149,8 @@ fn idk() {
     let x: String = String::from("Peter");
     let y: &String = &x;
 
-    println!("{}", x);
-    println!("{}", y);
+    println!("{x}");
+    println!("{y}");
     println!("{}", *y);
 
     // Multiple borrows
@@ -165,8 +168,8 @@ fn idk() {
     let x: String = String::from("Peter");
     let y: &String = &x;
 
-    println!("{}", x);
-    println!("{}", y);
+    println!("{x}");
+    println!("{y}");
     println!("{}", *y);
 
     // Mutable data
@@ -188,7 +191,7 @@ fn passing_ownership() {
     let s = String::from("Peter");
     let ref_s = &s;
 
-    println!("{}", s);
+    println!("{s}");
     println!("{}", *ref_s);
 
     // Both s and ref_s go out of scope here
@@ -198,7 +201,7 @@ fn passing_ownership() {
     //println!("{}", s);
     //println!("{}", *ref_s);
 
-    println!("{}", passed);
+    println!("{passed}");
 }
 
 fn take_and_give_back(x: String) -> String {
@@ -219,19 +222,16 @@ fn big_things() {
     let heap_size = name.len(); // The length of the string, which is the size of the heap-allocated data
 
     // Print both sizes
-    eprintln!("Size of the stack portion (String struct): {}", stack_size);
-    eprintln!("Size of the heap portion (string content): {}", heap_size);
+    eprintln!("Size of the stack portion (String struct): {stack_size}");
+    eprintln!("Size of the heap portion (string content): {heap_size}");
 
     // We cannot directly get memory details about ownership, but the total value size (stack + heap) is:
     let total_size = stack_size + heap_size;
-    eprintln!(
-        "Total size of the value associated with name: {}",
-        total_size
-    );
+    eprintln!("Total size of the value associated with name: {total_size}");
 
     // Optionally, checking the layout of the String struct
     let layout = Layout::for_value(&name);
-    eprintln!("Layout size: {:?}", layout);
+    eprintln!("Layout size: {layout:?}");
 
     // Testing borrows and the dereference operator
     let x: String = String::from("Peter");

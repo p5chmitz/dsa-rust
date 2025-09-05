@@ -4,7 +4,7 @@ An inefficient but safe singly-linked queue implementation. The `enqueue()` oper
 in linear (`O(n)`) time because I didn't feel like trying to safely reference the tail Node.
 
 ```rust
-    use dsa_rust::lists::queues::singly_linked_queue::{Node, Queue};
+    use dsa_rust::sequences::queues::singly_linked_queue::{Node, Queue};
 
     let mut q: Queue<char> = Queue::new();
 
@@ -41,6 +41,11 @@ impl<T> Node<T> {
 pub struct Queue<T> {
     front: Option<Box<Node<T>>>,
     length: usize,
+}
+impl<T> Default for Queue<T> {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 impl<T> Queue<T> {
     /// Creates a new list

@@ -13,6 +13,11 @@ pub mod vec_wrapper {
         data: Vec<T>,
         size: usize,
     }
+    impl<T> Default for Queue<T> {
+        fn default() -> Self {
+            Self::new()
+        }
+    }
     impl<T> Queue<T> {
         /** Creates a new Queue with an initial capacity of 10 in O(1) time */
         pub fn new() -> Queue<T> {
@@ -72,6 +77,7 @@ pub mod vec_wrapper {
 
 /** Illustrates how Vec can be used as a queue by itself; Convenient, but remove(0) runs in O(n) time;
 Use VecDeque for flexible operations in O(1) time */
+#[allow(clippy::vec_init_then_push)]
 pub mod vec {
     #[test]
     // Illustrates how Vec can be used as a queue, but with some inefficiencies

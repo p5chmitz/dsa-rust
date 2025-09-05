@@ -3,7 +3,7 @@
 This is a simple std::VecDeque wrapper
 
 ```rust
-use crate::lists::queue::vecdeque_wrapper;
+use crate::sequences::queue::vecdeque_wrapper;
 
 let mut queue = Queue::new();
 queue.enqueue('a');

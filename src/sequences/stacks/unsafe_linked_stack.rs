@@ -20,6 +20,11 @@ pub struct Stack {
     head: Link,
     length: usize,
 }
+impl Default for Stack {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 impl Stack {
     // Creates a new list
     pub fn new() -> Stack {

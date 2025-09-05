@@ -1,3 +1,4 @@
+// This module didn't make the cut: Suppres unused code warnings
 #![allow(dead_code)]
 
 // Ch 5: Recursion
@@ -243,7 +244,7 @@ pub fn array_reversal_0(mut v: Vec<i32>) -> Vec<i32> {
     let mut high = v.len() - 1; // Match the index values, not # of elements
     let mut low = 0;
     let mut temp;
-    println!("Iterative approach\nOriginal: {:?}", v);
+    println!("Iterative approach\nOriginal: {v:?}");
     while high > low {
         temp = v[low];
         v[low] = v[high];
@@ -251,7 +252,7 @@ pub fn array_reversal_0(mut v: Vec<i32>) -> Vec<i32> {
         high -= 1;
         low += 1;
     }
-    println!("Reversed: {:?}", v);
+    println!("Reversed: {v:?}");
     v
 }
 // Linear recursion to reverse the elements of an array in place
@@ -372,10 +373,10 @@ pub fn fib_0(n: i32) -> Vec<i32> {
  * problem set into source, auxiliary, and destination pegs. */
 pub fn tower_of_hanoi(n: u32, src: char, dest: char, aux: char) {
     if n == 1 {
-        println!("Move disk 1 from peg {} to peg {}", src, dest);
+        println!("Move disk 1 from peg {src} to peg {dest}");
         return;
     }
     tower_of_hanoi(n - 1, src, aux, dest);
-    println!("Move disk {} from peg {} to peg {}", n, src, dest); // Trace
+    println!("Move disk {n} from peg {src} to peg {dest}"); // Trace
     tower_of_hanoi(n - 1, aux, dest, src);
 }

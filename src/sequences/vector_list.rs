@@ -21,6 +21,11 @@ pub struct Podium {
     data: Vec<PodiumEntry>,
     size: usize,
 }
+impl Default for Podium {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 impl Podium {
     /** Builds new default list containing at least three elements */
     pub fn new() -> Podium {
@@ -102,7 +107,7 @@ impl Podium {
 
 #[test]
 fn vector_list_test() {
-    use crate::lists::vector_list::Podium;
+    use crate::sequences::vector_list::Podium;
     let mut podium = Podium::new();
 
     // Builds and adds a basic set of PodiumEntry instances
@@ -122,7 +127,7 @@ fn vector_list_test() {
 
 /** This example illustrates an array implementation for the list ADT... using no vectors */
 pub fn example() {
-    use crate::lists::vector_list::Podium;
+    use crate::sequences::vector_list::Podium;
     let mut podium = Podium::new();
 
     // Sample data to build a basic set of PodiumEntry instances

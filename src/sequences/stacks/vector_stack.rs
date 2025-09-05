@@ -1,3 +1,6 @@
+// Suppress unused code warnings: This module didn't make the cut
+#![allow(dead_code)]
+
 /////////////////////////////////////
 /* A vector-based stack (wrapper) */
 /////////////////////////////////////
@@ -139,30 +142,30 @@ mod raw {
     #[test]
     fn success() {
         let input = "{[({[]}[(())]){{{}}{[()()()[{}]]}}]}".to_string();
-        assert_eq!(balance(input), true);
+        assert!(balance(input));
     }
     #[test]
     #[should_panic(expected = "Error: Unexpected closing symbol")]
     fn mismatched_symbols_fail() {
         let input = "{{{}}{{}}}{{}{}{{{}{}}}}}{{{}{}".to_string(); // Fails somewhere mid-string
-        assert_eq!(balance(input), false);
+        assert!(!balance(input));
     }
     #[test]
     #[should_panic(expected = "Error: Unexpected closing symbol")]
     fn illegal_opening_brace_fail() {
         let input = "}{[]}{}".to_string(); // Fails with leading closing symbol
-        assert_eq!(balance(input), false);
+        assert!(!balance(input));
     }
     #[test]
     #[should_panic(expected = "Error 003: Missing closing symbol")]
     fn open_block_fail() {
         let input = "{[]}{".to_string();
-        assert_eq!(balance(input), false);
+        assert!(!balance(input));
     }
     #[test]
     #[should_panic(expected = "Error 002: Unexpected closing symbol")]
     fn block_fail() {
         let input = "(])".to_string();
-        assert_eq!(balance(input), false);
+        assert!(!balance(input));
     }
 }

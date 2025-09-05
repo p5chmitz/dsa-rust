@@ -4,7 +4,7 @@
 This simple, `Box`-based stack contains a rudimentary set of operations.
 
 ```rust
-use dsa_rust::lists::stacks::safe_linked_stack::Stack;
+use dsa_rust::sequences::stacks::safe_linked_stack::Stack;
 
 // Creates a stack
 let mut stack = Stack::new();
@@ -37,6 +37,11 @@ impl<T> Node<T> {
 pub struct Stack<T> {
     head: Option<Box<Node<T>>>, // Adding an extra box just in case things get wild
     length: usize,
+}
+impl<T> Default for Stack<T> {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 impl<T> Stack<T> {
     /// Creates a new stack

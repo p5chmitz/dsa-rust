@@ -9,7 +9,7 @@ This exceedingly simple, safe, singly-linked list consists of one primary [Linke
 The list operates on a single, private `Node` struct that contains only a `data` field (generic over `T`) and a `next` pointer as `Option<Box<Node<T>>>`. Due to the owned nature of the pointers and safe-code-only design restriction, _it is not possible to sort this list in place_.
 
 #### Iterators
-This list does not have any positional implementation, meaning that you cannot get pointers to arbitrary nodes within the list. The list _does_ provide an `iter()` method that yields an iterator over immutable references to `Node` data, consistent with Rust naming convention. Providing an `iter_mut()` that yields mutable references to the underlying `Node` data in safe Rust is currently beyond the scope of this structure. See the [doubly-linked variant](crate::lists::doubly_linked_list) which uses a `CursorMut` API for mutable references to `Node` data.
+This list does not have any positional implementation, meaning that you cannot get pointers to arbitrary nodes within the list. The list _does_ provide an `iter()` method that yields an iterator over immutable references to `Node` data, consistent with Rust naming convention. Providing an `iter_mut()` that yields mutable references to the underlying `Node` data in safe Rust is currently beyond the scope of this structure. See the [doubly-linked variant](crate::sequences::doubly_linked_list) which uses a `CursorMut` API for mutable references to `Node` data.
 
 **TODO**:
 - Implement add/remove operations at arbitrary "indexes" (non-positional)
@@ -18,7 +18,7 @@ This list does not have any positional implementation, meaning that you cannot g
 
 This example illustrates stack (FILO) operations
 ```rust
-    use dsa_rust::lists::singly_linked_list::LinkedList;
+    use dsa_rust::sequences::singly_linked_list::LinkedList;
 
     let mut list: LinkedList<char> = LinkedList::new();
 
@@ -49,7 +49,7 @@ This example illustrates stack (FILO) operations
 
 This example illustrates queue (FIFO) operations
 ```rust
-    use dsa_rust::lists::singly_linked_list::LinkedList;
+    use dsa_rust::sequences::singly_linked_list::LinkedList;
 
     let mut list: LinkedList<char> = LinkedList::new();
 
@@ -77,7 +77,7 @@ This example illustrates queue (FIFO) operations
 
 This example illustrates a sorting workaround
 ```rust
-    use dsa_rust::lists::singly_linked_list::LinkedList;
+    use dsa_rust::sequences::singly_linked_list::LinkedList;
 
     // 1) Create a new list of u8 values
     let mut list: LinkedList<u8> = LinkedList::new();
