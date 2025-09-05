@@ -3,7 +3,7 @@
 # About
 Even in 2025 you still hear stories about coding interviews that involve linked lists despite the fact that the world has mostly moved on from them. Most programs opt instead to use contiguous storage structures that take advantage of cache locality and minimal allocations despite some hard coping with amortized `O(1)` "add" operations. So why do linked lists remain? What gives these simple structures such rich lore? The reality is that its probably just a simple litmus test to ensure you were awake in your CS courses. Linked lists are traditionally introduced early on in CS programs because they provide a good introduction to the foundational concepts required to build more complex structures, such as managing references (and/or pointers) correctly (and soundly in languages that use pointers).
 
-Rust takes a notoriously different approach to pointers and memory safety from languages like C/C++ which can make otherwise simple pointer-based structures unusually difficult for Rust novices. Singly-linked lists are easy to build with safe, beginner-friendly Rust code because each node only requires a single reference in an adjacent node. Using the [`Box`](Box) type to create pointers in singly-linked lists neatly follows Rust's "one mutable reference or many immutable references" borrowing rules. It's in doubly-linked lists where you have to start keeping multiple mutable references to an object where things get necessarily tricky.
+Rust takes a notoriously different approach to pointers and memory safety from languages like C/C++ which can make otherwise simple pointer-based structures unusually difficult for Rust novices. Singly-linked lists are easy to build with safe, beginner-friendly Rust code because each node only requires a single reference in an adjacent node. Using the [`Box`] type to create pointers in singly-linked lists neatly follows Rust's "one mutable reference or many immutable references" borrowing rules. It's in doubly-linked lists where you have to start keeping multiple mutable references to an object where things get necessarily tricky.
 
 One option for safe code is to use smart pointers like [`RefCell`](std::cell::RefCell) that provide [interior mutability](https://doc.rust-lang.org/reference/interior-mutability.html). You may even choose to wrap it in a [`Rc`](std::rc::Rc) type for multiple ownership, but this approach gets unwieldy fast and requires runtime checks which may incur undesirable performance hits<sup>[1]</sup>.
 
@@ -34,7 +34,7 @@ the list as an unsorted linked list, a stack, or a queue with insert and remove 
 on both the front and tail of the list in `O(1)` time.
 
 ```rust
-   use dsa_rust::lists::doubly_linked_list::LinkedList;
+   use dsa_rust::sequences::doubly_linked_list::LinkedList;
 
    let mut list = LinkedList::new();
    list.push_tail("a");
@@ -58,7 +58,7 @@ on both the front and tail of the list in `O(1)` time.
 Rob Pike has famously claimed to have never written a program with cursors. Unfortunately for me, I'm not as clever as Rob Pike, so this module's second major struct is [`CursorMut`]. This mutable cursor type adds positional functionality to the list and contains functions for splitting and splicing lists, and range operations.
 
 ```rust
-    use dsa_rust::lists::doubly_linked_list::LinkedList;
+    use dsa_rust::sequences::doubly_linked_list::LinkedList;
 
     // First list
     let mut first = LinkedList::new();
@@ -846,8 +846,10 @@ impl<T> CursorMut<'_, T> {
 
         // Case 2) The cursor is on the ghost node;
         // replace self with an empty list, return the original list
+        // EDIT: replace self with None, return the original list
         } else {
-            std::mem::replace(self.list, LinkedList::new())
+            //std::mem::replace(self.list, LinkedList::new())
+            std::mem::take(self.list)
         }
     }
 
@@ -915,8 +917,10 @@ impl<T> CursorMut<'_, T> {
 
         // Case 2) The cursor is on the ghost node;
         // replace self with an empty list, return the original list
+        // EDIT: replace self with None, return the original list
         } else {
-            std::mem::replace(self.list, LinkedList::new())
+            //std::mem::replace(self.list, LinkedList::new())
+            std::mem::take(self.list)
         }
     }
 
@@ -1057,12 +1061,13 @@ impl<T> CursorMut<'_, T> {
 }
 
 #[cfg(test)]
+#[allow(clippy::items_after_test_module)] // Example runner comes after tests
 mod list_tests {
     use super::*;
 
     #[test]
     fn list_test() {
-        use crate::lists::doubly_linked_list::{CursorMut, LinkedList};
+        use crate::sequences::doubly_linked_list::{CursorMut, LinkedList};
 
         // Operational tests
         // Creates a new doubly-linked list
@@ -1159,7 +1164,7 @@ mod list_tests {
 
     #[test]
     fn cursor_test() {
-        use crate::lists::doubly_linked_list::{CursorMut, LinkedList};
+        use crate::sequences::doubly_linked_list::{CursorMut, LinkedList};
 
         // Creates a new doubly-linked list
         // and pushes some elements to it
@@ -1208,7 +1213,7 @@ mod list_tests {
 
     #[test]
     fn split_after() {
-        use crate::lists::doubly_linked_list::LinkedList;
+        use crate::sequences::doubly_linked_list::LinkedList;
 
         // Creates a new doubly-linked list
         // and pushes some elements to it
@@ -1238,7 +1243,7 @@ mod list_tests {
 
     #[test]
     fn split_before() {
-        use crate::lists::doubly_linked_list::LinkedList;
+        use crate::sequences::doubly_linked_list::LinkedList;
 
         // Creates a new doubly-linked list
         // and pushes some elements to it
@@ -1268,7 +1273,7 @@ mod list_tests {
 
     #[test]
     fn splice_before() {
-        use crate::lists::doubly_linked_list::LinkedList;
+        use crate::sequences::doubly_linked_list::LinkedList;
 
         // Creates a new doubly-linked list
         // and pushes some elements to it
@@ -1331,7 +1336,7 @@ mod list_tests {
 
     #[test]
     fn remove_current() {
-        use crate::lists::doubly_linked_list::LinkedList;
+        use crate::sequences::doubly_linked_list::LinkedList;
 
         // Creates a new doubly-linked list
         // and pushes some elements to it
@@ -1386,7 +1391,7 @@ mod list_tests {
 
     #[test]
     fn insert_before() {
-        use crate::lists::doubly_linked_list::LinkedList;
+        use crate::sequences::doubly_linked_list::LinkedList;
 
         // Creates a new doubly-linked list
         // and pushes some elements to it
@@ -1441,7 +1446,7 @@ mod list_tests {
 
     #[test]
     fn insert_after() {
-        use crate::lists::doubly_linked_list::LinkedList;
+        use crate::sequences::doubly_linked_list::LinkedList;
 
         // Creates a new doubly-linked list
         // and pushes some elements to it
@@ -1603,14 +1608,14 @@ pub fn example() {
     for (i, _) in (0..max).enumerate() {
         // If the first list has a value, print it
         if let Some(s) = second_iter.next() {
-            print!("{}", s);
+            print!("{s}");
             if i < max - 1 {
                 print!(", ");
             }
         }
         // If the second list has a value, print it
         if let Some(f) = first_iter.next() {
-            print!("{}", f);
+            print!("{f}");
             if i < max - 1 {
                 print!(", ");
             }
