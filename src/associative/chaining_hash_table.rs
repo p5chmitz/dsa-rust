@@ -43,6 +43,7 @@ impl<K, V> Entry<K, V> {
         Entry { key, value }
     }
 }
+
 #[derive(Debug)]
 pub struct ChainingHashTable<K, V> {
     data: Vec<Option<Vec<Entry<K, V>>>>,
