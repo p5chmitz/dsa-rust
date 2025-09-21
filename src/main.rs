@@ -163,6 +163,7 @@ fn main() {
         // TREES
         ////////
         Some("hierarchies") => {
+            println!("\x1b[1;34mFile tree:\x1b[0m");
             let path = std::path::Path::new("src");
             hierarchies::file_tree::disk_usage(path);
             println!();
@@ -187,7 +188,7 @@ fn main() {
             println!("\nHash code generator");
             associative::hash_lib::visual_hash_code("Schmitz");
             println!("\nHash code generator (with Rust's default 64-bit hasher)");
-            let s = "TypicalPassword123";
+            let s = "Brain";
             let v = associative::hash_lib::hash(s);
             println!("Hash code for {s}: {v}");
             println!("\nHash code generator (feeding individual bytes to Rust's hasher)");
@@ -254,6 +255,8 @@ fn main() {
                 associative::probing_hash_table::example();
                 i += 1;
             }
+
+            //let _m = associative::hash_set::example();
 
             println!("\x1b[1;34mGeneric linked list:\x1b[0m");
             sequences::doubly_linked_list::example();
