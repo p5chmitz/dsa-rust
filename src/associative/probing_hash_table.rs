@@ -1,33 +1,19 @@
 /*! Safe, open addressing hash table with MAD compression and quadratic probing
 
 # About
-This hash map implementation uses open-addressing to take advantage of cache locality while still effectively addressing collisions with a "multiply, add, and divide" (MAD) compression algorithm and quadratic probing.
+This hash map implementation uses open-addressing to take advantage of cache locality, and relies on a "multiply, add, and divide" (MAD) compression algorithm with quadratic probing to handle collisions.
 
-This implementation provides the basic design inspiration for several other structures in this library, including the [MultiMap](), [Set](), and [MultiSet]() structures. All of these structures provide unsorted (and unsortable) implementations. The major difference between this standard hash map and the multimap implementation is the `put(k, v)` operation which overwrites any value for identical keys in the standard map.
-
-For a sorted map/set, see either [TreeMap]()\*, [SkipListMap]()\*, or [BTreeMap]()\*.
-\*NOTE: Unimplemented as of 8/20/25
+This structure provides the basis for several other structures in this library, including the [PriorityQueue<K, P>](crate::composite::priority_queue) and [HashSet\<T>](crate::associative::hash_set) implementations.
 
 # Design
-The primary [HashMap] struct relies on an internal [Entry] enum with `Live` and `Tombstone` variants. To keep the probing logic consistent you cannot simply overwrite data for the slot and instead handle locations with removed entries with some marker. Using a sum type allows the map to distinguish between live entries, deleted entries, and empty slots with the addition of the standard library's own `Option::None` enum.
+This structure uses Rust's [default hasher](std::hash::DefaultHasher) to hash keys. The default hasher currently represents a cryptographically strong [SipHash-1-3](https://en.wikipedia.org/wiki/SipHash) design as of the publication date (9/2025). In practice, hashing small key objects <= 128 bytes provide similar performance as ULID generation, but hashing arbitrarily large key objects may incur performance penalties.
 
-The map uses a free list, but only overwrites previous entries if there are colissions. If you were to use a free-list of positions like a stack for new entries to reduce wasted space you risk breaking the probing semantics.
-
-## Insertion
-The structure contains two ways to insert entries into the map. The `put()` operation overwrites values for existing keys, but does not mutate the existing key. This keeps with the standard library's implementation where two keys can be `==` without being identical.
-
-\*From std::HashMap: If the map did have this key present, the value is updated, and the old value is returned. The key is not updated, though; this matters for types that can be == without being identical. See the module-level documentation for more.
-
-## Rehashing
-The structure has two re-hashing operations. The `rehash()` operation rehashes the entire map without removed entries _at the current underlying structure's capacity_. This essentially allows you to permanently remove deleted entries. Conversely, the `shrink_to_fit()` operation rehashes the map, without removed entries, down to the minimum capacity that still provides a load factor of _<= .5_. Both processes necessarily require _O(n)_ time where _n_ is the number of live entries in the map.
-
-There is a [shrink_to_fit()]() operation that allows long-lived maps with many deletions to reduce spatial bloat by re-building the map without the accumulated tombstones. Rebuilding the map requires _O(n)_ time.
+The primary [HashMap] struct uses a private byte mask (as a "control" list) to track positions with valid ("live"), empty, and removed ("tombstone") entries. Using a conventional free list and overwriting data for a marked slot would break the quadratic probing logic.
 
 ```text
 +-------------------------------------------------+
 | ctrl | Option<Entry<K, V>>                      |
 |------+------------------------------------------|
-|    0 | None                                     |
 |    0 | None                                     |
 |    0 | None                                     |
 |    0 | None                                     |
@@ -43,13 +29,132 @@ There is a [shrink_to_fit()]() operation that allows long-lived maps with many d
 |    0 | None                                     |
 |    0 | None                                     |
 |    1 | Some(Entry { key: "Remus", value: 22 })  |
-|  187 | Some(Entry { key: "", value: 0 })        |
+|  187 | None                                     |
 |    0 | None                                     |
 |    1 | Some(Entry { key: "Bobson", value: 36 }) |
 |    0 | None                                     |
 |    0 | None                                     |
 |    0 | None                                     |
-|  187 | Some(Entry { key: "", value: 0 })        |
+|  187 | None                                     |
++-------------------------------------------------+
+```
+
+## Insertion
+The structure contains two primary ways to insert entries into the map. 
+
+The [put()](crate::associative::probing_hash_table::HashMap::put) operation overwrites values for existing keys, but does not mutate the existing key. This keeps with the standard library's implementation where two keys can be `==` without being identical. 
+
+```rust
+    use dsa_rust::associative::probing_hash_table::HashMap;
+
+    // Build a map with put()
+    let mut map = HashMap::<&str, u8>::new();
+    let mut names: Vec<&str> = vec!["Peter", "Brain", "Remus", "Bobson", "Dingus", "Dangus"];
+    let values: Vec<u8> = vec![39, 37, 22, 36, 18, 27];
+    for (k, v) in names.iter().zip(values.into_iter()) {
+        map.put(k, v);
+    }
+```
+
+The structure also provides a [mut_val_or()](crate::associative::probing_hash_table::HashMap::mut_val_or) operation for mutating the value(s) of the map or inserting a default value. This is useful with the structures iterators to make linear passes over source data during mapping.
+
+
+```rust
+    use dsa_rust::associative::probing_hash_table::HashMap;
+
+    // Build a map with mut_val_or()
+    let mut map = HashMap::<char, u8>::new();
+    let word: &str = "Hello, sickos!";
+    for k in word.chars() {
+        map.mut_val_or(k, |x| *x += 1, 1);
+    }
+
+```
+
+## Removal & Rehashing
+The structure contains a [remove()](crate::associative::probing_hash_table::HashMap::remove) operation that returns an owned entry if it exists in the map. The `remove()` operation marks the index with a tombstone, and uses [std::mem::take] to remove and return the value. Even though `take()` swaps out a `None` variant the index remains unusable until the calling code invokes a rehash operation. This is done in order to retain probing logic. For long-lived maps with many removals/tombstones, the structure provides two re-hashing operations. The [rehash()](crate::associative::probing_hash_table::HashMap::rehash) operation rehashes the entire map (freeing up tombstones) _at the current underlying structure's capacity_. This essentially allows you to permanently remove deleted entries and reduce the map's load factor. Conversely, the [shrink_to_fit()](crate::associative::probing_hash_table::HashMap::shrink_to_fit) operation rehashes the map (freeing up tombstones) down to the minimum backing capacity that still provides a load factor of _<= .5_. Both processes necessarily require _O(n)_ time where _n_ is the number of live entries in the map.
+
+Example of a map that has had many entries removed:
+
+```text
++-------------------------------------------------+
+| ctrl | Option<Entry<K, V>>                      |
+|------+------------------------------------------|
+|    1 | Some(Entry { key: 'o', value: 2 })       |
+|  187 | None                                     |
+|    0 | None                                     |
+|  187 | None                                     |
+|    1 | Some(Entry { key: 'l', value: 2 })       |
+|  187 | None                                     |
+|    0 | None                                     |
+|    0 | None                                     |
+|    0 | None                                     |
+|  187 | None                                     |
+|  187 | None                                     |
+|    0 | None                                     |
+|    0 | None                                     |
+|    0 | None                                     |
+|    0 | None                                     |
+|    1 | Some(Entry { key: 'H', value: 1 })       |
+|    0 | None                                     |
+|  187 | None                                     |
+|    0 | None                                     |
+|    0 | None                                     |
+|    1 | Some(Entry { key: 'e', value: 1 })       |
+|  187 | None                                     |
+|    0 | None                                     |
++-------------------------------------------------+
+```
+
+This example illustrates how the map might look after a `rehash()`:
+
+```text
++-------------------------------------------------+
+| ctrl | Option<Entry<K, V>>                      |
+|------+------------------------------------------|
+|    1 | Some(Entry { key: 'H', value: 1 })       |
+|    1 | Some(Entry { key: 'o', value: 2 })       |
+|    0 | None                                     |
+|    0 | None                                     |
+|    0 | None                                     |
+|    0 | None                                     |
+|    0 | None                                     |
+|    0 | None                                     |
+|    0 | None                                     |
+|    0 | None                                     |
+|    0 | None                                     |
+|    0 | None                                     |
+|    1 | Some(Entry { key: 'l', value: 2 })       |
+|    0 | None                                     |
+|    0 | None                                     |
+|    0 | None                                     |
+|    0 | None                                     |
+|    0 | None                                     |
+|    0 | None                                     |
+|    0 | None                                     |
+|    1 | Some(Entry { key: 'e', value: 1 })       |
+|    0 | None                                     |
+|    0 | None                                     |
++-------------------------------------------------+
+```
+
+This example illustrates how the map might look after a `shrink_to_fit()`:
+
+```text
++-------------------------------------------------+
+| ctrl | Option<Entry<K, V>>                      |
+|------+------------------------------------------|
+|    1 | Some(Entry { key: 'H', value: 1 })       |
+|    0 | None                                     |
+|    0 | None                                     |
+|    1 | Some(Entry { key: 'l', value: 2 })       |
+|    1 | Some(Entry { key: 'o', value: 2 })       |
+|    0 | None                                     |
+|    0 | None                                     |
+|    1 | Some(Entry { key: 'e', value: 1 })       |
+|    0 | None                                     |
+|    0 | None                                     |
+|    0 | None                                     |
 +-------------------------------------------------+
 ```
 
@@ -108,7 +213,7 @@ There is a [shrink_to_fit()]() operation that allows long-lived maps with many d
     println!("\nThere can be only one!");
     names.remove(0);
     for e in names {
-        let removed = map.remove(e);
+        let removed = map.remove(&e);
         if let Some(entry) = removed {
             println!("Remove: {}", entry.key());
         }
@@ -218,8 +323,8 @@ where
 
 #[derive(Debug)]
 pub struct HashMap<K, V> {
-    data: Vec<Option<Entry<K, V>>>, // The primary memory backing
-    ctrl: Vec<u8>,                  // A byte mask to identify available positions
+    pub data: Vec<Option<Entry<K, V>>>, // The primary memory backing
+    pub ctrl: Vec<u8>,                  // A byte mask to identify available positions
     size: usize,                     // The total number of entries in the map (live + deleted)
     live: usize,                    // The number of "live" entries in the map
                  
@@ -241,13 +346,13 @@ where
 }
 impl<K, V> HashMap<K, V>
 where
-    K: Debug + Default + Eq + Hash + PartialEq,
+    K: Debug + Eq + Hash + PartialEq,
     V: Default + PartialEq + std::fmt::Debug,
 {
-    /// Constructor for an empty table with a default capacity of 2
-    pub fn new() -> HashMap<K, V> {
+    /// Constructor for an empty map with a default capacity of 2.
+    pub fn new() -> Self {
         let new_capacity = 2;
-        let mut table = HashMap {
+        let mut table = Self {
             data: Vec::with_capacity(new_capacity),
             ctrl: Vec::with_capacity(new_capacity),
             prime: 13,
@@ -259,6 +364,23 @@ where
         // Initialize storage to ensure access
         table.data.resize_with(new_capacity, || None);
         table.ctrl.resize_with(new_capacity, || 0x00);
+        table
+    }
+
+    /// Constructor for an empty map with a given capacity.
+    pub fn new_with_capacity(size: usize) -> Self {
+        let mut table = Self {
+            data: Vec::with_capacity(size),
+            ctrl: Vec::with_capacity(size),
+            prime: 13,
+            scale: 5,
+            shift: 7,
+            size: 0,
+            live: 0,
+        };
+        // Initialize storage to ensure access
+        table.data.resize_with(size, || None);
+        table.ctrl.resize_with(size, || 0x00);
         table
     }
 
@@ -287,7 +409,7 @@ where
 
     /// Returns the total number of available slots in the map in _O(1)_ time. 
     ///
-    /// NOTE: The load factor is the quotient of `size() / capacity()`.
+    /// NOTE: The load factor is the quotient of `len() / capacity()`.
     pub fn capacity(&self) -> usize {
         self.data.len()
     }
@@ -312,20 +434,7 @@ where
         K: std::borrow::Borrow<Q>,
         Q: Debug + Hash + Eq + ?Sized,
     {
-        //pub fn contains(&self, key: K) -> bool {
-        let hash = Self::hash(&key);
-        let mut location = self.compress(hash);
-        // Quadratic probing logic
-        let mut i: usize = 1;
-        while let Some(bucket) = &self.data[location] {
-            if bucket.key.borrow() == key && self.ctrl[location] == 0x01 {
-                return true;
-            } else {
-                location = (location + i.pow(2)) % self.data.len();
-                i += 1;
-            }
-        }
-        false
+        self.find_index(key) >= 0
     }
 
     /// Returns a reference to the value associated with a key, if the key exists.
@@ -349,21 +458,15 @@ where
     /// existing key `k`, returns old value. If a new addition increases
     /// the map's load factor above the designated threshhold of 0.5
     /// the map resizes.
-    pub fn put(&mut self, key: K, value: V) -> Option<Entry<K, V>> {
+    pub fn put(&mut self, key: K, value: V) -> Option<Entry<K, V>> 
+    //where 
+    //    K: std::default::Default,
+    {
         // Checks if the addition will bring the load factor above threshold
         if ((self.size) as f64 + 1.0) / self.data.len() as f64 >= 0.5 {
             self.grow();
         }
 
-        // Hashes and compresses key to produce a unique value
-        //let hash = Self::hash(&key);
-        //let compressed_key = self.compress(hash);
-
-        // Finds the correct insertion location using probing
-        // Searches the map for key:
-        // if >= 0, overwrite the location and return the old Entry,
-        // if < 0, insert new entry at that location, return None
-        //let location = self.find_index(compressed_key, &key);
         let location = self.find_index(&key);
 
         // Creates a new Entry and inserts it
@@ -384,6 +487,28 @@ where
         old_entry
     }
 
+    // Attempts to add entry `(k, v)` to the map, if key `k` does not
+    // already exist. If a new addition increases
+    // the map's load factor above the designated threshhold of 0.5
+    // the map resizes.
+    pub fn try_put(&mut self, key: K, value: V) {
+        // Checks if the addition will bring the load factor above threshold
+        if ((self.size) as f64 + 1.0) / self.data.len() as f64 >= 0.5 {
+            self.grow();
+        }
+    
+        let location = self.find_index(&key);
+    
+        // Avoids duplicates all together
+        if location < 0 {
+            let entry = Entry::new(key, value);
+            self.data[-(location + 1) as usize] = Some(entry);
+            self.ctrl[-(location + 1) as usize] = 0x01;
+            self.size += 1;
+            self.live += 1;
+        }
+    }
+
     /// Takes a key, a closure, and a default value. If the key is in the map, applies the closure
     /// to the corresponding entry's value. If the key is not in the map, creates a new entry with
     /// the provided value.
@@ -400,6 +525,7 @@ where
     pub fn mut_val_or<F>(&mut self, key: K, f: F, default: V)
     where
         F: FnOnce(&mut V),
+        K: std::default::Default,
     {
         // Find the appropriate index
         let index = self.find_index(&key);
@@ -416,28 +542,46 @@ where
     }
 
     /// Removes and returns an entry from the map for a given key, if it exists in the map.
-    pub fn remove(&mut self, key: K) -> Option<Entry<K, V>> {
-        let location = self.find_index(&key);
+    pub fn remove<Q>(&mut self, key: &Q) -> Option<Entry<K, V>>
+    where
+        K: std::borrow::Borrow<Q>,
+        Q: Debug + Hash + Eq + ?Sized,
+    {
+    //pub fn remove(&mut self, key: K) -> Option<Entry<K, V>> {
+        let location = self.find_index(key);
 
         let mut entry = None;
         if location >= 0 {
-            entry = self.data[location as usize].replace(Entry::default());
+            //entry = self.data[location as usize].replace(Entry::default());
+            entry = self.data[location as usize].take();
             self.ctrl[location as usize] = 0xBB; // Mark with tombstone
             self.live -= 1;
         }
         entry
     }
 
+    /// Consumes self and returns a new map of the same size, but without any tombstones.
+    /// Works like a cleanup operation in _O(capacity)_ time because `into_iter` checks all positions.
+    pub fn rehash(self) -> Self {
+        let mut new = Self::new_with_capacity(self.data.len());
+        for (k, v) in self.into_iter() {
+            new.put(k, v);
+        }
+        new
+    }
+
     /// Rebuilds the map to eliminate accumulated tombstones thereby reducing
     /// spatial bloat. This operation runs in _O(n)_ time and is intended for
-    /// long-lived maps that have undergone many insertions and deletions.
+    /// long-lived maps that have undergone many deletions.
     ///
     /// The operation consumes the existing map and returns a new `HashMap`
     /// with the same live entries.
-    ///
-    /// WARNING: Unimplemented
     pub fn shrink_to_fit(self) -> Self {
-        Self::new()
+        let mut new = Self::new();
+        for (k, v) in self.into_iter() {
+            new.put(k, v);
+        }
+        new
     }
 
     /// Returns an iterator over borrowed values. The resulting values
@@ -458,10 +602,43 @@ where
         }
     }
 
+    /// Returns an iterator over borrowed keys only. The keys
+    /// appear in random order.
+    ///
+    /// Example use:
+    /// ```text
+    /// for e in map.keys() {
+    ///     println!("{e}");
+    /// }
+    /// ```
+    pub fn keys(&self) -> Keys<'_, K, V> {
+        Keys {
+            iter: self.data.iter(),
+        }
+    }
+
+    /// Returns an iterator over borrowed values only. The values
+    /// appear in random order.
+    ///
+    /// Example use:
+    /// ```text
+    /// for e in map.values() {
+    ///     println!("{e}");
+    /// }
+    /// ```
+    pub fn values(&self) -> Values<'_, K, V> {
+        Values {
+            iter: self.data.iter(),
+        }
+    }
+
     // UTILITY FUNCTIONS
     ////////////////////
 
-    //
+    /// Finds the correct insertion location using probing
+    /// Searches the map for key:
+    /// if `>= 0`, overwrite the location and return the old Entry,
+    /// if `< 0`, insert new entry at that location, return None
     fn find_index<Q>(&self, key: &Q) -> isize
     where
         K: std::borrow::Borrow<Q>,
@@ -469,18 +646,34 @@ where
     {
         let mut i: usize = 1;
         let hash = Self::hash(&key);
-        let mut current_bucket = self.compress(hash);
-
+        let mut current_index = self.compress(hash);
+    
         // Quadratic probing logic
-        while let Some(entry) = &self.data[current_bucket] {
-            if entry.key.borrow() == key {
-                return current_bucket as isize;
-            } else {
-                current_bucket = (current_bucket + i.pow(2)) % self.data.len();
-                i += 1;
+        loop {
+            match &self.data[current_index] {
+                Some(val) => {
+                    if val.key.borrow() == key {
+                        return current_index as isize;
+                    }
+                },
+                None => {
+                    if self.ctrl[current_index] != 0xBB {
+                        return -(current_index as isize + 1)
+                    } 
+                }
             }
+            current_index = (current_index + i.pow(2)) % self.data.len();
+            i += 1;
         }
-        -(current_bucket as isize + 1)
+        //while let Some(entry) = &self.data[current_index] {
+        //    if entry.key.borrow() == key && self.ctrl[current_index] != 0xBB {
+        //        return current_index as isize;
+        //    } else {
+        //        current_index = (current_index + i.pow(2)) % self.data.len();
+        //        i += 1;
+        //    }
+        //}
+        //-(current_index as isize + 1)
     }
 
     /// Takes a reference to a type `T` and uses Rust's default hasher to return a
@@ -588,6 +781,69 @@ where
     }
 }
 
+// Returns a tuple of owned key:value pairs (K, V)
+pub struct IntoIter<K, V> {
+    inner: std::iter::Zip<
+        std::vec::IntoIter<Option<Entry<K, V>>>,
+        std::vec::IntoIter<u8>
+    >,
+}
+impl<K, V> Iterator for IntoIter<K, V> {
+    type Item = (K, V);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        for (slot, tag) in self.inner.by_ref() {
+            if tag == 1 {
+                if let Some(entry) = slot {
+                    return Some((entry.key, entry.value));
+                }
+            }
+
+        }
+        None
+    }
+}
+
+// Allows caller to consume HashMap as an iterator
+impl<K, V> IntoIterator for HashMap<K, V> {
+    type Item = (K, V);
+    type IntoIter = IntoIter<K, V>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        IntoIter {
+            inner: self.data.into_iter().zip(self.ctrl),
+        }
+    }
+}
+
+pub struct Keys<'a, K, V> {
+    iter: std::slice::Iter<'a, Option<Entry<K, V>>>,
+}
+impl<'a, K, V> Iterator for Keys<'a, K, V> {
+    type Item = &'a K;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if let Some(entry) = self.iter.by_ref().flatten().next() {
+            return Some(&entry.key);
+        }
+        None
+    }
+}
+
+pub struct Values<'a, K, V> {
+    iter: std::slice::Iter<'a, Option<Entry<K, V>>>,
+}
+impl<'a, K, V> Iterator for Values<'a, K, V> {
+    type Item = &'a V;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if let Some(entry) = self.iter.by_ref().flatten().next() {
+            return Some(&entry.value);
+        }
+        None
+    }
+}
+
 // Unit tests
 /////////////
 
@@ -637,7 +893,7 @@ fn probing_hash_table_test() {
 
     // Illustrates that removes entries by key and returns the value
     assert!(map.contains("Dangus"));
-    let removed = map.remove("Dangus").unwrap();
+    let removed = map.remove(&"Dangus").unwrap();
     assert_eq!(
         removed,
         Entry {
@@ -653,19 +909,26 @@ fn probing_hash_table_test() {
 fn mut_val_test() {
     //Creates a new hash map
     let mut count = HashMap::<char, u8>::new();
-    let word: &str = "Hello, sickos";
-    assert_eq!(count.remove('s'), None);
-    for k in word.chars() {
-        count.mut_val_or(k, |x| *x += 1, 1);
+    let phrase: &str = "Hello, sickos";
+
+    // Seeds the map with just the characters and a default value
+    for char in phrase.chars() {
+        count.put(char, 0);
     }
-    count.remove('s');
-    count.remove('i');
-    count.remove('c');
-    count.remove('k');
-    count.remove('o');
-    count.remove(',');
-    count.remove(' ');
-    eprintln!("My map: {count:#?}");
+
+    eprintln!("\nInitial state:");
+    count.contents();
+
+    // Iterates through the map again, updating each value based on its occurence
+    // NOTE: Can also be used as initial mapping operation with the same code, 
+    // but was split here for illustrative purposes
+    for char in phrase.chars() {
+        count.mut_val_or(char, |x| *x += 1, 1);
+    }
+
+    // Pretty-prints the contents of the map
+    eprintln!("\nModified:");
+    count.contents();
 
     // Uncomment to trigger debug print
     //assert!(count.is_empty());
@@ -674,32 +937,194 @@ fn mut_val_test() {
 #[test]
 // Tests that the structure is iterable
 fn iter_test() {
-    //Creates a new hash map
-    let mut count = HashMap::<char, u8>::new();
-    let word: &str = "Hello, sickos";
-    for k in word.chars() {
-        count.mut_val_or(k, |x| *x += 1, 1);
+    //Creates a new hash map of the frequence letters in the given phrase
+    let mut map = HashMap::<char, u8>::new();
+    let phrase: &str = "Hello, sickos";
+    for char in phrase.chars() {
+        map.mut_val_or(char, |x| *x += 1, 1);
     }
 
-    eprintln!("\nProvided pretty-printer: ");
-    count.contents();
+    eprintln!("\nInitial map state:");
+    map.contents();
 
+    // Iterates through the map, pushing entries 
+    // to a Vec as tuples returned from the iterator
     eprintln!("\nCompact map: ");
-    let mut v = Vec::new();
-    for e in count.iter() {
-        v.push(*e.0);
+    let mut vec = Vec::new();
+    for e in map.iter() {
+        vec.push(*e.0);
         eprintln!("{e:?}")
     }
 
-    assert!(v.contains(&'s'));
-    assert!(v.contains(&'i'));
-    assert!(v.contains(&'c'));
-    assert!(v.contains(&'k'));
-    assert!(v.contains(&'o'));
+    eprintln!("\nFinal map state:");
+    map.contents();
+
+    eprintln!("\nFinal vec state:");
+    for e in vec.iter() {
+        eprintln!("{:?}", *e)
+    }
+
+    // Proves that all entries are still valid
+    // Vec contains only keys
+    assert!(vec.contains(&'s'));
+    assert!(vec.contains(&'i'));
+    assert!(vec.contains(&'c'));
+    assert!(vec.contains(&'k'));
+    assert!(vec.contains(&'o'));
+
+    // Map contains whole entries
+    assert!(map.contains(&'s'));
+    assert!(map.contains(&'i'));
+    assert!(map.contains(&'c'));
+    assert!(map.contains(&'k'));
+    assert!(map.contains(&'o'));
+
+    eprintln!("\nPrinting just the keys:");
+    for key in map.keys() {
+        eprintln!("{key}");
+    }
+
+    eprintln!("\nPrinting just the values:");
+    for value in map.values() {
+        eprintln!("{value}");
+    }
+
+    // Consume the map and transfer it to a new map
+    let mut new_map = HashMap::<char, u8>::new();
+    for e in map.into_iter() {
+        new_map.put(e.0, e.1);
+    }
+    // Illegal, map is moved/consumed!
+    //assert!(map.is_empty());
+    
+    // But new_map contains data now
+    assert!(new_map.contains(&'s'));
+    assert!(new_map.contains(&'i'));
+    assert!(new_map.contains(&'c'));
+    assert!(new_map.contains(&'k'));
+    assert!(new_map.contains(&'o'));
 
     // Uncomment to trigger debug print
-    assert!(count.is_empty());
+    //assert!(map.is_empty());
 }
+
+#[test]
+// Tests that into_iter consumes the map, 
+// and that rehash and shrink_to_fit delete removed entries
+fn rehash_test() {
+    //Creates a new hash map
+    let mut map = HashMap::<char, u8>::new();
+    let word: &str = "Hello, sickos!";
+    for k in word.chars() {
+        map.mut_val_or(k, |x| *x += 1, 1);
+    }
+
+    // Prints initial state of the map
+    // and illustrates that values exist
+    eprintln!("\nInitial state: ");
+    map.contents();
+    assert!(map.contains(&','));
+    assert!(map.contains(&' '));
+    assert!(map.contains(&'!'));
+    assert!(map.contains(&'s'));
+    assert_eq!(map.len(), 11);
+    assert_eq!(map.data.len(), 23);
+
+    // Removes the values
+    map.remove(&',');
+    map.remove(&' ');
+    map.remove(&'!');
+    map.remove(&'s');
+    map.remove(&'i');
+    map.remove(&'c');
+    map.remove(&'k');
+
+    // Checks that the values are removed
+    eprintln!("\nModified: ");
+    map.contents();
+    assert!(!map.contains(&','));
+    assert!(!map.contains(&' '));
+    assert!(!map.contains(&'!'));
+    assert!(!map.contains(&'s'));
+    assert_eq!(map.len(), 4);
+    assert_eq!(map.data.len(), 23);
+
+    // Rehashes to get rid of deleted items
+    // map goes out of scope here
+    let new_map = map.rehash();
+
+    // Illegal operation! into_iter has consumed map!
+    // assert!(map.contains(&'H'));
+
+    // Checks that the values are removed
+    // but the capacity remains the same as before
+    eprintln!("\nRehash: ");
+    new_map.contents();
+    assert!(!new_map.contains(&','));
+    assert!(!new_map.contains(&' '));
+    assert!(!new_map.contains(&'!'));
+    assert!(!new_map.contains(&'s'));
+    assert_eq!(new_map.len(), 4);
+    assert_eq!(new_map.data.len(), 23);
+
+    // Repeats the process for shrink_to_fit
+    //
+    //Creates a new hash map
+    let mut map = HashMap::<char, u8>::new();
+    let word: &str = "Hello, sickos!";
+    for k in word.chars() {
+        map.mut_val_or(k, |x| *x += 1, 1);
+    }
+
+    // Prints initial state of the map
+    // and illustrates that values exist
+    eprintln!("\nInitial state: ");
+    map.contents();
+    assert!(map.contains(&','));
+    assert!(map.contains(&' '));
+    assert!(map.contains(&'!'));
+    assert!(map.contains(&'s'));
+    assert_eq!(map.len(), 11);
+    assert_eq!(map.data.len(), 23);
+
+    // Removes the values
+    map.remove(&',');
+    map.remove(&' ');
+    map.remove(&'!');
+    map.remove(&'s');
+    map.remove(&'i');
+    map.remove(&'c');
+    map.remove(&'k');
+
+    // Checks that the values are removed
+    eprintln!("\nModified: ");
+    map.contents();
+    assert!(!map.contains(&','));
+    assert!(!map.contains(&' '));
+    assert!(!map.contains(&'!'));
+    assert!(!map.contains(&'s'));
+    assert_eq!(map.len(), 4);
+    assert_eq!(map.data.len(), 23);
+
+    // Rehashes to get rid of deleted items
+    // map goes out of scope here
+    let new_map = map.shrink_to_fit();
+
+    // Checks that the values are removed
+    // but the capacity remains the same as before
+    eprintln!("\nRehash (shrink to fit): ");
+    new_map.contents();
+    assert!(!new_map.contains(&','));
+    assert!(!new_map.contains(&' '));
+    assert!(!new_map.contains(&'!'));
+    assert!(!new_map.contains(&'s'));
+    assert_eq!(new_map.len(), 4);
+    assert_eq!(new_map.data.len(), 11);
+
+    // Uncomment to trigger debug print
+    //panic!("MANUAL TEST FAILURE");
+}
+
 
 // TODO: This belongs in either an external runner or in an integration test module
 pub fn example() {
@@ -753,7 +1178,7 @@ pub fn example() {
     println!("\nThere can be only one!");
     names.remove(0);
     for e in names {
-        println!("Remove: {}", map.remove(e).unwrap().key);
+        println!("Remove: {}", map.remove(&e).unwrap().key);
     }
 
     // The final result
