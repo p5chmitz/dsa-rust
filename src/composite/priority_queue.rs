@@ -1,21 +1,68 @@
 /*! An adaptable priority queue implementation
 
 # About
-This structure adds key and priority mutation as well as entry removal operations over the base [binary heap](crate::hierarchies::bin_heap) in this library. You can use either structure to implement Dijkstra's algorithm, but this adaptable priority queue implementation avoids creating duplicate key entries which reduces spatial complexity and can _potentially_ improve temporal performance.
+This structure adds key and priority mutation as well as entry removal operations over the base [binary heap](crate::hierarchies::bin_heap) in this library. You can use the bare-bones binary heap to implement Dijkstra's algorithm, but this adaptable priority queue implementation avoids creating duplicate key entries which reduces spatial complexity and can _potentially_ improve temporal performance.
 
-The primary struct [PriorityQueue<K, P>](crate::composite::priority_queue::PriorityQueue) provides the ability to mutate both key `K` and priority `P` after insertion while maintaining _O(log(n))_ (or better) operations. It is the caller's responsibility to ensure that the keying schemes they use guarantees uniqueness to maintain the structure's integrity.
-
-You have the option to YOLO your way through your list by calling `put(K, P)` which overwrites the priorty for existing keys, or by using `try_put(K, P)` which returns [Result] if the key already exists in the queue.
+The primary struct [PriorityQueue<K, P>](crate::composite::priority_queue::PriorityQueue) provides the ability to mutate both key `K` and priority `P` _after_ insertion while maintaining _O(log(n))_ (or better) operations. It is the caller's responsibility to ensure that the keying schemes they use guarantees uniqueness to maintain the structure's integrity. The structure inherits the underlying binary heap property in that equal priorities do _not_ guarantee deterministic ordering, and different insertion or removal sequences on the same set of values may yield different internal heap layouts.
 
 # Design
 The composite desgin of this structure provides _O(log(n))_ insert, remove, and key/priority mutation operations. The structure uses a `Vec`-based [heap](crate::hierarchies::bin_heap) as its primary backing and ordering structure. In addition to the heap, this design also uses a [map](crate::associative::probing_hash_table) for (private) `find(k)` opertions that run in _O(1)_ time. The map lookups allow heap mutation operaitons to avoid _O(n)_ (_n/2_ average) lookups. Due to the map's deletion logic, removed items are technically leaked which grows the map with key mutations. Key mutation operations amortize temporal complexity to _O(1)_.
 
-This structure uses Rust's [default hasher](std::hash::DefaultHasher) to hash keys. The default hasher (currently) represents a cryptographically strong [SipHash-1-3](https://en.wikipedia.org/wiki/SipHash) implementation, though the implementation is subject to change. In practice, hashing small key objects <= 128 bytes provide similar performance as ULID generation, but keep in mind that hashing arbitrarily large key objects may incur performance penalties.
+## Insertion
+You have the option to YOLO your way through your list by calling [put(K, P)](crate::composite::priority_queue::PriorityQueue::put) which overwrites the priorty for existing keys, or by using [try_put(K, P)](crate::composite::priority_queue::PriorityQueue::try_put) which returns [Result] if the key already exists in the queue.
 
 # Example
 
 ```rust
+    use dsa_rust::composite::priority_queue::PriorityQueue;
 
+    // Build the queue
+    // NOTE: The ordering of equal priorities is NOT guaranteed
+    // Postcondition: [{Bobson, 2}, {Peter, 3}, {Brain, 3}]
+    let mut queue = PriorityQueue::<&str, u8>::new();
+    queue.put("Peter", 3);
+    queue.put("Bobson", 2);
+    queue.put("Brain", 3);
+
+    //let mut front = queue.peek().unwrap();
+    let (key, priority) = queue.peek().unwrap();
+    assert_eq!(key, &"Bobson");
+    assert_eq!(priority, &2u8); // With type specification for clarity
+
+    // Mutuate priority, bumping it to the front of the queue
+    // Postcondition: [{Peter, 1}, {Bobson, 2}, {Brain, 3}]
+    queue.mutate_priority("Peter", 1); // Mutable borrow invalidates "front"
+    let (key, priority) = queue.peek().unwrap();
+    assert_eq!(key, &"Peter");
+    assert_eq!(priority, &1);
+
+    // Key is already in the queue
+    assert!(queue.try_put("Peter", 4).is_err());
+
+    // Mutates the key at the front of the queue
+    // Postcondition: [{Piper, 1}, {Bobson, 2}, {Brain, 3}]
+    queue.mutate_key("Peter", "Piper");
+    let (key, priority) = queue.peek().unwrap();
+    assert_eq!(key, &"Piper");
+    assert_eq!(priority, &1);
+
+    // Pop the queue for owned values
+    // Postcondition: [{Bobson, 2}, {Brain, 3}]
+    let (key, priority) = queue.pop().unwrap();
+    assert_eq!(key, "Piper");
+    assert_eq!(priority, 1);
+
+    // Remove a random entry
+    // Postcondition: [{Brain, 3}]
+    assert!(queue.contains("Bobson"));
+    assert_eq!(queue.len(), 2);
+    let (key, priority) = queue.remove("Bobson").unwrap();
+    assert_eq!(key, "Bobson");
+    assert_eq!(priority, 2);
+
+    // Prove that its really gone
+    assert!(!queue.contains("Bobson"));
+    assert_eq!(queue.len(), 1);
 ```
 
 */
@@ -43,6 +90,8 @@ where
     heap: Vec<Entry<K, P>>,
     // Tracks entry indexes in the heap as <hashed_K, index>
     map: HashMap<usize, usize>,
+    size: usize, // # of live entries 
+    deleted: usize, // # of tombstones
 }
 impl<K, P> Default for PriorityQueue<K, P>
 where
@@ -67,6 +116,8 @@ where
         PriorityQueue {
             heap: Vec::new(),
             map: HashMap::new(),
+            size: 0,
+            deleted: 0,
         }
     }
 
@@ -75,12 +126,14 @@ where
         PriorityQueue {
             heap: Vec::with_capacity(capacity),
             map: HashMap::new(),
+            size: 0,
+            deleted: 0,
         }
     }
 
-    /// Returns the number of elements in the heap.
-    pub fn size(&self) -> usize {
-        self.heap.len()
+    /// Returns the number of live elements in the queue.
+    pub fn len(&self) -> usize {
+        self.size
     }
 
     /// Returns `true` if the queue is empty.
@@ -108,6 +161,8 @@ where
 
         // Update the map with a unique key and the element's index value
         self.map.put(hash, index);
+
+        self.size += 1
     }
 
     /// Attempts to add an element to the heap in _O(log(n))_ time.
@@ -128,6 +183,7 @@ where
 
             // Update the map with a unique key and the element's index value
             self.map.put(hash, index);
+            self.size += 1;
 
             Ok(())
         }
@@ -184,7 +240,15 @@ where
             }
 
             // Remove old key from the map
-            self.map.remove(hashed_old_key);
+            self.map.remove(&hashed_old_key); // Adds to tombstone count
+            self.deleted += 1;
+
+            // If tombstones out-number live entries, rehash to reduce load factor
+            //use std::mem;
+            //if self.deleted >= self.size {
+            //    let old = mem::take(&mut self.map); // replaces with empty map
+            //    self.map = old.rehash();            // consumes old
+            //}
 
             // Insert new key pointing to same index
             self.map.put(hashed_new_key, index);
@@ -193,36 +257,74 @@ where
             self.heap[index].key = new_key;
 
             Ok(old_key)
+
         } else {
             Err("Error: Old key does not exist in the queue")
         }
     }
 
-    /// Returns and removes the element at the top of the heap in _O(log(n))_ time.
+    /// A manual tool to rehash and shrink the structure's map down to 
+    /// a load factor <= 0.5. The structure automatically rehashes the underlying 
+    /// map for remove and key mutation operations to reduce spatial bloat in 
+    /// long-lived queues with many such mutations. This operation provides a 
+    /// manual way to actually shrink the underlying map down to a load factor 
+    /// of 0.5 over live entries only. This operation uses the map's 
+    /// [shrink_to_fit()](crate::associative::probing_hash_table::HashMap::shrink_to_fit) operation
+    /// to clean up the backing structure for long-lived queues in _O(n)_ time 
+    /// where `n` is the number of live entries in the queue.
+    pub fn clean(&mut self) {
+        use std::mem;
+        if self.map.deleted() >= self.map.len() {
+            let old = mem::take(&mut self.map); // replaces with empty map
+            self.map = old.shrink_to_fit();     // consumes old
+        }
+    }
+
+    /// Removes and returns the highest priority pair in the queue. 
+    /// This operation automatically checks for spatial bloat and rehashes the 
+    /// underlying map when tombstones outnumber live entries. Amortized cost 
+    /// is _O(log n)_, but a rehash may occasionally incur _O(n)_ time where `n` 
+    /// is the number of live entries in the queue.
     pub fn pop(&mut self) -> Option<(K, P)> {
         if !self.heap.is_empty() {
             let node = self.heap.swap_remove(0); // O(1)
             self.sift_down(0); // O(log(n))
+                               
+            // Rehash if tombstones out-number live entries
+            use std::mem;
+            if self.deleted >= self.size {
+            //if self.map.deleted() >= self.map.len() { // Checks take O(n) time :(
+                let old = mem::take(&mut self.map); 
+                self.map = old.rehash();            // O(n)
+            }
+
+            self.size -= 1;
+            self.deleted += 1;
             Some((node.key, node.priority))
         } else {
             None
         }
     }
 
-    /// Removes and returns the key:priority pair for the given key in _O(log(n))_ time.
+    /// Removes and returns an arbitrarily-located entry for the given key. 
+    /// This operation automatically checks for spatial bloat and rehashes the 
+    /// underlying map when tombstones outnumber live entries. Amortized cost 
+    /// is _O(log n)_, but a rehash may occasionally incur _O(n)_ time where `n` 
+    /// is the number of live entries in the queue.
     pub fn remove(&mut self, key: K) -> Option<(K, P)> {
         let hashed_key = Self::hash(&key);
 
         // If the key is in the queue, remove it
         if let Some(&index) = self.map.get(&hashed_key) {
-            self.map.remove(hashed_key);
+            self.map.remove(&hashed_key);
 
-            // Special case: last element
+            // Case 1: Removal of the last element
             if index == self.heap.len() - 1 {
                 let removed_entry = self.heap.pop().unwrap();
                 return Some((removed_entry.key, removed_entry.priority));
             }
 
+            // Case 2: Regular mid-structure removal
             // swap_remove allows you to maintain O(log(n)) removals
             // by avoiding O(n) shifts with remove
             let removed_entry = self.heap.swap_remove(index);
@@ -232,16 +334,35 @@ where
             self.map.put(Self::hash(&moved_key), index);
 
             // Decide whether to sift up or down to restore heap
-            let parent_index = (index - 1) / 2;
-            if index > 0 && self.heap[index].priority < self.heap[parent_index].priority {
-                self.sift_up(index);
+            if index > 0 {
+                let parent_index = (index - 1) / 2;
+                if self.heap[index].priority < self.heap[parent_index].priority {
+                    self.sift_up(index);
+                } else {
+                    self.sift_down(index);
+                }
             } else {
+                // Root can only move down
                 self.sift_down(index);
             }
 
+            // Check for % of tombstones and rehash to reduce load factor
+            //if self.map.len() as f64 / self.map.capacity() as f64 >= 0.5 {
+            //    self.map.rehash();
+            //}
+            // Rehash if tombstones out-number live entries
+            //use std::mem;
+            //if self.map.deleted() >= self.map.len() {
+            //    let old = mem::take(&mut self.map); // replaces with empty map
+            //    self.map = old.rehash();            // consumes old
+            //}
+
+            self.size -= 1;
             Some((removed_entry.key, removed_entry.priority))
+
+        // Case 3: The element doesn't exist in the queue
         } else {
-            None // No op; the key isn't in the queu
+            None // No op
         }
     }
 
@@ -331,6 +452,7 @@ where
 }
 
 #[cfg(test)]
+#[allow(clippy::uninlined_format_args)] // Cant inline all args in print
 mod tests {
 
     use super::*;
@@ -358,22 +480,60 @@ mod tests {
             queue.put(e.0, e.1)
         }
 
+        // Testing updated membership
+        assert!(queue.contains("Peter"));
+        assert!(queue.contains("Damiel"));
+        assert!(queue.contains("Cork"));
+        assert!(queue.contains("Dichael"));
+        assert!(queue.contains("Bobson"));
+        assert!(queue.contains("Sleve"));
+        assert!(queue.contains("Flank"));
+
         // DEBUG PRINT: initial state
-        eprintln!("Pre-mutations: {:#?}", queue);
+        eprintln!("Pre-mutations: {:#?}\n{:#?}", queue.heap, queue.map.data);
 
         // Attempt to place duplicate key:value pair
         assert!(queue.try_put("Dichael", 2).is_err());
 
+        // Testing updated membership
+        assert!(queue.contains("Peter"));
+        assert!(queue.contains("Damiel"));
+        assert!(queue.contains("Cork"));
+        assert!(queue.contains("Dichael"));
+        assert!(queue.contains("Bobson"));
+        assert!(queue.contains("Sleve"));
+        assert!(queue.contains("Flank"));
+
         // Attempt to mutate priority
         assert!(queue.mutate_priority("Cork", 1).is_ok()); // increase
         assert!(queue.mutate_priority("Damiel", 3).is_ok()); // decrease
+                                                             
+        // Testing updated membership
+        assert!(queue.contains("Peter"));
+        assert!(queue.contains("Damiel"));
+        assert!(queue.contains("Cork"));
+        assert!(queue.contains("Dichael"));
+        assert!(queue.contains("Bobson"));
+        assert!(queue.contains("Sleve"));
+        assert!(queue.contains("Flank"));
 
         // Attempt to mutate key
         assert!(queue.mutate_key("Peter", "The Peter").is_ok());
+        eprintln!("Mutate key: {:#?}\n{:#?}", queue.heap, queue.map.data);
+
+        // Testing updated membership
+        assert!(queue.contains("The Peter"));
+        assert!(queue.contains("Damiel"));
+        assert!(queue.contains("Cork"));
+        assert!(queue.contains("Dichael"));
+        assert!(queue.contains("Bobson"));
+        assert!(queue.contains("Sleve"));
+        assert!(queue.contains("Flank"));
 
         // Remove passengers
         assert_eq!(queue.remove("Sleve"), Some(("Sleve", 2)));
         assert_eq!(queue.remove("Flank"), Some(("Flank", 3)));
+        eprintln!("Removals: {:#?}\n{:#?}", queue.heap, queue.map.data);
 
         // Testing updated membership
         assert!(queue.contains("The Peter"));
@@ -412,7 +572,8 @@ mod tests {
         assert!(!passengers.contains(&("Sleve", 2)));
         assert!(!passengers.contains(&("Flank", 3)));
 
-        // Triggers failure for debug print
-        //assert!(passengers.contains(&("TEST", 69)));
+        // Uncomment to trigger debug print
+        //panic!("MANUAL TEST FAILURE")
+
     }
 }
