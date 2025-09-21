@@ -4,11 +4,11 @@
 
 # About
 This simple set structure offers mutating and non-mutating versions of basic set operations. Currently, the structure contains the following operations: 
-- [Union](crate::associative::hash_set::HashSet::union): Returns a iterator over references to all elements that appear in both self and other. 
-- [Intersection](crate::associative::hash_set::HashSet::intersection): Returns an iterator over references to elements contained only in both sets. 
+- [Union](crate::associative::hash_set::HashSet::union): Returns an iterator over references to all elements that appear in either `self` or `other` as a set-theoretic [union](https://en.wikipedia.org/wiki/Union_(set_theory)).
+- [Intersection](crate::associative::hash_set::HashSet::intersection): Returns an iterator over references to elements that appear in both `self` and `other` as a set-theoretic [intersection](https://en.wikipedia.org/wiki/Intersection_(set_theory)).
 - [Retain All](crate::associative::hash_set::HashSet::retain_all): Mutates self such that self only keeps elements that are also in other. This function could also appropriately be called "intersect", but that was too close to the non-mutating version of this function called "intersection". 
-- [Difference](crate::associative::hash_set::HashSet::difference): Returns an iterator over references to elements in self _not also present_ in other. This operation is positionally dependent, and may yield different sets depending on which set is `self`.
-- [Unique](crate::associative::hash_set::HashSet::unique): Returns an iterator over references to elements not contained across both sets. This operation yields the same set regardless of which set is set as `self`.
+- [Difference](crate::associative::hash_set::HashSet::difference): Returns an iterator over references to elements that are present in `self` but not in `other` as a set-theoretic asymmetric difference or [relative complement](https://en.wikipedia.org/wiki/Complement_(set_theory)). This operation is asymmetric: interchanging self and other generally produces different results.
+- [Unique](crate::associative::hash_set::HashSet::unique): Returns an iterator over references to elements that are present in exactly one of the two sets as a set-theoretic [symmetric difference](https://en.wikipedia.org/wiki/Symmetric_difference). This operation is symmetric: interchanging self and other yields the same result.
 
 # Design
 This structure is built using the library's custom [hash map](crate::associative::probing_hash_table). This structure represents mostly an exercise in iterator implementation.
@@ -31,18 +31,18 @@ use dsa_rust::associative::hash_set::HashSet;
         set2.put(n); 
     }
 
-    // Creates a list of all unique elements
-    let mut unique: Vec<u8> = Vec::new();
+    // Creates a list of all elements in both self and other
+    let mut union: Vec<u8> = Vec::new();
     for e in set1.union(&set2) {
-        unique.push(*e); 
+        union.push(*e); 
     }
-    assert_eq!(unique.len(), 6);
-    assert!(unique.contains(&0));
-    assert!(unique.contains(&1));
-    assert!(unique.contains(&2));
-    assert!(unique.contains(&3));
-    assert!(unique.contains(&4));
-    assert!(unique.contains(&5));
+    assert_eq!(union.len(), 6);
+    assert!(union.contains(&0));
+    assert!(union.contains(&1));
+    assert!(union.contains(&2));
+    assert!(union.contains(&3));
+    assert!(union.contains(&4));
+    assert!(union.contains(&5));
 
     // Creates a list of elements only present in both sets
     let mut intersection: Vec<u8> = Vec::new();
@@ -62,7 +62,7 @@ use dsa_rust::associative::hash_set::HashSet;
     assert!(difference.contains(&0));
     assert!(difference.contains(&1));
 
-    // Proves that difference() is positionally dependent
+    // Proves that difference() is asymmetric 
     let mut difference: Vec<u8> = Vec::new();
     for e in set2.difference(&set1) {
         difference.push(*e); 
@@ -77,7 +77,17 @@ use dsa_rust::associative::hash_set::HashSet;
     for e in set1.unique(&set2) {
         unique.push(*e); 
     }
-    eprintln!("{:#?}", unique);
+    assert_eq!(unique.len(), 4);
+    assert!(unique.contains(&0));
+    assert!(unique.contains(&1));
+    assert!(unique.contains(&4));
+    assert!(unique.contains(&5));
+
+    // Illustrates that unique() is symmetric
+    let mut unique: Vec<u8> = Vec::new();
+    for e in set2.unique(&set1) {
+        unique.push(*e); 
+    }
     assert_eq!(unique.len(), 4);
     assert!(unique.contains(&0));
     assert!(unique.contains(&1));
