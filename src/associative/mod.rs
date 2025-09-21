@@ -1,6 +1,7 @@
 pub mod chaining_hash_table;
 pub mod hash_lib;
 pub mod hash_map;
+pub mod hash_set;
 pub mod map_concepts;
 pub mod probing_hash_table;
 pub mod skip_list;

@@ -33,6 +33,7 @@ The content currently combines general trees and search trees. This section is i
 One of the most useful structures in the real world. Maps are essentially just lists of key-value pairs with potentially
 better expected asymptotics.
 
+#### Maps
 - [Chaining hash table](crate::associative::chaining_hash_table): Simple, easy, unsorted fun for the whole family; This implementation uses a Vec-based backing structure with a simple division compression and chaining scheme to address collisions.
 
 - [Probing hash table](crate::associative::probing_hash_table): A little more complex, still unsorted, but arguably more performant by taking advantage of cache locality through a flattened backing structure. This Vec-backed structure uses MAD compression and quadratic probing as well as a fun little secondary byte mask to distinguish available, occupied, and defunct indexes.
@@ -40,6 +41,11 @@ better expected asymptotics.
 - [Simple sorted map](crate::associative::sorted_map): No hashing, just simple tricks; This naive map is really just a vector of `Entry<K, V>`, but uses a binary search algorithm in `find_index()` operations which reduces queries from _O(n)_ to _O(log(n))_ time. Insert operations are still _O(n)_ because it relies on the [Vec::insert] operation to maintain a sorted invariant.
 
 - [Sorted AVL tree map](): Coming soon!
+
+#### Sets
+- [Simple Set](crate::associative::hash_set): A simple unsorted set based on this library's probing hash table implementation. This structure includes basic mutating and non-mutation versions for union, intersection, and subtraction operations.
+
+- [Sorted tree set](): Coming soon!
 
 # Composite Structures
 This category contains "miscelaneous" data structures that do not neatly fall into any of the other categories.
@@ -80,7 +86,7 @@ pub mod associative {
     pub mod probing_hash_table;
     pub mod skip_list;
     pub mod sorted_map;
-    //pub mod hash_set;
+    pub mod hash_set;
     //pub mod skip_map;
     //pub mod skip_set;
 }
