@@ -12,12 +12,6 @@ pub struct Heading {
     pub level: usize,
     pub title: String,
 }
-impl Heading {
-    // /** Just a humble Heading builder */
-    //fn new(title: String, level: usize) -> Heading {
-    //    Heading { level, title }
-    //}
-}
 
 /** Takes a path to a Markdown file, parses it for title and headings,
 and returns a tuple containing the document title and a vector of
@@ -206,3 +200,156 @@ pub fn navigator(level: usize, path: &Path) {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    /** 
+    Creates this tree to test properties
+        []
+        ├── Landlocked
+        │   ├── Switzerland
+        │   │   └── Geneva
+        │   │       └── Old Town
+        │   │           └── Cathédrale Saint-Pierre
+        │   └── Bolivia
+        │       └── []
+        │           └── []
+        │               ├── Puerta del Sol
+        │               └── Puerta de la Luna
+        └── Islands
+            ├── Marine
+            │   └── Australia
+            └── Fresh Water
+    */
+    fn print_tree() {
+        use crate::hierarchies::safe_linked_gentree_builder::{
+            construct, 
+            pretty_print, 
+            GenTree,
+            Heading
+        };
+
+        let tree_vec = vec![
+            Heading {
+                level: 2,
+                title: "Landlocked".to_string(),
+            },
+            Heading {
+                level: 3,
+                title: "Switzerland".to_string(),
+            },
+            Heading {
+                level: 4,
+                title: "Geneva".to_string(),
+            },
+            Heading {
+                level: 5,
+                title: "Old Town".to_string(),
+            },
+            Heading {
+                level: 6,
+                title: "Cathédrale Saint-Pierre".to_string(),
+            },
+            Heading {
+                level: 3,
+                title: "Bolivia".to_string(),
+            },
+            Heading {
+                level: 1,
+                title: "Places".to_string(),
+            },
+            Heading {
+                level: 6,
+                title: "Puerta del Sol".to_string(),
+            },
+            Heading {
+                level: 6,
+                title: "Puerta de la Luna".to_string(),
+            },
+            Heading {
+                level: 2,
+                title: "Islands".to_string(),
+            },
+            Heading {
+                level: 3,
+                title: "Marine".to_string(),
+            },
+            Heading {
+                level: 4,
+                title: "Australia".to_string(),
+            },
+            Heading {
+                level: 3,
+                title: "Fresh Water".to_string(),
+            },
+        ];
+
+        let mut tree: GenTree<Heading> = construct(0, tree_vec);
+        let mut cur = tree.cursor_mut();
+
+        pretty_print("LINKED TEST TITLE", &mut cur);
+        
+        //panic!("MANUAL TEST FAILURE");
+
+    }
+
+    #[test]
+    fn print_tree2() {
+        use crate::hierarchies::safe_linked_gentree_builder::{
+            construct, 
+            pretty_print, 
+            GenTree,
+            Heading
+        };
+
+        let tree_vec = vec![
+            Heading {
+                level: 5,
+                title: "Peter".to_string(),
+            },
+            Heading {
+                level: 3,
+                title: "Dingus".to_string(),
+            },
+            Heading {
+                level: 4,
+                title: "Dangus".to_string(),
+            },
+            Heading {
+                level: 1,
+                title: "Bobson".to_string(),
+            },
+            Heading {
+                level: 6,
+                title: "Dorkus".to_string(),
+            },
+            Heading {
+                level: 3,
+                title: "Flock".to_string(),
+            },
+            Heading {
+                level: 1,
+                title: "Dichael".to_string(),
+            },
+        ];
+
+        let mut tree: GenTree<Heading> = construct(0, tree_vec);
+        let mut cur = tree.cursor_mut();
+
+        pretty_print("LINKED TEST TITLE", &mut cur);
+        
+        //panic!("MANUAL TEST FAILURE");
+
+    }
+
+    #[test]
+    fn print_pwd() {
+        use std::path::Path;
+        let pwd = Path::new("~/MyPrograms/tech-docs/src/content/docs");
+        crate::hierarchies::arena_gentree_builder::navigator(4, pwd);
+
+        //panic!("MANUAL TEST FAILURE");
+    }
+}
+
