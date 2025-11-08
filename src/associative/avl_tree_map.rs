@@ -404,5 +404,5 @@ fn iter_test() {
     }
 
     // Uncomment to trigger debug print
-    panic!("MANUAL TEST FAILURE");
+    //panic!("MANUAL TEST FAILURE");
 }
