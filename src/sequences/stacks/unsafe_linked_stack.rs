@@ -70,7 +70,7 @@ impl Stack {
         }
     }
     // Iterating over and printing the stack is really only for debugging and visibility
-    pub fn iter(&self) -> Iter {
+    pub fn iter(&self) -> Iter<'_> {
         Iter {
             next: self.head.as_ref().map(|&ptr| unsafe { &*ptr }),
         }

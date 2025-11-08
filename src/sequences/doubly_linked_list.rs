@@ -325,7 +325,7 @@ impl<T> LinkedList<T> {
 
     /// Returns an iterator of references to data in the list's nodes as
     /// `list.iter()`.
-    pub fn iter(&self) -> Iter<T> {
+    pub fn iter(&self) -> Iter<'_, T> {
         Iter {
             next: self.head,
             // Needed for lifetime tracking
@@ -338,7 +338,7 @@ impl<T> LinkedList<T> {
     //pub fn find(&T) -> Link<T> {}
 
     /// Acts like a constructor for a cursor.
-    pub fn cursor_mut(&mut self) -> CursorMut<T> {
+    pub fn cursor_mut(&mut self) -> CursorMut<'_, T> {
         CursorMut {
             cursor: None,
             list: self,

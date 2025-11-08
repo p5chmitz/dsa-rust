@@ -10,7 +10,7 @@ struct Entry<'a> {
     name: &'a str,
     score: Option<i32>,
 }
-fn build(name: &str, score: Option<i32>) -> Entry {
+fn build(name: &str, score: Option<i32>) -> Entry<'_> {
     Entry { name, score }
 }
 // Required for an easy, idiomatic re-size operation
