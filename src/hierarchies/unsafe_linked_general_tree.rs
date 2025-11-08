@@ -5,6 +5,8 @@ Following classical DSA curricula, this implementation relies primarily on point
 
 There are better ways to do this. Specifically, an index-backed graph crate would likely provide a more robust set of tooling to construct and navigate hierarchical, n-ary tree structures.
 
+Warning: This structure is technically unsound and may cause dangling pointers
+
 # Design
 The base [GenTree] structure is sparse and only contains basic operations for constructors and metadata retrieval. Most of the magic happens in the [CursorMut] struct. Both structs rely on a [Position] struct which provides a safe handle to all the raw pointers required to make tree go brrr.
 
@@ -29,7 +31,7 @@ This section presents an algorithm that builds a tree from a `Vec` of custom `He
         └── Fresh Water`
 ```
 ```rust
-    use dsa_rust::trees::unsafe_linked_general_tree::GenTree;
+    use dsa_rust::hierarchies::unsafe_linked_general_tree::GenTree;
 
     struct Heading {
         level: usize,
@@ -369,7 +371,7 @@ impl<T> GenTree<T> {
     }
 
     /** Creates a `CursorMut<T>` starting at the tree's root */
-    pub fn cursor_mut(&mut self) -> CursorMut<T> {
+    pub fn cursor_mut(&mut self) -> CursorMut<'_, T> {
         // Gets the *mut from root
         let ptr = self.root.as_ptr().ok().unwrap();
         // Constructs and returns the Position<T>
@@ -381,7 +383,7 @@ impl<T> GenTree<T> {
         }
     }
 
-    pub fn cursor_from(&mut self, position: &mut Position<T>) -> CursorMut<T> {
+    pub fn cursor_from(&mut self, position: &mut Position<T>) -> CursorMut<'_, T> {
         // Gets the *mut from root
         let ptr = position.as_ptr().ok().unwrap();
         // Constructs and returns the Position<T>
@@ -879,6 +881,8 @@ mod tests {
         assert_eq!(kids, ["Fresh Water".to_string(), "Australia".to_string()]);
     }
 
+    // This test illustrates that this structure is unsound
+    // and causes a dangling pointer
     // THIS IS WHY WE CANT HAVE NICE THINGS
     #[test]
     fn dangle() {
@@ -917,6 +921,7 @@ mod tests {
 
         // UB: Attempts to access dangling pointer on CursorMut::get_data()
         // and Position::get_data() :(
+        // Uncomment to trigger miri test failure
         //let _oopsie = cursor.get_data();
         //let _oopsie = _pos.get_data();
     }
