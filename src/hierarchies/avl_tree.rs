@@ -69,6 +69,9 @@ Due to common usage when implementing sorted map and set structures, this implem
 
 #![allow(dead_code)] // While we cook
 
+//use std::mem;
+
+use std::borrow::Borrow;
 use std::cmp::{max, Ordering};
 
 // Custom sum type for search algorithm
@@ -120,8 +123,13 @@ fn opposite(side: &Side) -> &Side {
     }
 }
 
+//pub trait Keyed {
+//    type Key: Ord + ?Sized;
+//    fn key(&self) -> &Self::Key;
+//}
+
 #[derive(Debug)]
-struct AVLNode<T> {
+pub struct AVLNode<T> {
     value: Option<T>,      // Option allows take() operations for efficient node removals
     parent: Option<usize>, // None indicates the root of the tree
     left: Option<usize>,
@@ -195,13 +203,14 @@ impl<T> AVLNode<T> {
 pub struct AVLTree<T> {
     // Option wrapper for efficient take() operations during removal
     // without incurring the wrath of O(n) resize ops
-    arena: Vec<Option<AVLNode<T>>>, 
+    pub arena: Vec<Option<AVLNode<T>>>, 
     // Wont always be 0, and wont always be Some!
     root: Option<usize>, 
 }
 // Im just here to make Clippy happy
 impl<T> Default for AVLTree<T>
 where
+    //T: Keyed + Ord,
     T: Ord,
 {
     fn default() -> Self {
@@ -210,6 +219,7 @@ where
 }
 impl<T> AVLTree<T>
 where
+    //T: Keyed + Ord,
     T: Ord,
 {
     /// Creates a new, empty binary search tree.
@@ -233,6 +243,11 @@ where
         self.arena[index].as_ref().expect("Error: Invalid immutable node access")
     }
 
+    /// Mutable node accessor
+    fn node_mut(&mut self, index: usize) -> &mut AVLNode<T> {
+        self.arena[index].as_mut().expect("Error: Invalid mutable node access")
+    }
+
     /// Gets a reference to the value of a key, if Some.
     //pub fn get_node(&self, key: &T) -> Option<&T> {
     //    if let SearchResult::Exists(index) = self.search(key) {
@@ -241,16 +256,22 @@ where
     //        None
     //    }
     //}
-    pub fn get_node(&self, key: &T) -> Option<&T> {
+    //pub fn get_node(&self, key: &T) -> Option<&T> {
+    //    match self.search(key) {
+    //        SearchResult::Exists(index) => Some(self.node(index).get_value()?),
+    //        _ => None,
+    //    }
+    //}
+    pub fn get_node<Q>(&self, key: &Q) -> Option<&T>
+    where
+        Q: Ord + ?Sized,
+        //T::Key: std::borrow::Borrow<Q>,
+        T: Borrow<Q>,
+    {
         match self.search(key) {
-            SearchResult::Exists(index) => Some(self.node(index).get_value()?),
+            SearchResult::Exists(index) => self.node(index).get_value(),
             _ => None,
         }
-    }
-
-    /// Mutable node accessor
-    fn node_mut(&mut self, index: usize) -> &mut AVLNode<T> {
-        self.arena[index].as_mut().expect("Error: Invalid mutable node access")
     }
 
     //fn get_root_index(&self) -> Option<usize> {
@@ -272,31 +293,82 @@ where
     /// SAFETY: May panic if a node does not contain a value, but that 
     /// would violate the AVL tree invariant, so its highly unlikely, and only present to
     /// handle the possibility of corrupted structures.
-    fn search(&self, key: &T) -> SearchResult
-    where
-        T: Ord,
+    // Original impl: WORKS for T
+    //fn search(&self, key: &T) -> SearchResult
+    //where
+    //    T: Ord,
+    //{
+    //    // Early return for empty structures
+    //    if self.arena.is_empty() {
+    //        return SearchResult::None;
+    //    };
+    //
+    //    // Sets the starting point for the search
+    //    // Safety: Valueless nodes violate the AVL tree invariant
+    //    let mut current = self
+    //        .root
+    //        .expect("Error: Root should always contain a value");
+    //
+    //    // Uses iterative loop instead of recursive search
+    //    // because fuck stack overflows (and recursion)
+    //    loop {
+    //        if let Some(val) = &self.arena[current] {
+    //            // Safety: Valueless nodes violate the AVL tree invariant
+    //            let value = val
+    //                .get_value()
+    //                .expect("Error: Node does not contain a value");
+    //
+    //            match value.cmp(key) {
+    //                // Go right or return parent
+    //                Ordering::Less => {
+    //                    if let Some(right) = val.right {
+    //                        current = right;
+    //                    } else {
+    //                        return SearchResult::Parent(current);
+    //                    }
+    //                }
+    //                // Go left or return parent
+    //                Ordering::Greater => {
+    //                    if let Some(left) = val.left {
+    //                        current = left;
+    //                    } else {
+    //                        return SearchResult::Parent(current);
+    //                    }
+    //                }
+    //                // The key already exists in the tree at the current index
+    //                Ordering::Equal => return SearchResult::Exists(current),
+    //            }
+    //        };
+    //    }
+    //}
+    // Updated impl for T: Keyed
+    fn search<Q>(&self, key: &Q) -> SearchResult 
+        where Q: Ord + ?Sized, T: Borrow<Q>, 
     {
         // Early return for empty structures
         if self.arena.is_empty() {
             return SearchResult::None;
         };
-
+    
         // Sets the starting point for the search
         // Safety: Valueless nodes violate the AVL tree invariant
         let mut current = self
             .root
             .expect("Error: Root should always contain a value");
-
+    
         // Uses iterative loop instead of recursive search
         // because fuck stack overflows (and recursion)
         loop {
             if let Some(val) = &self.arena[current] {
+                // Converts &AVLNode<T> to &T
                 // Safety: Valueless nodes violate the AVL tree invariant
                 let value = val
                     .get_value()
                     .expect("Error: Node does not contain a value");
-
-                match value.cmp(key) {
+    
+                let value_key: &Q = value.borrow();
+    
+                match value_key.cmp(key) {
                     // Go right or return parent
                     Ordering::Less => {
                         if let Some(right) = val.right {
@@ -319,13 +391,65 @@ where
             };
         }
     }
+    //fn search<Q>(&self, key: &Q) -> SearchResult
+    //where
+    //    Q: Ord + ?Sized,
+    //    //T::Key: Borrow<Q>,
+    //    T: Borrow<Q>,
+    //{
+    //    if self.arena.is_empty() {
+    //        return SearchResult::None;
+    //    }
+    //
+    //    let mut current = self.root.expect("root should exist");
+    //
+    //    loop {
+    //        let node_ref = self.arena[current]
+    //            .as_ref()
+    //            .expect("missing node in arena");
+    //        let value = node_ref
+    //            .value
+    //            .as_ref()
+    //            .expect("node missing value");
+    //
+    //        let node_key = value.key();
+    //
+    //        match key.cmp(node_key.borrow()) {
+    //            Ordering::Less => {
+    //                if let Some(left) = node_ref.left {
+    //                    current = left;
+    //                } else {
+    //                    return SearchResult::Parent(current);
+    //                }
+    //            }
+    //            Ordering::Greater => {
+    //                if let Some(right) = node_ref.right {
+    //                    current = right;
+    //                } else {
+    //                    return SearchResult::Parent(current);
+    //                }
+    //            }
+    //            Ordering::Equal => return SearchResult::Exists(current),
+    //        }
+    //    }
+    //}
 
     /// Returns true if the key exists in the tree.
-    pub fn contains(&self, key: &T) -> bool {
-        //match self.search(key) {
-        //    SearchResult::Exists(_) => true,
-        //    _ => false,
-        //}
+    //pub fn contains(&self, key: &T) -> bool {
+    //    match self.search(key) {
+    //        SearchResult::Exists(_) => true,
+    //        _ => false,
+    //    }
+    //}
+    //pub fn contains(&self, key: &T) -> bool {
+    //    matches!(self.search(key), SearchResult::Exists(_))
+    //}
+    pub fn contains<Q>(&self, key: &Q) -> bool
+    where
+        Q: Ord + ?Sized,
+        //T::Key: Borrow<Q>,
+        T: Borrow<Q>,
+    {
         matches!(self.search(key), SearchResult::Exists(_))
     }
 
@@ -333,7 +457,15 @@ where
     ///
     /// NOTE: Does not handle duplicate keys by convention, but may overwrite values for
     /// arbitrarily complex T with custom Ordering.
-    pub fn insert(&mut self, key: T) {
+    //pub fn insert(&mut self, key: T) {
+    //    match self.search(&key) {
+    pub fn insert(&mut self, key: T)
+    where
+        //T: Keyed + Ord,
+        T: Ord,
+    {
+        // Pass &T::Key to search; search itself is generic over Q
+        //match self.search(key.key()) {
         match self.search(&key) {
             SearchResult::Parent(parent) => {
                 // Determine child position
@@ -377,7 +509,19 @@ where
     }
 
     /// Removes and returns an element from the AVL tree as an owned value.
-    pub fn remove(&mut self, key: &T) -> Option<T> {
+    //pub fn remove(&mut self, key: &T) -> Option<T> {
+    //    let target_index = match self.search(key) {
+    //pub fn remove(&mut self, key: &T) -> Option<T>
+    //where
+    //    //T: Keyed + Ord,
+    //    T: Ord,
+    //{
+    pub fn remove<Q>(&mut self, key: &Q) -> Option<T>
+    where
+        Q: Ord + ?Sized,
+        T: Borrow<Q>,
+    {
+        //let target_index = match self.search(key.key()) {
         let target_index = match self.search(key) {
             SearchResult::Exists(idx) => idx,
             _ => return None,
@@ -393,8 +537,22 @@ where
             }
     
             // Move successor's value into target node
-            let succ_value = self.arena[succ_index].take().unwrap().value;
-            self.node_mut(remove_index).value = succ_value;
+            //let succ_value = self.arena[succ_index].take().unwrap().value;
+            //self.node_mut(remove_index).value = succ_value;
+
+            // 1. Take the value out of the successor node.
+            let succ_value = self.node_mut(succ_index).value.take();
+            
+            // 2. Replace the target's value with the successor's, 
+            // getting the original target value back.
+            let original_value = self.node_mut(target_index).value.replace(succ_value.unwrap());
+            
+            // 3. Place the original target value into the successor node, 
+            // which we are about to remove.
+            self.node_mut(succ_index).value = original_value;
+            
+            // Now, the successor node can be safely removed, and it 
+            // contains the correct value to return.
     
             // Now remove the successor node (guaranteed ≤1 child)
             remove_index = succ_index;
@@ -435,6 +593,9 @@ where
     
         removed_value?
     }
+
+    // Utility functions
+    ////////////////////
 
     /// Updates the height of an arbitrary node in an AVL tree
     /// where leaf nodes are defined as having height 1
@@ -559,25 +720,6 @@ impl<'a, T> InOrderIter<'a, T> {
         }
     }
 }
-//impl<'a, T> Iterator for InOrderIter<'a, T> {
-//    type Item = &'a T;
-//
-//    fn next(&mut self) -> Option<Self::Item> {
-//        // Uses a simplified inorder traversal with a stack
-//        // to fetch elements in sorted order
-//        while let Some(idx) = self.current {
-//            self.stack.push(idx);
-//            self.current = self.arena[idx].left;
-//        }
-//
-//        if let Some(idx) = self.stack.pop() {
-//            self.current = self.arena[idx].right;
-//            self.arena[idx].value.as_ref() // convert Option<T> -> Option<&T>
-//        } else {
-//            None
-//        }
-//    }
-//}
 impl<'a, T> Iterator for InOrderIter<'a, T> {
     type Item = &'a T;
 
