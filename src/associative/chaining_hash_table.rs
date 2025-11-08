@@ -209,7 +209,7 @@ impl<K: Hash + Debug + PartialEq, V: PartialEq + Clone> ChainingHashTable<K, V> 
 
     /** A function that follows the naming convention for iterable collections;
     Returns struct Iter that tracks iteration state */
-    pub fn iter(&self) -> Iter<K, V> {
+    pub fn iter(&self) -> Iter<'_, K, V> {
         Iter {
             outer: self.data.iter(),
             inner: None,
