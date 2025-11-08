@@ -111,7 +111,7 @@ impl<T> Position<T> {
     }
 
     /// Returns an reference to the data at the Position, if Some.
-    fn get_data(&self) -> Option<Ref<T>> {
+    fn get_data(&self) -> Option<Ref<'_, T>> {
         let node_ref: Ref<Node<T>> = self.ptr.as_ref()?.borrow();
         Ref::filter_map(node_ref, |node| node.data.as_ref()).ok()
         //if let Some(val) = self.ptr.as_ref() {
@@ -123,7 +123,7 @@ impl<T> Position<T> {
     //fn get_node(&self) -> Ref<Node<T>> {
     //    self.ptr.as_ref().unwrap().borrow()
     //}
-    fn get_node(&self) -> Option<Ref<Node<T>>> {
+    fn get_node(&self) -> Option<Ref<'_, Node<T>>> {
         self.ptr.as_ref().map(|rc| rc.borrow())
     }
 
@@ -235,7 +235,7 @@ impl<T> GenTree<T> {
     }
 
     /// Creates a `CursorMut` starting at the tree's root.
-    pub fn cursor_mut(&mut self) -> CursorMut<T> {
+    pub fn cursor_mut(&mut self) -> CursorMut<'_, T> {
         CursorMut {
             node: self.root.clone(),
             tree: self,
@@ -243,7 +243,7 @@ impl<T> GenTree<T> {
     }
 
     /// Creates a `CursorMut` from a given `Position`.
-    pub fn cursor_from(&mut self, position: Position<T>) -> CursorMut<T> {
+    pub fn cursor_from(&mut self, position: Position<T>) -> CursorMut<'_, T> {
         CursorMut {
             node: position,
             tree: self,
@@ -351,7 +351,7 @@ impl<'a, T> CursorMut<'a, T> {
     /////////////////////////
 
     /** Returns an _immutable_ reference to the data under the cursor, if `Some` */
-    pub fn get_data(&self) -> Option<Ref<T>> {
+    pub fn get_data(&self) -> Option<Ref<'_, T>> {
         let node_ref: Ref<Node<T>> = self.node.get_node()?;
         Ref::filter_map(node_ref, |node| node.data.as_ref()).ok()
     }
