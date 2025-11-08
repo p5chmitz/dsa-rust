@@ -1,5 +1,6 @@
 pub mod arena_bst;
 pub mod arena_gentree;
+pub mod arena_gentree_builder;
 pub mod avl_tree;
 pub mod bin_heap;
 pub mod file_tree;
