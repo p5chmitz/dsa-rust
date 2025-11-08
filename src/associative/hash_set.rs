@@ -3,15 +3,16 @@
 /*! A set structure based on this library's HashMap
 
 # About
-This simple set structure offers mutating and non-mutating versions of basic set operations. Currently, the structure contains the following operations: 
+This structure provides common binary set operations (as `self` and `other`), mostly as an excuse to explore implementing custom iterators.
 - [Union](crate::associative::hash_set::HashSet::union): Returns an iterator over references to all elements that appear in either `self` or `other` as a set-theoretic [union](https://en.wikipedia.org/wiki/Union_(set_theory)).
+- [Extend](crate::associative::hash_set::HashSet::extend): Mutates `self` to contain all unique elements in both `self` and `other`. This is a mutating version of `union()`.
 - [Intersection](crate::associative::hash_set::HashSet::intersection): Returns an iterator over references to elements that appear in both `self` and `other` as a set-theoretic [intersection](https://en.wikipedia.org/wiki/Intersection_(set_theory)).
-- [Retain All](crate::associative::hash_set::HashSet::retain_all): Mutates self such that self only keeps elements that are also in other. This function could also appropriately be called "intersect", but that was too close to the non-mutating version of this function called "intersection". 
+- [Retain All](crate::associative::hash_set::HashSet::retain_all): Mutates `self` such that self only keeps elements that are also in `other`. This function could also appropriately be called "intersect", but that was too close to the non-mutating version of this function called "intersection". 
 - [Difference](crate::associative::hash_set::HashSet::difference): Returns an iterator over references to elements that are present in `self` but not in `other` as a set-theoretic asymmetric difference or [relative complement](https://en.wikipedia.org/wiki/Complement_(set_theory)). This operation is asymmetric: interchanging self and other generally produces different results.
 - [Unique](crate::associative::hash_set::HashSet::unique): Returns an iterator over references to elements that are present in exactly one of the two sets as a set-theoretic [symmetric difference](https://en.wikipedia.org/wiki/Symmetric_difference). This operation is symmetric: interchanging self and other yields the same result.
 
 # Design
-This structure is built using the library's custom [hash map](crate::associative::probing_hash_table). This structure represents mostly an exercise in iterator implementation.
+The structure is based on this library's (open-addressing) [hash map](crate::associative::probing_hash_table). Each entry is stored as `(T, ())`, and because of the underlying implementation, `T` must be [Hash], [PartialEq], and [Eq].
 
 # Example
 
@@ -120,7 +121,8 @@ where
     // Basic operations
     ///////////////////
 
-    /// Constructor for an empty map with a default capacity of 2.
+    /// Constructor for an empty set with a default capacity of 2 
+    /// because everyone deserves a friend.
     pub fn new() -> Self {
         let new_capacity = 2;
         Self {
@@ -128,7 +130,7 @@ where
         }
     }
 
-    /// Constructor for an empty map with a given capacity.
+    /// Constructor for an empty set with a given capacity.
     pub fn new_with_capacity(size: usize) -> Self {
         Self {
             map: probing_hash_table::HashMap::<T, ()>::new_with_capacity(size),
@@ -169,13 +171,15 @@ where
     // Union operations
     ///////////////////
 
-    /// Returns a iterator that yields references to all elements that 
-    /// appear in both `self` and `other`.
+    /// Returns an iterator over references to all elements that appear 
+    /// in either `self` or `other` as a set-theoretic 
+    /// [union](https://en.wikipedia.org/wiki/Union_(set_theory)).
     pub fn union<'a>(&'a self, other: &'a Self) -> Union<'a, T> {
         Union::build(&self.map, &other.map)
     }
 
-    /// Consumes `other` to add all of its elements to `self`.
+    /// A mutating version of `union()` that consumes `other` to add 
+    /// all of its elements to `self`.
     pub fn extend(&mut self, other: Self) {
         let other_iter = other.map.into_iter();
         for key in other_iter {
@@ -188,7 +192,9 @@ where
     //Intersection operations
     /////////////////////////
 
-    /// Returns an iterator that yields references to elements contained in both sets.
+    /// Returns an iterator over references to elements that appear 
+    /// in both `self` and `other` as a set-theoretic 
+    /// [intersection](https://en.wikipedia.org/wiki/Intersection_(set_theory)).
     pub fn intersection<'a>(&'a self, other: &'a Self) -> Intersection<'a, T> {
         let (longer, shorter) = if self.map.len() >= other.map.len() {
             (&self.map, &other.map)
@@ -224,9 +230,11 @@ where
     // Subtraction operations
     /////////////////////////
 
-    /// Returns an iterator that yields references to elements in `self` but not `other`. 
-    /// This operation is positionally dependent, and may yield different elements 
-    /// depending on which set is set as `self` and which is set as `other`.
+    /// Returns an iterator over references to elements that are present 
+    /// in `self` but not in `other` as a set-theoretic asymmetric difference 
+    /// or [relative complement](https://en.wikipedia.org/wiki/Complement_(set_theory)). 
+    /// This operation is asymmetric: interchanging self and other 
+    /// generally produces different results.
     pub fn difference<'a>(&'a self, other: &'a Self) -> Difference<'a, T> {
         //let (longer, shorter) = if self.map.len() <= other.map.len() {
         //    (&self.map, &other.map)
@@ -241,9 +249,11 @@ where
 
     }
 
-    /// Returns an iterator that yields references to elements that appear in 
-    /// either `self` or `other`, but not both. This operation yields 
-    /// the same set regardless of which set is set as `self`.
+    /// Returns an iterator over references to elements that are present 
+    /// in exactly one of the two sets as a set-theoretic [symmetric 
+    /// difference](https://en.wikipedia.org/wiki/Symmetric_difference). 
+    /// This operation is symmetric: interchanging `self` and `other` 
+    /// yields the same result.
     pub fn unique<'a>(&'a self, other: &'a Self) -> Unique<'a, T> {
         Unique::new(&self.map, &other.map)
     }
