@@ -8,6 +8,21 @@ default-run = "dsa-rust"
 rand = "0.9.0"
 regex = "1.11"
 
+[dev-dependencies]
+criterion = "0.7"
+
+[[bench]]
+name = "associative"
+harness = false 
+
+[[bench]]
+name = "hierarchies"
+harness = false 
+
+[[bench]]
+name = "sequences"
+harness = false 
+
 #[[bin]]
 #name = "list"
 #path = "src/bin/test.rs"
