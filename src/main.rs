@@ -168,15 +168,21 @@ fn main() {
             hierarchies::file_tree::disk_usage(path);
             println!();
 
-            println!("\x1b[1;34mUnsafe N-ary tree example:\x1b[0m");
-            let path = std::path::Path::new("./src/hierarchies");
-            hierarchies::unsafe_linked_general_tree::builder::navigator(1, path);
-            println!();
+            //let path = std::path::Path::new("./src/hierarchies");
+            let path = std::path::Path::new("../tech-docs/src/content/docs/cs/dsa/maps.mdx");
+
+            //println!("\x1b[1;34mUnsafe N-ary tree example:\x1b[0m");
+            //hierarchies::unsafe_linked_general_tree::builder::navigator(1, path);
+            //println!();
 
             println!("\x1b[1;34mSafe N-ary tree example:\x1b[0m");
-            let path = std::path::Path::new("./src/hierarchies");
-            hierarchies::safe_linked_gentree_builder::navigator(1, path);
+            hierarchies::safe_linked_gentree_builder::navigator(0, path);
             println!();
+
+            println!("\x1b[1;34mArena N-ary tree example:\x1b[0m");
+            crate::hierarchies::arena_gentree_builder::navigator(0, path);
+            println!();
+
         }
 
         // MAPS
