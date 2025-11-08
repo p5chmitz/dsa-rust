@@ -246,7 +246,7 @@ pub struct Entry<K, V> {
 impl<K, V> Entry<K, V>
 where
     K: Debug + Hash + PartialEq,
-    V: Debug + PartialEq,
+    V: Debug,
 {
     /// Constructs a new Entry
     fn new(key: K, value: V) -> Entry<K, V> {
@@ -258,15 +258,15 @@ where
         &self.key
     }
 
-    // /// Returns the value from an Entry
-    // pub fn value(&self) -> &V {
-    //     &self.value
-    // }
+    /// Returns the value from an Entry
+    pub fn value(&self) -> &V {
+        &self.value
+    }
 }
 impl<K, V> Default for Entry<K, V>
 where
     K: Default + Debug + Hash + PartialEq,
-    V: Debug + Default + PartialEq,
+    V: Debug + Default,
 {
     fn default() -> Self {
         Self {
@@ -347,7 +347,7 @@ where
 impl<K, V> HashMap<K, V>
 where
     K: Debug + Eq + Hash + PartialEq,
-    V: Default + PartialEq + std::fmt::Debug,
+    V: std::fmt::Debug,
 {
     /// Constructor for an empty map with a default capacity of 2.
     pub fn new() -> Self {
@@ -705,7 +705,7 @@ where
         let mut new_ctrl: Vec<u8> = Vec::with_capacity(new_capacity);
         new_ctrl.resize_with(new_capacity, || 0x00);
 
-        println!("Growing from {} to {}", self.data.len(), new_capacity);
+        //println!("Growing from {} to {}", self.data.len(), new_capacity);
 
         // Reset the instance values for MAD compression
         // Finds a prime > len, starting much larger to ensure even spread
