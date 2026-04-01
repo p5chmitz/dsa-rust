@@ -5,7 +5,6 @@ pub mod hash_map;
 pub mod hash_set;
 pub mod map_concepts;
 pub mod probing_hash_table;
-pub mod skip_list;
 pub mod sorted_map;
 pub mod traits;
 pub mod word_freq;

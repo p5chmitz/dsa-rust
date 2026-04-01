@@ -7,45 +7,51 @@ The utility functions in this module can be used to implement various hashing an
 // HOME-ROLLED HASHING
 //////////////////////
 
-/** Illustrates the concept of bit shifting;
-Takes a string a prints the bit and integer value of each character before
-performing a bit shift operation and printing the result as bit and integer values */
-pub fn visual_bit_shift(value: &str) {
+/// Illustrates the concept of bit shifting;
+/// Takes a string a prints the bit and integer value of each character before
+/// performing a bit shift operation and printing the result as bit and integer values
+#[allow(clippy::manual_rotate)]
+pub fn bit_shift_visualization(value: &str) {
     for mut v in value.bytes() {
         print!("{v:08b} ({v}) -> ");
-        //v = (v << 5) | (v >> 3);
+        v = (v << 5) | (v >> 3);
         // clippy wants a function
-        v = v.rotate_right(3);
+        //v = v.rotate_right(3);
         println!("{v:08b} ({v})");
     }
 }
 
-/** Calculates a bit-shifted hash code;
-The function initializes a 32-bit hash code integer to 0,
-then loops over each character in the input string;
-Each loop adds the next character in the string to the hash code
-as an integer value with wrapping; This ensures consistency
-across architectures; The next operation in each loop performs
-a cyclic bit shift on the hash code, and the process repeats */
-pub fn visual_hash_code(key: &str) -> u32 {
+/// Calculates a bit-shifted hash code;
+/// The function initializes a 32-bit hash code integer to 0,
+/// then loops over each character in the input string;
+/// Each loop adds the next character in the string to the hash code
+/// as an integer value with wrapping; This ensures consistency
+/// across architectures; The next operation in each loop performs
+/// a cyclic bit shift on the hash code, and the process repeats
+#[allow(clippy::manual_rotate)]
+pub fn simple_hash_function(key: &str) -> u32 {
     let mut hash: u32 = 0;
-    for word in key.bytes() {
-        print!("{word:08b} -> ");
-        hash = hash.wrapping_add(word as u32);
-        //hash = (hash << 5) | (hash >> 27);
-        // clippy wants a function
-        hash = hash.rotate_left(5);
-        println!("{hash:032b}");
+    for v in key.bytes() {
+        print!("{v:08b} -> "); // Prints the character's bit value
+                               //hash += v as u32; // Adds the character to the hash
+        hash = hash.wrapping_add(v as u32); // Adds the character to the hash
+        hash = (hash << 5) | (hash >> 27); // Shifts the hash left by 5 places
+                                           // clippy wants a function
+                                           //hash = hash.rotate_left(5);
+        println!("{hash:032b}"); // Prints the resultant hash value
     }
     hash
 }
 #[test]
 fn hash_code_test() {
-    let v = visual_hash_code("Peter");
+    let v = simple_hash_function("Peter");
     assert_eq!(v, 2794168896);
 
     //let v = visual_hash_code("This block overflows the value");
     //assert_eq!(v, 3862340559);
+
+    let v = simple_hash_function("Simple hash digest");
+    assert_eq!(v, 1741143911);
 }
 
 // STANDARD LIBRARY HASHING
@@ -124,7 +130,7 @@ fn prime_test() {
     assert!(!is_prime(445));
 }
 
-/** Finds the next prime by brute force in O(n) time */
+// Finds the next prime by brute force in O(n) time
 //fn next_prime(n: u64) -> u64 {
 //    let mut candidate = n + 1;
 //    while !is_prime(candidate) {e
@@ -132,7 +138,8 @@ fn prime_test() {
 //    }
 //    candidate
 //}
-/** Finds the next prime in O(n/2) time by skipping evens */
+
+/// Finds the next prime in O(n/2) time by skipping evens
 pub fn next_prime(n: usize) -> usize {
     if n < 2 {
         return 2;
@@ -157,9 +164,9 @@ fn next_prime_test() {
 
 use rand::Rng;
 
-/** Implements MAD compression as `[(ai + b) mod p] mod N`
-Relies on `is_prime` and `next_prime` functions */
-// `c(h(k)) = ((a * h(k) + b) mod p) mod N`
+/// Illustrates MAD compression as `[(ai + b) mod p] mod N`
+/// Relies on `is_prime` and `next_prime` functions
+/// `c(h(k)) = ((a * h(k) + b) mod p) mod N`
 pub fn mad_compression(key: usize, len: usize) -> usize {
     // Finds a prime >len, starting much larger to ensure even spread
     let p = next_prime(len.pow(3));

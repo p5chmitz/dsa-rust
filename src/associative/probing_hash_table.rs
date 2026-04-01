@@ -40,9 +40,9 @@ The primary [HashMap] struct uses a private byte mask (as a "control" list) to t
 ```
 
 ## Insertion
-The structure contains two primary ways to insert entries into the map. 
+The structure contains two primary ways to insert entries into the map.
 
-The [put()](crate::associative::probing_hash_table::HashMap::put) operation overwrites values for existing keys, but does not mutate the existing key. This keeps with the standard library's implementation where two keys can be `==` without being identical. 
+The [put()](crate::associative::probing_hash_table::HashMap::put) operation overwrites values for existing keys, but does not mutate the existing key. This keeps with the standard library's implementation where two keys can be `==` without being identical.
 
 ```rust
     use dsa_rust::associative::probing_hash_table::HashMap;
@@ -325,9 +325,9 @@ where
 pub struct HashMap<K, V> {
     pub data: Vec<Option<Entry<K, V>>>, // The primary memory backing
     pub ctrl: Vec<u8>,                  // A byte mask to identify available positions
-    size: usize,                     // The total number of entries in the map (live + deleted)
-    live: usize,                    // The number of "live" entries in the map
-                 
+    size: usize,                        // The total number of entries in the map (live + deleted)
+    live: usize,                        // The number of "live" entries in the map
+
     // NOTE: Prime, scale, and shift are used by the MAD compression algorithm.
     // These randomly-generated values must remain static for the
     // lifetime of the backing structure; The grow() operation changes these values
@@ -393,7 +393,9 @@ where
     pub fn occupied(&self) -> usize {
         let mut occupied = 0;
         for e in self.ctrl.iter() {
-            if *e == 1 || *e == 187 { occupied += 1 }
+            if *e == 1 || *e == 187 {
+                occupied += 1
+            }
         }
         occupied
     }
@@ -402,12 +404,14 @@ where
     pub fn deleted(&self) -> usize {
         let mut occupied = 0;
         for e in self.ctrl.iter() {
-            if *e == 187 { occupied += 1 }
+            if *e == 187 {
+                occupied += 1
+            }
         }
         occupied
     }
 
-    /// Returns the total number of available slots in the map in _O(1)_ time. 
+    /// Returns the total number of available slots in the map in _O(1)_ time.
     ///
     /// NOTE: The load factor is the quotient of `len() / capacity()`.
     pub fn capacity(&self) -> usize {
@@ -458,8 +462,8 @@ where
     /// existing key `k`, returns old value. If a new addition increases
     /// the map's load factor above the designated threshhold of 0.5
     /// the map resizes.
-    pub fn put(&mut self, key: K, value: V) -> Option<Entry<K, V>> 
-    //where 
+    pub fn put(&mut self, key: K, value: V) -> Option<Entry<K, V>>
+//where 
     //    K: std::default::Default,
     {
         // Checks if the addition will bring the load factor above threshold
@@ -496,9 +500,9 @@ where
         if ((self.size) as f64 + 1.0) / self.data.len() as f64 >= 0.5 {
             self.grow();
         }
-    
+
         let location = self.find_index(&key);
-    
+
         // Avoids duplicates all together
         if location < 0 {
             let entry = Entry::new(key, value);
@@ -547,7 +551,7 @@ where
         K: std::borrow::Borrow<Q>,
         Q: Debug + Hash + Eq + ?Sized,
     {
-    //pub fn remove(&mut self, key: K) -> Option<Entry<K, V>> {
+        //pub fn remove(&mut self, key: K) -> Option<Entry<K, V>> {
         let location = self.find_index(key);
 
         let mut entry = None;
@@ -647,7 +651,7 @@ where
         let mut i: usize = 1;
         let hash = Self::hash(&key);
         let mut current_index = self.compress(hash);
-    
+
         // Quadratic probing logic
         loop {
             match &self.data[current_index] {
@@ -655,11 +659,11 @@ where
                     if val.key.borrow() == key {
                         return current_index as isize;
                     }
-                },
+                }
                 None => {
                     if self.ctrl[current_index] != 0xBB {
-                        return -(current_index as isize + 1)
-                    } 
+                        return -(current_index as isize + 1);
+                    }
                 }
             }
             current_index = (current_index + i.pow(2)) % self.data.len();
@@ -783,10 +787,7 @@ where
 
 // Returns a tuple of owned key:value pairs (K, V)
 pub struct IntoIter<K, V> {
-    inner: std::iter::Zip<
-        std::vec::IntoIter<Option<Entry<K, V>>>,
-        std::vec::IntoIter<u8>
-    >,
+    inner: std::iter::Zip<std::vec::IntoIter<Option<Entry<K, V>>>, std::vec::IntoIter<u8>>,
 }
 impl<K, V> Iterator for IntoIter<K, V> {
     type Item = (K, V);
@@ -798,7 +799,6 @@ impl<K, V> Iterator for IntoIter<K, V> {
                     return Some((entry.key, entry.value));
                 }
             }
-
         }
         None
     }
@@ -920,7 +920,7 @@ fn mut_val_test() {
     count.contents();
 
     // Iterates through the map again, updating each value based on its occurence
-    // NOTE: Can also be used as initial mapping operation with the same code, 
+    // NOTE: Can also be used as initial mapping operation with the same code,
     // but was split here for illustrative purposes
     for char in phrase.chars() {
         count.mut_val_or(char, |x| *x += 1, 1);
@@ -947,7 +947,7 @@ fn iter_test() {
     eprintln!("\nInitial map state:");
     map.contents();
 
-    // Iterates through the map, pushing entries 
+    // Iterates through the map, pushing entries
     // to a Vec as tuples returned from the iterator
     eprintln!("\nCompact map: ");
     let mut vec = Vec::new();
@@ -996,7 +996,7 @@ fn iter_test() {
     }
     // Illegal, map is moved/consumed!
     //assert!(map.is_empty());
-    
+
     // But new_map contains data now
     assert!(new_map.contains(&'s'));
     assert!(new_map.contains(&'i'));
@@ -1009,7 +1009,7 @@ fn iter_test() {
 }
 
 #[test]
-// Tests that into_iter consumes the map, 
+// Tests that into_iter consumes the map,
 // and that rehash and shrink_to_fit delete removed entries
 fn rehash_test() {
     //Creates a new hash map
@@ -1125,7 +1125,6 @@ fn rehash_test() {
     //panic!("MANUAL TEST FAILURE");
 }
 
-
 // TODO: This belongs in either an external runner or in an integration test module
 pub fn example() {
     //Creates a new hash map
@@ -1205,7 +1204,6 @@ pub fn example() {
         count.occupied(), // Total number of elements
         count.capacity(),
         count.len() // Active entries
-
     );
     for (e, m) in count.data.iter().zip(count.ctrl.iter()) {
         println!("\t{m:>3}: {e:?}")
@@ -1213,5 +1211,4 @@ pub fn example() {
 
     let l = "=".repeat(s.len());
     println!("\n{l}");
-
 }

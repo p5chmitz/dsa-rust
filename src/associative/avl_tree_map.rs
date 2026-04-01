@@ -8,10 +8,13 @@ This sorted map uses the library's [AVL tree]() as its backing structure, provid
 ```rust
     use dsa_rust::associative::avl_tree_map::TreeMap;
 
-    let text = "and the final paragraph clearly came from the heart, 
+    let text = "and the final paragraph clearly came from the heart,
     or whatever cool yet sensitive organ Sadie kept in place of one.";
 
     let mut map = TreeMap::<char, usize>::new();
+
+    // SAFETY: This is a thing
+    unsafe {}
 
     for e in text.chars() {
         if map.contains(e) {
@@ -74,15 +77,15 @@ y: 2
 
 use crate::hierarchies::avl_tree::AVLTree;
 
-use std::fmt::Debug;
-use std::cmp::Ordering;
 use std::borrow::Borrow;
+use std::cmp::Ordering;
+use std::fmt::Debug;
 
-/// The wrapper struct that allows TreeMap<K, V> to use AVLTree<T>. 
-/// Because `T` is [Ord], Entry<K, V> must implement [Eq] and [PartialOrd], 
-/// which themselves must implement [PartialEq]. 
+/// The wrapper struct that allows TreeMap<K, V> to use AVLTree<T>.
+/// Because `T` is [Ord], Entry<K, V> must implement [Eq] and [PartialOrd],
+/// which themselves must implement [PartialEq].
 /// All traits use `key` for ordering.
-/// 
+///
 /// See the [module-level documentation]() for more details.
 #[derive(Debug)]
 pub struct Entry<K, V> {
@@ -123,23 +126,23 @@ impl<K, V> Borrow<K> for Entry<K, V> {
     }
 }
 
-/// 
-/// 
+///
+///
 /// See the [module-level documentation]() for more details.
 #[derive(Debug)]
 pub struct TreeMap<K, V> {
     tree: AVLTree<Entry<K, V>>,
-    size: usize
+    size: usize,
 }
 impl<K, V> Default for TreeMap<K, V>
 where
     K: Default + Eq + Ord + PartialEq,
- {
+{
     fn default() -> Self {
         Self::new()
     }
 }
-impl<K, V> TreeMap<K, V> 
+impl<K, V> TreeMap<K, V>
 where
     K: Default + Eq + Ord + PartialEq,
 {
@@ -147,7 +150,7 @@ where
     pub fn new() -> Self {
         Self {
             tree: AVLTree::<Entry<K, V>>::new(),
-            size: 0
+            size: 0,
         }
     }
 
@@ -164,8 +167,9 @@ where
     /// Returns the value associated with the key, if `Some`.
     pub fn get(&self, key: K) -> Option<&V> {
         if let Some(val) = self.tree.get_node(&key) {
-            return Some(&val.value)
-        } None
+            return Some(&val.value);
+        }
+        None
     }
 
     /// Inserts the entry into the map. If the key already exists, removes
@@ -184,13 +188,14 @@ where
     /// Mutates
     pub fn mut_val_or() {}
 
-    /// Removes and returns the entry associated with the key:value pair, 
+    /// Removes and returns the entry associated with the key:value pair,
     /// if it exists in the map.
     pub fn remove(&mut self, key: K) -> Option<Entry<K, V>> {
         if self.tree.contains(&key) {
             self.size -= 1;
-            return self.tree.remove(&key)
-        } None
+            return self.tree.remove(&key);
+        }
+        None
     }
 
     /// Returns an iterator over borrowed values. The resulting values
@@ -210,12 +215,14 @@ where
             iter: self.tree.iter(),
         }
     }
-
 }
 
 pub struct Iter<'a, K, V> {
     //iter: std::slice::Iter<'a, Option<Entry<K, V>>>,
-    iter: crate::hierarchies::avl_tree::InOrderIter<'a, crate::associative::avl_tree_map::Entry<K, V>>
+    iter: crate::hierarchies::avl_tree::InOrderIter<
+        'a,
+        crate::associative::avl_tree_map::Entry<K, V>,
+    >,
 }
 impl<'a, K, V> Iterator for Iter<'a, K, V>
 where
@@ -313,7 +320,7 @@ fn avl_tree_map_test() {
 //    count.contents();
 //
 //    // Iterates through the map again, updating each value based on its occurence
-//    // NOTE: Can also be used as initial mapping operation with the same code, 
+//    // NOTE: Can also be used as initial mapping operation with the same code,
 //    // but was split here for illustrative purposes
 //    for char in phrase.chars() {
 //        count.mut_val_or(char, |x| *x += 1, 1);
@@ -350,8 +357,8 @@ fn iter_test() {
         eprintln!("{val:?}");
     }
 
-    //let text = "Not the most elegant text, but it sure 
-    //    does the trick when you need it. I could go on and on and on, 
+    //let text = "Not the most elegant text, but it sure
+    //    does the trick when you need it. I could go on and on and on,
     //but instead Id rather just let the text explain itself in order to Illustrate
     //    what this test is all about. Then again Im not sure I could do this without
     //    just a little rambling, amirite? You're the kind of person that

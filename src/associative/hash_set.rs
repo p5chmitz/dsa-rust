@@ -7,7 +7,7 @@ This structure provides common binary set operations (as `self` and `other`), mo
 - [Union](crate::associative::hash_set::HashSet::union): Returns an iterator over references to all elements that appear in either `self` or `other` as a set-theoretic [union](https://en.wikipedia.org/wiki/Union_(set_theory)).
 - [Extend](crate::associative::hash_set::HashSet::extend): Mutates `self` to contain all unique elements in both `self` and `other`. This is a mutating version of `union()`.
 - [Intersection](crate::associative::hash_set::HashSet::intersection): Returns an iterator over references to elements that appear in both `self` and `other` as a set-theoretic [intersection](https://en.wikipedia.org/wiki/Intersection_(set_theory)).
-- [Retain All](crate::associative::hash_set::HashSet::retain_all): Mutates `self` such that self only keeps elements that are also in `other`. This function could also appropriately be called "intersect", but that was too close to the non-mutating version of this function called "intersection". 
+- [Retain All](crate::associative::hash_set::HashSet::retain_all): Mutates `self` such that self only keeps elements that are also in `other`. This function could also appropriately be called "intersect", but that was too close to the non-mutating version of this function called "intersection".
 - [Difference](crate::associative::hash_set::HashSet::difference): Returns an iterator over references to elements that are present in `self` but not in `other` as a set-theoretic asymmetric difference or [relative complement](https://en.wikipedia.org/wiki/Complement_(set_theory)). This operation is asymmetric: interchanging self and other generally produces different results.
 - [Unique](crate::associative::hash_set::HashSet::unique): Returns an iterator over references to elements that are present in exactly one of the two sets as a set-theoretic [symmetric difference](https://en.wikipedia.org/wiki/Symmetric_difference). This operation is symmetric: interchanging self and other yields the same result.
 
@@ -23,19 +23,19 @@ use dsa_rust::associative::hash_set::HashSet;
     let mut set1 = HashSet::<u8>::new();
     // [0, 1, 2, 3]
     for n in 0..=3 {
-        set1.put(n); 
+        set1.put(n);
     }
 
     let mut set2 = HashSet::<u8>::new();
     // [2, 3, 4, 5]
     for n in 2..=5 {
-        set2.put(n); 
+        set2.put(n);
     }
 
     // Creates a list of all elements in both self and other
     let mut union: Vec<u8> = Vec::new();
     for e in set1.union(&set2) {
-        union.push(*e); 
+        union.push(*e);
     }
     assert_eq!(union.len(), 6);
     assert!(union.contains(&0));
@@ -48,7 +48,7 @@ use dsa_rust::associative::hash_set::HashSet;
     // Creates a list of elements only present in both sets
     let mut intersection: Vec<u8> = Vec::new();
     for e in set1.intersection(&set2) {
-        intersection.push(*e); 
+        intersection.push(*e);
     }
     assert_eq!(intersection.len(), 2);
     assert!(intersection.contains(&2));
@@ -57,26 +57,26 @@ use dsa_rust::associative::hash_set::HashSet;
     // Creates a list of elements from self not present in other
     let mut difference: Vec<u8> = Vec::new();
     for e in set1.difference(&set2) {
-        difference.push(*e); 
+        difference.push(*e);
     }
     assert_eq!(difference.len(), 2);
     assert!(difference.contains(&0));
     assert!(difference.contains(&1));
 
-    // Proves that difference() is asymmetric 
+    // Proves that difference() is asymmetric
     let mut difference: Vec<u8> = Vec::new();
     for e in set2.difference(&set1) {
-        difference.push(*e); 
+        difference.push(*e);
     }
     assert_eq!(difference.len(), 2);
     assert!(difference.contains(&4));
     assert!(difference.contains(&5));
 
-    // Creates a list of elements present in either the first or 
+    // Creates a list of elements present in either the first or
     // second one set, but not both
     let mut unique: Vec<u8> = Vec::new();
     for e in set1.unique(&set2) {
-        unique.push(*e); 
+        unique.push(*e);
     }
     assert_eq!(unique.len(), 4);
     assert!(unique.contains(&0));
@@ -87,7 +87,7 @@ use dsa_rust::associative::hash_set::HashSet;
     // Illustrates that unique() is symmetric
     let mut unique: Vec<u8> = Vec::new();
     for e in set2.unique(&set1) {
-        unique.push(*e); 
+        unique.push(*e);
     }
     assert_eq!(unique.len(), 4);
     assert!(unique.contains(&0));
@@ -104,24 +104,24 @@ use std::fmt::Debug;
 use std::hash::Hash;
 
 pub struct HashSet<T> {
-    map: probing_hash_table::HashMap<T, ()>
+    map: probing_hash_table::HashMap<T, ()>,
 }
 impl<T> Default for HashSet<T>
 where
     T: Clone + Default + Debug + Hash + Eq + PartialEq,
- {
+{
     fn default() -> Self {
         Self::new()
     }
 }
 impl<T> HashSet<T>
 where
-    T: Clone + Default + Debug + Hash + Eq + PartialEq, {
-
+    T: Clone + Default + Debug + Hash + Eq + PartialEq,
+{
     // Basic operations
     ///////////////////
 
-    /// Constructor for an empty set with a default capacity of 2 
+    /// Constructor for an empty set with a default capacity of 2
     /// because everyone deserves a friend.
     pub fn new() -> Self {
         let new_capacity = 2;
@@ -156,7 +156,8 @@ where
     pub fn remove(&mut self, elem: T) -> Option<T> {
         if let Some(val) = self.map.remove(&elem) {
             return Some(val.key().clone());
-        } None
+        }
+        None
     }
 
     /// Returns true if the set contains the referenced element.
@@ -171,14 +172,14 @@ where
     // Union operations
     ///////////////////
 
-    /// Returns an iterator over references to all elements that appear 
-    /// in either `self` or `other` as a set-theoretic 
+    /// Returns an iterator over references to all elements that appear
+    /// in either `self` or `other` as a set-theoretic
     /// [union](https://en.wikipedia.org/wiki/Union_(set_theory)).
     pub fn union<'a>(&'a self, other: &'a Self) -> Union<'a, T> {
         Union::build(&self.map, &other.map)
     }
 
-    /// A mutating version of `union()` that consumes `other` to add 
+    /// A mutating version of `union()` that consumes `other` to add
     /// all of its elements to `self`.
     pub fn extend(&mut self, other: Self) {
         let other_iter = other.map.into_iter();
@@ -187,13 +188,13 @@ where
                 self.put(key.0)
             }
         }
-    } 
+    }
 
     //Intersection operations
     /////////////////////////
 
-    /// Returns an iterator over references to elements that appear 
-    /// in both `self` and `other` as a set-theoretic 
+    /// Returns an iterator over references to elements that appear
+    /// in both `self` and `other` as a set-theoretic
     /// [intersection](https://en.wikipedia.org/wiki/Intersection_(set_theory)).
     pub fn intersection<'a>(&'a self, other: &'a Self) -> Intersection<'a, T> {
         let (longer, shorter) = if self.map.len() >= other.map.len() {
@@ -216,11 +217,13 @@ where
     // O(m*n)
     pub fn retain_all(&mut self, other: &Self) {
         // Collect keys to remove
-        let keys_to_remove: Vec<_> = self.map.keys()
+        let keys_to_remove: Vec<_> = self
+            .map
+            .keys()
             .filter(|k| !other.map.contains(k))
             .cloned() // collect owned keys if necessary
             .collect();
-    
+
         // Remove them safely
         for key in keys_to_remove {
             self.map.remove(&key);
@@ -230,10 +233,10 @@ where
     // Subtraction operations
     /////////////////////////
 
-    /// Returns an iterator over references to elements that are present 
-    /// in `self` but not in `other` as a set-theoretic asymmetric difference 
-    /// or [relative complement](https://en.wikipedia.org/wiki/Complement_(set_theory)). 
-    /// This operation is asymmetric: interchanging self and other 
+    /// Returns an iterator over references to elements that are present
+    /// in `self` but not in `other` as a set-theoretic asymmetric difference
+    /// or [relative complement](https://en.wikipedia.org/wiki/Complement_(set_theory)).
+    /// This operation is asymmetric: interchanging self and other
     /// generally produces different results.
     pub fn difference<'a>(&'a self, other: &'a Self) -> Difference<'a, T> {
         //let (longer, shorter) = if self.map.len() <= other.map.len() {
@@ -243,16 +246,15 @@ where
         //};
         //Diff::new(longer, shorter)
         Difference {
-            lhs_iter: self.map.keys(), 
-            rhs: &other.map
+            lhs_iter: self.map.keys(),
+            rhs: &other.map,
         }
-
     }
 
-    /// Returns an iterator over references to elements that are present 
-    /// in exactly one of the two sets as a set-theoretic [symmetric 
-    /// difference](https://en.wikipedia.org/wiki/Symmetric_difference). 
-    /// This operation is symmetric: interchanging `self` and `other` 
+    /// Returns an iterator over references to elements that are present
+    /// in exactly one of the two sets as a set-theoretic [symmetric
+    /// difference](https://en.wikipedia.org/wiki/Symmetric_difference).
+    /// This operation is symmetric: interchanging `self` and `other`
     /// yields the same result.
     pub fn unique<'a>(&'a self, other: &'a Self) -> Unique<'a, T> {
         Unique::new(&self.map, &other.map)
@@ -263,23 +265,22 @@ where
 
     // Mutates `S` to only contain values that adhere to the given predicate (lambda)
     //pub fn retain(&mut self, |predicate|) {}
-
 }
 
 pub struct Union<'a, K> {
     // Used "raw" for its "free" operations
     lhs: &'a probing_hash_table::HashMap<K, ()>,
     // Create explicit iterators outside of the next() implementation
-    lhs_iter: probing_hash_table::Keys<'a, K, ()>, 
+    lhs_iter: probing_hash_table::Keys<'a, K, ()>,
     rhs_iter: probing_hash_table::Keys<'a, K, ()>,
 }
 impl<'a, K> Union<'a, K> {
     // Constructor that takes map references to create iterators outside of the next()
     // implementation
     fn build(
-        lhs: &'a probing_hash_table::HashMap<K, ()>, 
-        rhs: &'a probing_hash_table::HashMap<K, ()>) 
-    -> Union<'a, K> 
+        lhs: &'a probing_hash_table::HashMap<K, ()>,
+        rhs: &'a probing_hash_table::HashMap<K, ()>,
+    ) -> Union<'a, K>
     where
         K: Debug + Eq + Hash + PartialEq,
     {
@@ -355,7 +356,10 @@ impl<'a, K> Unique<'a, K>
 where
     K: Debug + Eq + Hash,
 {
-    pub fn new(lhs: &'a probing_hash_table::HashMap<K, ()>, rhs: &'a probing_hash_table::HashMap<K, ()>) -> Self {
+    pub fn new(
+        lhs: &'a probing_hash_table::HashMap<K, ()>,
+        rhs: &'a probing_hash_table::HashMap<K, ()>,
+    ) -> Self {
         Self {
             lhs,
             rhs,
@@ -381,7 +385,6 @@ where
         self.lhs_iter.find(|&k| !self.rhs.contains(k))
     }
 }
-
 
 // Unit tests
 /////////////
@@ -422,12 +425,12 @@ fn union() {
     let mut set2 = HashSet::<&str>::new();
     set2.put("Remus"); // +1
     set2.put("Romulus"); // +1
-    set2.put("Bobson"); 
-    set2.put("Peter"); 
+    set2.put("Bobson");
+    set2.put("Peter");
 
     let mut union: Vec<&str> = Vec::new();
     for e in set1.union(&set2) {
-        union.push(*e); 
+        union.push(*e);
     }
     assert_eq!(union.len(), 6);
     eprintln!("{:#?}", union);
@@ -447,7 +450,7 @@ fn union() {
     assert!(set1.contains("Dichael"));
     assert!(set1.contains("Remus"));
     assert!(set1.contains("Romulus"));
-    
+
     //panic!("MANUAL TEST FAILURE");
 }
 
@@ -464,15 +467,15 @@ fn intersection() {
     let mut set2 = HashSet::<&str>::new();
     set2.put("Remus");
     set2.put("Romulus");
-    set2.put("Bobson"); 
-    set2.put("Glank"); 
-    set2.put("Flock"); 
-    set2.put("Peter"); 
+    set2.put("Bobson");
+    set2.put("Glank");
+    set2.put("Flock");
+    set2.put("Peter");
 
     // Creates a vec of borrowed keys contained only in both sets
     let mut intersection: Vec<&str> = Vec::new();
     for e in set1.intersection(&set2) {
-        intersection.push(*e); 
+        intersection.push(*e);
     }
     eprintln!("{:#?}", intersection);
     assert_eq!(intersection.len(), 2);
@@ -500,22 +503,22 @@ fn intersection() {
 fn difference() {
     //Creates a couple new hash sets
     let mut set1 = HashSet::<&str>::new();
-    set1.put("Peter"); 
+    set1.put("Peter");
     set1.put("Brain"); // +1
-    set1.put("Bobson"); 
-    set1.put("Dichael"); // +1 
+    set1.put("Bobson");
+    set1.put("Dichael"); // +1
 
     let mut set2 = HashSet::<&str>::new();
     set2.put("Remus"); // +1
     set2.put("Romulus"); // +1
-    set2.put("Bobson"); 
-    set2.put("Flock");  // +1
-    set2.put("Peter"); 
+    set2.put("Bobson");
+    set2.put("Flock"); // +1
+    set2.put("Peter");
 
     // Creates a vec of borrowed keys contained only in both sets
     let mut difference: Vec<&str> = Vec::new();
     for e in set1.difference(&set2) {
-        difference.push(*e); 
+        difference.push(*e);
     }
     eprintln!("{:#?}", difference);
     assert_eq!(difference.len(), 2);
@@ -525,7 +528,7 @@ fn difference() {
     // Proves that difference() is positionally dependent
     let mut difference: Vec<&str> = Vec::new();
     for e in set2.difference(&set1) {
-        difference.push(*e); 
+        difference.push(*e);
     }
     eprintln!("{:#?}", difference);
     assert_eq!(difference.len(), 3);
@@ -536,7 +539,7 @@ fn difference() {
     // Creates a vec of borrowed keys contained only in both sets
     let mut unique: Vec<&str> = Vec::new();
     for e in set1.unique(&set2) {
-        unique.push(*e); 
+        unique.push(*e);
     }
     eprintln!("{:#?}", unique);
     assert_eq!(unique.len(), 5);
