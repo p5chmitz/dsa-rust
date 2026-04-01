@@ -90,7 +90,7 @@ where
     heap: Vec<Entry<K, P>>,
     // Tracks entry indexes in the heap as <hashed_K, index>
     map: HashMap<usize, usize>,
-    size: usize, // # of live entries 
+    size: usize,    // # of live entries
     deleted: usize, // # of tombstones
 }
 impl<K, P> Default for PriorityQueue<K, P>
@@ -257,45 +257,44 @@ where
             self.heap[index].key = new_key;
 
             Ok(old_key)
-
         } else {
             Err("Error: Old key does not exist in the queue")
         }
     }
 
-    /// A manual tool to rehash and shrink the structure's map down to 
-    /// a load factor <= 0.5. The structure automatically rehashes the underlying 
-    /// map for remove and key mutation operations to reduce spatial bloat in 
-    /// long-lived queues with many such mutations. This operation provides a 
-    /// manual way to actually shrink the underlying map down to a load factor 
-    /// of 0.5 over live entries only. This operation uses the map's 
+    /// A manual tool to rehash and shrink the structure's map down to
+    /// a load factor <= 0.5. The structure automatically rehashes the underlying
+    /// map for remove and key mutation operations to reduce spatial bloat in
+    /// long-lived queues with many such mutations. This operation provides a
+    /// manual way to actually shrink the underlying map down to a load factor
+    /// of 0.5 over live entries only. This operation uses the map's
     /// [shrink_to_fit()](crate::associative::probing_hash_table::HashMap::shrink_to_fit) operation
-    /// to clean up the backing structure for long-lived queues in _O(n)_ time 
+    /// to clean up the backing structure for long-lived queues in _O(n)_ time
     /// where `n` is the number of live entries in the queue.
     pub fn clean(&mut self) {
         use std::mem;
         if self.map.deleted() >= self.map.len() {
             let old = mem::take(&mut self.map); // replaces with empty map
-            self.map = old.shrink_to_fit();     // consumes old
+            self.map = old.shrink_to_fit(); // consumes old
         }
     }
 
-    /// Removes and returns the highest priority pair in the queue. 
-    /// This operation automatically checks for spatial bloat and rehashes the 
-    /// underlying map when tombstones outnumber live entries. Amortized cost 
-    /// is _O(log n)_, but a rehash may occasionally incur _O(n)_ time where `n` 
+    /// Removes and returns the highest priority pair in the queue.
+    /// This operation automatically checks for spatial bloat and rehashes the
+    /// underlying map when tombstones outnumber live entries. Amortized cost
+    /// is _O(log n)_, but a rehash may occasionally incur _O(n)_ time where `n`
     /// is the number of live entries in the queue.
     pub fn pop(&mut self) -> Option<(K, P)> {
         if !self.heap.is_empty() {
             let node = self.heap.swap_remove(0); // O(1)
             self.sift_down(0); // O(log(n))
-                               
+
             // Rehash if tombstones out-number live entries
             use std::mem;
             if self.deleted >= self.size {
-            //if self.map.deleted() >= self.map.len() { // Checks take O(n) time :(
-                let old = mem::take(&mut self.map); 
-                self.map = old.rehash();            // O(n)
+                //if self.map.deleted() >= self.map.len() { // Checks take O(n) time :(
+                let old = mem::take(&mut self.map);
+                self.map = old.rehash(); // O(n)
             }
 
             self.size -= 1;
@@ -306,10 +305,10 @@ where
         }
     }
 
-    /// Removes and returns an arbitrarily-located entry for the given key. 
-    /// This operation automatically checks for spatial bloat and rehashes the 
-    /// underlying map when tombstones outnumber live entries. Amortized cost 
-    /// is _O(log n)_, but a rehash may occasionally incur _O(n)_ time where `n` 
+    /// Removes and returns an arbitrarily-located entry for the given key.
+    /// This operation automatically checks for spatial bloat and rehashes the
+    /// underlying map when tombstones outnumber live entries. Amortized cost
+    /// is _O(log n)_, but a rehash may occasionally incur _O(n)_ time where `n`
     /// is the number of live entries in the queue.
     pub fn remove(&mut self, key: K) -> Option<(K, P)> {
         let hashed_key = Self::hash(&key);
@@ -507,7 +506,7 @@ mod tests {
         // Attempt to mutate priority
         assert!(queue.mutate_priority("Cork", 1).is_ok()); // increase
         assert!(queue.mutate_priority("Damiel", 3).is_ok()); // decrease
-                                                             
+
         // Testing updated membership
         assert!(queue.contains("Peter"));
         assert!(queue.contains("Damiel"));
@@ -574,6 +573,5 @@ mod tests {
 
         // Uncomment to trigger debug print
         //panic!("MANUAL TEST FAILURE")
-
     }
 }
