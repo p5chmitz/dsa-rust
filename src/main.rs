@@ -182,7 +182,6 @@ fn main() {
             println!("\x1b[1;34mArena N-ary tree example:\x1b[0m");
             crate::hierarchies::arena_gentree_builder::navigator(0, path);
             println!();
-
         }
 
         // MAPS
@@ -190,11 +189,12 @@ fn main() {
         Some("associative") => {
             println!("\x1b[1;34mHashing examples:\x1b[0m");
             println!("Bit shifting");
-            associative::hash_lib::visual_bit_shift("Peter");
-            println!("\nHash code generator");
-            associative::hash_lib::visual_hash_code("Schmitz");
-            println!("\nHash code generator (with Rust's default 64-bit hasher)");
+            associative::hash_lib::bit_shift_visualization("Peter");
+            let p = "Simple hash digest";
+            println!("\nHash code generator for: {p}");
+            associative::hash_lib::simple_hash_function(p);
             let s = "Brain";
+            println!("\nHash code generator (with Rust's default 64-bit hasher)");
             let v = associative::hash_lib::hash(s);
             println!("Hash code for {s}: {v}");
             println!("\nHash code generator (feeding individual bytes to Rust's hasher)");
