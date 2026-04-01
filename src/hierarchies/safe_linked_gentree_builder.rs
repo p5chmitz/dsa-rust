@@ -204,7 +204,7 @@ pub fn navigator(level: usize, path: &Path) {
 #[cfg(test)]
 mod tests {
     #[test]
-    /** 
+    /**
     Creates this tree to test properties
         []
         ├── Landlocked
@@ -224,10 +224,7 @@ mod tests {
     */
     fn print_tree() {
         use crate::hierarchies::safe_linked_gentree_builder::{
-            construct, 
-            pretty_print, 
-            GenTree,
-            Heading
+            construct, pretty_print, GenTree, Heading,
         };
 
         let tree_vec = vec![
@@ -289,18 +286,14 @@ mod tests {
         let mut cur = tree.cursor_mut();
 
         pretty_print("LINKED TEST TITLE", &mut cur);
-        
-        //panic!("MANUAL TEST FAILURE");
 
+        //panic!("MANUAL TEST FAILURE");
     }
 
     #[test]
     fn print_tree2() {
         use crate::hierarchies::safe_linked_gentree_builder::{
-            construct, 
-            pretty_print, 
-            GenTree,
-            Heading
+            construct, pretty_print, GenTree, Heading,
         };
 
         let tree_vec = vec![
@@ -338,9 +331,8 @@ mod tests {
         let mut cur = tree.cursor_mut();
 
         pretty_print("LINKED TEST TITLE", &mut cur);
-        
-        //panic!("MANUAL TEST FAILURE");
 
+        //panic!("MANUAL TEST FAILURE");
     }
 
     #[test]
@@ -352,4 +344,3 @@ mod tests {
         //panic!("MANUAL TEST FAILURE");
     }
 }
-

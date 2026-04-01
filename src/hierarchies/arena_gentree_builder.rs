@@ -5,7 +5,7 @@ use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
 
-use crate::hierarchies::arena_gentree::{Position, GenTree};
+use crate::hierarchies::arena_gentree::{GenTree, Position};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Heading {
@@ -13,7 +13,7 @@ pub struct Heading {
     pub title: String,
 }
 
- /** Takes a path to a Markdown file, parses it for title and headings,
+/** Takes a path to a Markdown file, parses it for title and headings,
 and returns a tuple containing the document title and a vector of
 Heading objects.
 
@@ -72,7 +72,7 @@ pub fn construct(mut cur_level: usize, data: Vec<Heading>) -> GenTree<Heading> {
     let mut tree: GenTree<Heading> = GenTree::<Heading>::new();
 
     let mut cursor: Position = tree.root().clone(); // Sets cursor to tree.root
-    //let mut cur_level = 0;
+                                                    //let mut cur_level = 0;
 
     // Constructs tree from Vec<T>
     for heading in data {
@@ -101,7 +101,9 @@ pub fn construct(mut cur_level: usize, data: Vec<Heading>) -> GenTree<Heading> {
         }
         // Case 3: Adds sibling
         else if title_level == cur_level {
-            cursor = tree.parent(&cursor).expect("Error: Cannot add sibling to root!");
+            cursor = tree
+                .parent(&cursor)
+                .expect("Error: Cannot add sibling to root!");
             cursor = tree.add_child(&cursor, heading);
             cur_level += 1;
             //eprintln!("Case 3: {:#?}", tree.get_data(&cursor).unwrap().title);
@@ -110,7 +112,9 @@ pub fn construct(mut cur_level: usize, data: Vec<Heading>) -> GenTree<Heading> {
         else {
             let diff = cur_level - title_level;
             for _ in 1..diff {
-                cursor = tree.parent(&cursor).expect("Error: Cannot traverse beyond root!");
+                cursor = tree
+                    .parent(&cursor)
+                    .expect("Error: Cannot traverse beyond root!");
                 cur_level -= 1;
             }
             cursor = tree.add_child(&cursor, heading);
@@ -121,33 +125,33 @@ pub fn construct(mut cur_level: usize, data: Vec<Heading>) -> GenTree<Heading> {
     tree
 }
 // 2
-// 1 
-// 1 
-// 1 
-// 1 
+// 1
+// 1
+// 1
+// 1
 // 4
 // 4
 // 2
 // 3
 // 4
-// 1 
-// 1 
+// 1
+// 1
 // 4
 
-/// Takes the parsed file name and the root of a GenTree type as 
+/// Takes the parsed file name and the root of a GenTree type as
 /// a Position and pretty-prints the tree structure
 /// Modified preorder traversal function that walks the tree recursively
 /// printing each node's title and children with appropriate box drawing components
 fn preorder<'a>(tree: &'a GenTree<Heading>, mut cursor: &'a Position, prefix: &str) {
     let children = tree.children(cursor);
-    
+
     if !children.is_empty() {
         let mut index = children.len();
-    
+
         for child_pos in children {
             index -= 1;
             cursor = child_pos;
-    
+
             if let Some(child_data) = tree.get_data(child_pos) {
                 if index == 0 {
                     println!("\t{}└── {}", prefix, child_data.title);
@@ -228,12 +232,12 @@ pub fn navigator(level: usize, path: &Path) {
 mod tests {
 
     #[test]
-    /** 
+    /**
     Creates this tree to test properties
     */
     fn build_logic() {
         use crate::hierarchies::arena_gentree::GenTree;
-        use crate::hierarchies::arena_gentree_builder::{Heading, construct};
+        use crate::hierarchies::arena_gentree_builder::{construct, Heading};
 
         let tree_vec = vec![
             Heading {
@@ -292,7 +296,7 @@ mod tests {
         // The root starts at 0, but the data starts at 1,
         // so you have to navigate to the children of the root
         // to access the "perceived" root
-        let cursor = tree.root(); 
+        let cursor = tree.root();
         let kids = tree.children(&cursor);
         let cursor = &kids[0];
         assert_eq!(tree.num_children(cursor), 2); // Root has [Landlocked, Islands]
@@ -422,7 +426,7 @@ mod tests {
     }
 
     #[test]
-    /** 
+    /**
     Creates this tree to test properties
         []
         ├── Landlocked
@@ -442,10 +446,7 @@ mod tests {
     */
     fn md_heading_test() {
         use crate::hierarchies::arena_gentree_builder::{
-            GenTree, 
-            Heading, 
-            construct, 
-            pretty_print
+            construct, pretty_print, GenTree, Heading,
         };
 
         let tree_vec = vec![
@@ -511,16 +512,12 @@ mod tests {
         //eprintln!("{tree:#?}");
         pretty_print("Test Title", &tree);
         //panic!("MANUAL TEST FAILURE");
-
     }
 
     #[test]
-        fn md_heading_test2() {
+    fn md_heading_test2() {
         use crate::hierarchies::arena_gentree_builder::{
-            GenTree, 
-            Heading, 
-            construct, 
-            pretty_print
+            construct, pretty_print, GenTree, Heading,
         };
 
         let tree_vec = vec![
@@ -559,11 +556,9 @@ mod tests {
 
         //eprintln!("{tree:#?}");
         pretty_print("ARENA TEST TITLE", &tree);
-        
+
         //panic!("MANUAL TEST FAILURE");
-
     }
-
 
     #[test]
     // Fails with md/mdx files with no headings

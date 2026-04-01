@@ -17,14 +17,14 @@ Due to common usage when implementing sorted map and set structures, this implem
     let mut tree: AVLTree<u8> = AVLTree::new();
 
     // Create the following AVL tree
-    // 
-    //           39      
-    //          /  \      
-    //        17    41      
-    //       /  \     \   
+    //
+    //           39
+    //          /  \
+    //        17    41
+    //       /  \     \
     //     13   23     43
-    //     /   /  \           
-    //    8   19  31          
+    //     /   /  \
+    //    8   19  31
     //
     let v = [31, 13, 23, 39, 41, 43, 8, 17, 19];
     for e in v.iter() {
@@ -34,7 +34,7 @@ Due to common usage when implementing sorted map and set structures, this implem
 
 
     // Remove 41 which results in the following restructure
-    // 
+    //
     //         17
     //        /  \
     //      13    39
@@ -61,7 +61,7 @@ Due to common usage when implementing sorted map and set structures, this implem
     // In-order "snapshot" iterator
     let mut sorted = Vec::new();
     for e in tree.iter() {
-        sorted.push(*e) 
+        sorted.push(*e)
     }
     assert_eq!(sorted, [1, 2, 4, 5, 8, 13, 17, 19, 23, 31, 34, 39, 43, 67]);
 ```
@@ -90,9 +90,9 @@ enum Side {
     Left,
     Right,
 }
-// NOTE: Implementing Not provides the ability to use the 
+// NOTE: Implementing Not provides the ability to use the
 // logical negation operator !. Implementing a custom
-// opposite() does the same thing, but more explicitly. 
+// opposite() does the same thing, but more explicitly.
 // The choice to implement Not for &Side instead of Side
 // allows the re-use of Side without making it Copy/Clone.
 // Example:
@@ -142,7 +142,7 @@ pub struct AVLNode<T> {
 }
 impl<T> AVLNode<T> {
     // Creates a new node with its current index, a value, and its parent (if Some).
-    // Guarantees that all nodes have a value. 
+    // Guarantees that all nodes have a value.
     // All initial inserts are leafs before restructuring, so left and right are set to None.
     fn new(index: usize, value: T, parent: Option<usize>, height: usize) -> Self {
         AVLNode {
@@ -193,7 +193,6 @@ impl<T> AVLNode<T> {
             Side::Right => self.right = idx,
         }
     }
-
 }
 
 /// # About
@@ -203,9 +202,9 @@ impl<T> AVLNode<T> {
 pub struct AVLTree<T> {
     // Option wrapper for efficient take() operations during removal
     // without incurring the wrath of O(n) resize ops
-    pub arena: Vec<Option<AVLNode<T>>>, 
+    pub arena: Vec<Option<AVLNode<T>>>,
     // Wont always be 0, and wont always be Some!
-    root: Option<usize>, 
+    root: Option<usize>,
 }
 // Im just here to make Clippy happy
 impl<T> Default for AVLTree<T>
@@ -238,14 +237,18 @@ where
         }
     }
 
-    /// Immutable node accessor 
+    /// Immutable node accessor
     fn node(&self, index: usize) -> &AVLNode<T> {
-        self.arena[index].as_ref().expect("Error: Invalid immutable node access")
+        self.arena[index]
+            .as_ref()
+            .expect("Error: Invalid immutable node access")
     }
 
     /// Mutable node accessor
     fn node_mut(&mut self, index: usize) -> &mut AVLNode<T> {
-        self.arena[index].as_mut().expect("Error: Invalid mutable node access")
+        self.arena[index]
+            .as_mut()
+            .expect("Error: Invalid mutable node access")
     }
 
     /// Gets a reference to the value of a key, if Some.
@@ -281,7 +284,9 @@ where
     pub fn get_root(&self) -> Option<&T> {
         if let Some(node) = self.root {
             self.node(node).get_value()
-        } else { None }
+        } else {
+            None
+        }
     }
 
     /// Returns a `SearchResult` enum with the following variants:
@@ -290,7 +295,7 @@ where
     /// - Exists: The key was found in the tree; The caller can decide how to use this index
     ///   to deal with multi-maps and sets
     ///
-    /// SAFETY: May panic if a node does not contain a value, but that 
+    /// SAFETY: May panic if a node does not contain a value, but that
     /// would violate the AVL tree invariant, so its highly unlikely, and only present to
     /// handle the possibility of corrupted structures.
     // Original impl: WORKS for T
@@ -342,20 +347,22 @@ where
     //    }
     //}
     // Updated impl for T: Keyed
-    fn search<Q>(&self, key: &Q) -> SearchResult 
-        where Q: Ord + ?Sized, T: Borrow<Q>, 
+    fn search<Q>(&self, key: &Q) -> SearchResult
+    where
+        Q: Ord + ?Sized,
+        T: Borrow<Q>,
     {
         // Early return for empty structures
         if self.arena.is_empty() {
             return SearchResult::None;
         };
-    
+
         // Sets the starting point for the search
         // Safety: Valueless nodes violate the AVL tree invariant
         let mut current = self
             .root
             .expect("Error: Root should always contain a value");
-    
+
         // Uses iterative loop instead of recursive search
         // because fuck stack overflows (and recursion)
         loop {
@@ -365,9 +372,9 @@ where
                 let value = val
                     .get_value()
                     .expect("Error: Node does not contain a value");
-    
+
                 let value_key: &Q = value.borrow();
-    
+
                 match value_key.cmp(key) {
                     // Go right or return parent
                     Ordering::Less => {
@@ -474,20 +481,21 @@ where
                 //if let Some(val) = &self.arena[parent].as_mut().unwrap().value {
                 if let Some(val) = &self.node_mut(parent).value {
                     match key.cmp(val) {
-                        Ordering::Less => { 
+                        Ordering::Less => {
                             //self.arena[parent].as_mut().unwrap().left = Some(new_idx);
                             self.node_mut(parent).left = Some(new_idx);
-                        },
-                        Ordering::Greater => { 
+                        }
+                        Ordering::Greater => {
                             //self.arena[parent].as_mut().unwrap().right = Some(new_idx);
                             self.node_mut(parent).right = Some(new_idx);
-                        },
+                        }
                         Ordering::Equal => {}
                     }
                 };
 
                 // Insert new node
-                self.arena.push(Some(AVLNode::new(new_idx, key, Some(parent), 1)));
+                self.arena
+                    .push(Some(AVLNode::new(new_idx, key, Some(parent), 1)));
 
                 // Walk up the tree to update heights and rebalance
                 let mut current = Some(parent);
@@ -526,7 +534,7 @@ where
             SearchResult::Exists(idx) => idx,
             _ => return None,
         };
-    
+
         // Step 1: Find node to physically remove (node with ≤1 child)
         let mut remove_index = target_index;
         if self.node(remove_index).left.is_some() && self.node(remove_index).right.is_some() {
@@ -535,32 +543,38 @@ where
             while let Some(left) = self.node(succ_index).left {
                 succ_index = left;
             }
-    
+
             // Move successor's value into target node
             //let succ_value = self.arena[succ_index].take().unwrap().value;
             //self.node_mut(remove_index).value = succ_value;
 
             // 1. Take the value out of the successor node.
             let succ_value = self.node_mut(succ_index).value.take();
-            
-            // 2. Replace the target's value with the successor's, 
+
+            // 2. Replace the target's value with the successor's,
             // getting the original target value back.
-            let original_value = self.node_mut(target_index).value.replace(succ_value.unwrap());
-            
-            // 3. Place the original target value into the successor node, 
+            let original_value = self
+                .node_mut(target_index)
+                .value
+                .replace(succ_value.unwrap());
+
+            // 3. Place the original target value into the successor node,
             // which we are about to remove.
             self.node_mut(succ_index).value = original_value;
-            
-            // Now, the successor node can be safely removed, and it 
+
+            // Now, the successor node can be safely removed, and it
             // contains the correct value to return.
-    
+
             // Now remove the successor node (guaranteed ≤1 child)
             remove_index = succ_index;
         }
-    
+
         // Step 2: Identify the child of the node to remove (if any)
-        let child_index = self.node(remove_index).left.or(self.node(remove_index).right);
-    
+        let child_index = self
+            .node(remove_index)
+            .left
+            .or(self.node(remove_index).right);
+
         // Step 3: Update parent to point to the child
         let parent_index = self.node(remove_index).parent;
         if let Some(p_idx) = parent_index {
@@ -574,15 +588,15 @@ where
             // Removing root
             self.root = child_index;
         }
-    
+
         // Step 4: Update child's parent
         if let Some(c_idx) = child_index {
             self.node_mut(c_idx).parent = parent_index;
         }
-    
+
         // Step 5: Take the node for return
         let removed_value = self.arena[remove_index].take().map(|n| n.value);
-    
+
         // Step 6: Walk up ancestors to update heights and rebalance
         let mut current = parent_index;
         while let Some(idx) = current {
@@ -590,7 +604,7 @@ where
             self.restructure(idx);
             current = self.node(idx).parent;
         }
-    
+
         removed_value?
     }
 
@@ -606,8 +620,14 @@ where
     //    self.arena[index].as_mut().unwrap().height = max(left, right) + 1
     //}
     fn update_node_height(&mut self, index: usize) {
-        let left = self.node_mut(index).left.map_or(0, |idx| self.node_mut(idx).height);
-        let right = self.node_mut(index).right.map_or(0, |idx| self.node_mut(idx).height);
+        let left = self
+            .node_mut(index)
+            .left
+            .map_or(0, |idx| self.node_mut(idx).height);
+        let right = self
+            .node_mut(index)
+            .right
+            .map_or(0, |idx| self.node_mut(idx).height);
         // Works for internal and leaf nodes, because max(0, 0) + 1 = 1
         self.node_mut(index).height = max(left, right) + 1
     }
@@ -616,7 +636,8 @@ where
     /// `side` is the direction of the original heavy side (Side::Left or Side::Right).
     fn rotate(&mut self, root_idx: usize, side: &Side) {
         // Heavy child becomes the new root of the subtree
-        let child_idx = self.node_mut(root_idx)
+        let child_idx = self
+            .node_mut(root_idx)
             .child(side)
             .expect("Rotation requires heavy child");
 
@@ -643,14 +664,14 @@ where
         }
 
         // Make old root the child of new root
-        self.node_mut(child_idx).set_child(opposite(side), Some(root_idx));
+        self.node_mut(child_idx)
+            .set_child(opposite(side), Some(root_idx));
         self.node_mut(root_idx).parent = Some(child_idx);
 
         // Update heights
         self.update_node_height(root_idx);
         self.update_node_height(child_idx);
     }
-
 
     /// Determines left-heavy (>0) or right-heavy (<0) balance factors for a given node index
     /// The necessity for restructure operations can be determined agnostically by
@@ -665,7 +686,6 @@ where
     /// Rebalances the subtree rooted at `index`.
     /// Performs single or double rotations as necessary.
     fn restructure(&mut self, index: usize) {
-
         // Not all inserts require restructuring
         let balance = self.balance_factor(index);
         if balance.abs() < 2 {
@@ -678,7 +698,7 @@ where
         // Determine the child index for the heavy side
         let child_idx = match self.node(index).child(&heavy_side) {
             Some(idx) => idx,
-            // SAFETY: A None value on the child violates the AVL invariant 
+            // SAFETY: A None value on the child violates the AVL invariant
             None => panic!("Error: Heavy child is None"),
         };
 
@@ -755,14 +775,14 @@ fn avl_construction() {
 
     let v = [31, 13, 23, 39, 41, 43, 8, 17, 19];
     // Produces the following AVL tree
-    // 
-    //           39      
-    //          /  \      
-    //        17    41      
-    //       /  \     \   
+    //
+    //           39
+    //          /  \
+    //        17    41
+    //       /  \     \
     //     13   23     43
-    //     /   /  \           
-    //    8   19  31          
+    //     /   /  \
+    //    8   19  31
     //
     for e in v.iter() {
         tree.insert(*e);
@@ -782,20 +802,20 @@ fn avl_construction() {
 
     let mut sorted = Vec::new();
     for e in tree.iter() {
-        sorted.push(*e) 
+        sorted.push(*e)
     }
     assert_eq!(sorted, [8, 13, 17, 19, 23, 31, 39, 41, 43]);
 
     let mut tree: AVLTree<u8> = AVLTree::new();
     let v = [1, 2, 3, 4, 5, 6, 7];
     // Produces the following AVL tree
-    // 
+    //
     //          4
     //        /   \
     //      2       6
     //     / \     / \
     //    1   3   5   7
-    //       
+    //
     for e in v.iter() {
         tree.insert(*e);
     }
@@ -813,7 +833,7 @@ fn avl_construction() {
 
     let mut sorted = Vec::new();
     for e in tree.iter() {
-        sorted.push(*e) 
+        sorted.push(*e)
     }
     assert_eq!(sorted, [1, 2, 3, 4, 5, 6, 7]);
 
@@ -827,14 +847,14 @@ fn avl_removals() {
     let mut tree: AVLTree<u8> = AVLTree::new();
 
     // Construct the following AVL tree
-    // 
-    //           39      
-    //          /  \      
-    //        17    41      
-    //       /  \     \   
+    //
+    //           39
+    //          /  \
+    //        17    41
+    //       /  \     \
     //     13   23     43
-    //     /   /  \           
-    //    8   19  31          
+    //     /   /  \
+    //    8   19  31
     //
     let v = [31, 13, 23, 39, 41, 43, 8, 17, 19];
     for e in v.iter() {
@@ -842,14 +862,14 @@ fn avl_removals() {
     }
 
     // Remove 31 which results in the following AVL tree
-    // 
-    //           39      
-    //          /  \      
-    //        17    41      
-    //       /  \     \   
+    //
+    //           39
+    //          /  \
+    //        17    41
+    //       /  \     \
     //     13   23     43
-    //     /   /           
-    //    8   19            
+    //     /   /
+    //    8   19
     //
     assert_eq!(tree.get_root().unwrap(), &39);
     assert!(tree.contains(&31));
@@ -861,7 +881,7 @@ fn avl_removals() {
     assert_eq!(tree.node(2).right, None);
 
     // Remove 41 which results in the following AVL tree
-    // 
+    //
     //         17
     //        /  \
     //      13    39
@@ -880,7 +900,7 @@ fn avl_removals() {
     assert_eq!(tree.node(tree.node(3).left.expect("")).value, Some(23));
     assert_eq!(tree.node(tree.node(3).right.expect("")).value, Some(43));
 
-    // 17 is now rooth with L 13 and R 39 
+    // 17 is now rooth with L 13 and R 39
     assert_eq!(tree.get_root().unwrap(), &17);
     assert_eq!(tree.node(tree.root.expect("You fucked up")).value, Some(17));
     assert_eq!(tree.node(tree.node(7).left.expect("")).value, Some(13));
@@ -890,7 +910,7 @@ fn avl_removals() {
     assert_eq!(tree.node(tree.node(3).right.expect("")).value, Some(43));
 
     // Remove 8 which results in the following AVL tree
-    // 
+    //
     //         23
     //        /  \
     //      17    39

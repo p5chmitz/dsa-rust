@@ -122,7 +122,7 @@ impl<T> GenTree<T> {
 
     /// Returns the number of live nodes in the tree.
     pub fn size(&self) -> usize {
-        self.size 
+        self.size
     }
 
     /// Returns the number of children for a `Node` at the given `Position`.
@@ -147,10 +147,10 @@ impl<T> GenTree<T> {
     //        let val = self.arena[position.ptr].parent.clone().unwrap().ptr;
     //        pos.ptr = val;
     //        Some(pos)
-    //    } else { None }  
+    //    } else { None }
     //}
 
-    //pub fn jump(&self, position: Position) {} 
+    //pub fn jump(&self, position: Position) {}
 
     // /// Returns a list of the given `Position`'s children.
     // pub fn get_children(&self) -> Vec<Position> {}
@@ -164,7 +164,9 @@ impl<T> GenTree<T> {
     pub fn get_for_pos(&self, position: &Position) -> Option<&T> {
         if position.ptr < self.arena.len() {
             self.arena[position.get()].data.as_ref()
-        } else { panic!("Error: index out-of-bounds") }
+        } else {
+            panic!("Error: index out-of-bounds")
+        }
     }
 
     /// Adds a child to the given `Position` and returns its `Position`.
@@ -341,7 +343,9 @@ impl<T> GenTree<T> {
         #[allow(clippy::manual_map)]
         if let Some(parent) = self.arena[position.get()].parent.clone() {
             Some(parent)
-        } else { None }
+        } else {
+            None
+        }
         //self.arena[position.get()].parent.clone()
     }
 }
@@ -352,7 +356,6 @@ mod tests {
     #[test]
     /// TODO: actually test the structure's members!
     fn atomic() {
-    
         use super::GenTree;
         use crate::hierarchies::arena_gentree_builder::Heading;
 
@@ -360,7 +363,9 @@ mod tests {
         assert_eq!(tree.size(), 0);
         assert!(tree.is_empty());
         let root = tree.root().clone();
-        let mut cursor = tree.add_child(&root, Heading {
+        let mut cursor = tree.add_child(
+            &root,
+            Heading {
                 level: 2,
                 title: "Landlocked".to_string(),
             },
@@ -368,24 +373,32 @@ mod tests {
         assert_eq!(tree.size(), 1);
         assert!(!tree.is_empty());
 
-        cursor = tree.add_child(&cursor, Heading {
+        cursor = tree.add_child(
+            &cursor,
+            Heading {
                 level: 3,
                 title: "Switzerland".to_string(),
             },
         );
-        cursor = tree.add_child(&cursor, Heading {
+        cursor = tree.add_child(
+            &cursor,
+            Heading {
                 level: 4,
                 title: "Geneva".to_string(),
             },
         );
-        cursor = tree.add_child(&cursor, Heading {
+        cursor = tree.add_child(
+            &cursor,
+            Heading {
                 level: 5,
                 title: "Old Town".to_string(),
             },
         );
         cursor = tree.parent(&cursor).expect(""); // Geneva
         cursor = tree.parent(&cursor).expect(""); // Switzerland
-        tree.add_child(&cursor, Heading {
+        tree.add_child(
+            &cursor,
+            Heading {
                 level: 3,
                 title: "Botswana".to_string(),
             },
@@ -398,7 +411,7 @@ mod tests {
 
     #[test]
     fn dangle() {
-        use crate::hierarchies::arena_gentree_builder::{Heading, construct};
+        use crate::hierarchies::arena_gentree_builder::{construct, Heading};
 
         use super::GenTree;
         let one = vec![
