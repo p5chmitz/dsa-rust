@@ -27,7 +27,7 @@ S1: HEAD ----------> None
 S0: HEAD -> [ 5 ] -> None
 ```
 
-After inserting `['a', 'c', 'e', 'd', 'b', 'i', 'g', 'h', 'f']`, the list's `SkipNodes` might contain the following towers. Notice that its always possible to tell the last item in the list because its tower is empty. This makes sense, because inserting the last element can only point to `None`. As you can see by the index notation on the left-hand side of the table, the backing structure retains the insertion order; the backing structure remains unsorted.
+After inserting `['a', 'c', 'e', 'd', 'b', 'i', 'g', 'h', 'f']`, the list's `SkipNodes` might contain the following towers. 
 ```text
 HEAD[0]: [1, 2, 9, 7]
 a[1]: [5]
@@ -40,7 +40,9 @@ g[7]: [8, 6, 6]
 h[8]: [6]
 f[9]: [7, 7, 7]
 ```
-The towers appear to contain rather nonsensical values when printed as they exist in memory, which represents insertion order. However, if you follow the indexes from the `HEAD` node, and re-arrange the nodes into _lexicographically sorted order_, which is what the navigational algorithms in the skiplist achieve, you'd get the following towers.
+Note that its always possible to tell the last item in the list because its tower is empty. This makes sense, because the last element within the sorted arrangement can only point to `None`. As you can see by the index notation on the left-hand side of the table, the backing structure retains the insertion order; the backing structure remains unsorted.
+
+The structure simply appends elements to the backing structure, so when printed the list retains its insertion order, not its sorted arrangement. As a result, the towers appear to contain rather nonsensical values. However, if you follow the indexes from the `HEAD` node, and re-arrange the nodes into _lexicographically sorted order_, which is what the navigational algorithms in the skiplist achieve, you get the following towers.
 ```text
 HEAD[0]: [1, 2, 9, 7]
 a[1]: [5]
@@ -49,19 +51,19 @@ c[2]: [4, 4]
 d[4]: [3, 9]
 e[3]: [9]
 f[9]: [7, 7, 7]
+g[7]: [8, 6, 6]
 h[8]: [6]
 i[6]: []
-g[7]: [8, 6, 6]
 ```
 
-When you rotate the mapping 90 degrees you can start to visualize the skip list layers as logically linked lists formed by tower index placement. Notice that the towers roughly mirror the raw tower output from the previous output.
+When you rotate the mapping 90 degrees you can start to visualize the skip list layers as logically linked lists formed by "next" element indexes. 
 ```text
 L3: [ g[7] ] -> None
 L2: [ f[9] ] -> [ g[7] ] -> [ i[6] ] -> None
 L1: [ c[2] ] -> [ d[4] ] -> [ f[9] ] -> [ g[7] ] -> [ i[6] ] -> None
 L0: [ a[1] ] -> [ b[5] ] -> [ c[2] ] -> [ d[4] ] -> [ e[3] ] -> [ f[9] ] -> [ g[7] ] -> [ h[8] ] -> [ i[6] ] -> None
 ```
-Finally, if you extend each index reference to align with its sorted position within the list, a classical skip list diagram emerges.
+Finally, if you extend each "next" index reference to align with its sorted position within the list, a classical skip list diagram of towers emerges.
 ```text
 L3: HEAD -------------------------------------------------------------------------> [ g[7] ] -------------------------> None
 L2: HEAD -------------------------------------------------------------> [ f[9] ] -> [ g[7] ] -------------> [ i[6] ] -> None
