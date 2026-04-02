@@ -1,9 +1,7 @@
-pub mod arena_bst;
 pub mod arena_gentree;
 pub mod arena_gentree_builder;
 pub mod avl_tree;
 pub mod bin_heap;
-pub mod btreemap;
 pub mod file_tree;
 pub mod linked_bst;
 pub mod safe_linked_gentree;

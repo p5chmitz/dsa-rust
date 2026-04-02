@@ -77,6 +77,7 @@ pub mod sequences {
 pub mod hierarchies {
     pub mod avl_tree;
     pub mod linked_bst;
+    pub mod arena_bst;
     pub mod safe_linked_gentree;
     pub mod safe_linked_gentree_builder;
     pub mod traits; // Necessary for gen tree
