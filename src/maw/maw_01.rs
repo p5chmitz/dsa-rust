@@ -58,3 +58,64 @@ pub fn binary_search_test() {
     let result = binary_search(&array, target).unwrap_or_default();
     assert_eq!(result, 37)
 }
+
+use std::collections::HashMap;
+
+fn longest_unique_substring(s: &str) -> usize {
+    let mut map = HashMap::new(); // As HashMap<char, i32>
+    let mut left = 0;
+    let mut max_len = 0;
+
+    let chars: Vec<char> = s.chars().collect();
+
+    for right in 0..chars.len() {
+        *map.entry(chars[right]).or_insert(0) += 1;
+
+        while map[&chars[right]] > 1 {
+            *map.get_mut(&chars[left]).unwrap() -= 1;
+            left += 1;
+        }
+
+        max_len = max_len.max(right - left + 1);
+    }
+
+    max_len
+}
+
+fn longest_unique_substring_print(s: &str) -> usize {
+    let mut map = HashMap::new();
+    let mut left = 0;
+    let mut max_len = 0;
+    let mut best_range = (0, 0); // To store (start, end)
+
+    let chars: Vec<char> = s.chars().collect();
+
+    for right in 0..chars.len() {
+        *map.entry(chars[right]).or_insert(0) += 1;
+
+        while map[&chars[right]] > 1 {
+            *map.get_mut(&chars[left]).unwrap() -= 1;
+            left += 1;
+        }
+
+        let current_len = right - left + 1;
+        if current_len > max_len {
+            max_len = current_len;
+            best_range = (left, right);
+        }
+    }
+
+    // Print the substring using the captured indices
+    let result: String = chars[best_range.0..=best_range.1].iter().collect();
+    println!("Longest substring found: \"{result}\" (length {max_len})");
+
+    max_len
+}
+
+#[test]
+fn longest_unique_substring_test() {
+    let s = "this is a llama test.";
+    assert_eq!(longest_unique_substring(s), 6);
+    longest_unique_substring_print(s);
+    //panic!()
+}

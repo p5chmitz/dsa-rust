@@ -77,6 +77,7 @@ impl Podium {
     pub fn new() -> Podium {
         Podium {
             data: [const { None }; PODIUM_SIZE],
+            //data: [None; new_capacity], // Illegal
             size: 0,
         }
     }
@@ -231,4 +232,91 @@ pub fn array_list_test() {
 
 pub fn example() {
     //TODO
+}
+
+
+fn balance(s: &str) -> bool {
+    let mut stack = Vec::new();
+
+    for e in s.chars() {
+        match e {
+            // Push opening symbols to the stack
+            '[' | '{' | '(' => stack.push(e),
+
+            // Otherwise, check if the closing symbol has an opener
+            ']' | '}' | ')' => {
+                //let expected = match e {
+                //    ']' => '[',
+                //    '}' => '{',
+                //    ')' => '(',
+                //    _ => unreachable!(),
+                //};
+                //if stack.pop() != Some(expected) {
+                //    panic!("Error: unexpected closing symbol '{e}'");
+                //};
+
+                // Checks that all closing symbols have a matching opener,
+                // if it does, the opener gets popped
+                if stack.is_empty() {
+                    panic!("Error: No opening symbol for {e}");
+                } else {
+                    let check = *stack.last().expect("Error: No symbols on stack");
+                    if matches!((check, e), ('[', ']') | ('{', '}') | ('(', ')')) {
+                        stack.pop();
+                    }
+                    //let check = *stack.last().expect("Error: No symbols on stack");
+                    //if (check == '[' && e == ']')
+                    //    || (check == '{' && e == '}')
+                    //    || (check == '(' && e == ')')
+                    //{
+                    //    stack.pop();
+                    //}
+                }
+            }
+            _ => {}
+        }
+    }
+    // Checks that all opening symbols have a matching closer
+    if !stack.is_empty() {
+        // SAFETY: unwrap guaranteed to be valid because stack is not empty
+        panic!(
+            "Error: Missing closing symbol for {}",
+            stack.last().unwrap()
+        )
+    }
+    true
+}
+
+fn balance2(s: &str) -> bool {
+    let mut stack = Vec::new();
+
+    for e in s.chars() {
+        match e {
+            // Push opening symbols to the stack
+            '[' | '{' | '(' => stack.push(e),
+
+            // Otherwise, check if the closing symbol has an opener
+            // if it does, the opener gets popped
+            ']' | '}' | ')' => {
+                if stack.is_empty() {
+                    panic!("Error: No opening symbol for {e}");
+                } else {
+                    let check = *stack.last().expect("Error: No symbols on stack");
+                    if matches!((check, e), ('[', ']') | ('{', '}') | ('(', ')')) {
+                        stack.pop();
+                    }
+                }
+            }
+            _ => {} // No-op catch-all for non-delimieter symbols
+        }
+    }
+    // The stack should be empty after iterating through all delimeters
+    if !stack.is_empty() {
+        panic!(
+            "Error: Missing closing symbol for {}",
+            stack.last().unwrap()
+        )
+    }
+
+    true
 }

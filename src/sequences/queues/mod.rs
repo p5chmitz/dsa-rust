@@ -1,4 +1,3 @@
-pub mod array_queue;
 pub mod priority_queue;
 pub mod singly_linked_queue;
 pub mod traits;

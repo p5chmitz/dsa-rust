@@ -47,9 +47,9 @@ This example illustrates the circular queue logic. The example provides a queue 
 
    // Postcondition
    //
-   //  <-> None <-> Non <-> c <->
-   //                       ^
-   //                  front/back
+   //  <-> None <-> None <-> c <->
+   //                        ^
+   //                   front/back
    assert_eq!(q.dequeue().unwrap(), 'b'); // queue: 0:None, 1:None, 2:c (fr/ba)
    assert_eq!(2, q.capacity() - q.size()); // Remaining capacity
    assert_eq!(q.front(), 2);
@@ -100,6 +100,7 @@ This example illustrates the circular queue logic. The example provides a queue 
 /// All functions operate in `O(1)` time unless otherwise noted.
 ///
 /// See the [module-level documentation](`crate::lists::queues::vec_circ_queue`) for more information.
+#[derive(Debug)]
 pub struct CircularQueue<T> {
     data: Vec<Option<T>>, // Store elements as `Option` to allow reusing slots
     front: usize,
@@ -167,6 +168,25 @@ impl<T> CircularQueue<T> {
         self.back = (self.front + self.size) % self.capacity;
         self.data[self.back] = Some(item);
         self.size += 1;
+    }
+
+    /// Adds an element to the back of the queue. If the size is equal to
+    /// the queue's capacity, this function performs an _O(n)_ grow operation.
+    pub fn enqueue_dyn(&mut self, item: T) {
+        // Check size + 1 < capacity
+
+        // Grow the underlying Vec if necessary
+
+        // Reset:
+        // - capacity
+        // - head index
+        // - tail index
+
+        // Re-linearization operation
+        //for i in 0..self.size {
+        //    let idx = (self.front + i) % old_cap;
+        //    new_data.push(self.data[idx].take());
+        //}
     }
 
     /// Adds an element to the back of the queue. This operation checks that
@@ -273,6 +293,23 @@ pub fn empirical_test() {
             println!("{name}: {avg:?}");
         }
     }
+}
+
+#[test]
+fn first() {
+    let mut queue = CircularQueue::<usize>::new(3);
+
+    queue.enqueue(1);
+    queue.enqueue(2);
+    queue.enqueue(3);
+    queue.enqueue(4);
+    queue.enqueue(5);
+    queue.enqueue(6);
+    queue.enqueue(7);
+
+    println!("Circular queue: {queue:#?}");
+    println!("Vec len: {}", queue.data.len());
+    println!("Vec len: {}", queue.data.len());
 }
 
 pub fn example() {
