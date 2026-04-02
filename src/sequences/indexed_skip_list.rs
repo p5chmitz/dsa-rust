@@ -6,7 +6,7 @@ Skip lists are sorted, probabalistic structures made up of stacked lists of vary
 Properly implemented skip lists provide _O(log(n))_ expected time complexity for search, insert, and removal operations. This provides a significant advantage over keeping sorted array- or link-based list invariants, which have _worst-case O(n)_ removal (average _O(n/2)_) temporal performance. Skip lists are also simpler than self-balancing tree structures, which are commonly used for sorted list and map structures. Skip lists also generally provide easier and finer-grained control when adapted for concurrent operations. There is a reason Java's `concurrentSkipListMap` is so popular.
 
 # Design
-This design uses `Vec`-backed storage for [SkipNode]s that contain a list (tower) of "next" values, and a single "previous" value that represent indexes within the backing vector. 
+This design uses `Vec`-backed storage for [SkipNode]s that contain a list (tower) of "next" values, and a single "previous" value that represent indexes within the backing vector.
 
 The list features a dynamic max height _h_ that is logarithmically proportional to the number of elements in the list _n_ such that _h = log(n) in the expected case_. The logarithmic growth ensures that the average search, insertion, and deletion operations remain efficient, typically with expected _O(log(n))_ time complexity.
 
@@ -71,18 +71,20 @@ L0: HEAD -> [ a[1] ] -> [ b[5] ] -> [ c[2] ] -> [ d[4] ] -> [ e[3] ] -> [ f[9] ]
 
 # Example code
 ```rust
-    let mut list = SkipList::<char>::new();
+    let mut list = dsa_rust::sequences::indexed_skip_list::SkipList::<char>::new();
 
-    // Inserts 9 values into the skip list
+    // An unsorted list of values and a sorted version to compare against
+    let values = ['a', 'c', 'e', 'd', 'b', 'i', 'g', 'h', 'f'];
+    let sorted = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'];
+
+    // Inserts unsorted values into the skip list
     // with a consuming iterator, moving values
     // into the list
-    let values = ['a', 'c', 'e', 'd', 'b', 'i', 'g', 'h', 'f'];
-    for e in l1.into_iter() {
+    for e in values.into_iter() {
         list.insert(e)
     }
 
     // Illustrates that the list exists as a sorted invariant
-    let sorted = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'];
     for (i, e) in list.iter().enumerate() {
         assert_eq!(e, &sorted[i]);
     }
@@ -109,7 +111,7 @@ const MAX_HEIGHT: usize = 32;
 struct SkipNode<T> {
     value: Option<T>,                  // None for sentinel
     next: [Option<usize>; MAX_HEIGHT], // forward links
-    prev: Option<usize>, // back links at s0 for reverse iteration
+    prev: Option<usize>,               // back links at s0 for reverse iteration
 }
 
 pub struct SkipList<T> {
@@ -126,7 +128,7 @@ impl<T: Ord> SkipList<T> {
         let sentinel = SkipNode {
             value: None,
             next: [None; MAX_HEIGHT],
-            prev: None
+            prev: None,
         };
 
         Self {
@@ -150,21 +152,17 @@ impl<T: Ord> SkipList<T> {
     {
         let update = self.find_predecessors(key);
         let candidate = self.nodes[update[0]].next[0];
-    
+
         match candidate {
-            Some(idx)
-                if self.nodes[idx].value.as_ref().unwrap().borrow() == key =>
-            {
-                Some(idx)
-            }
+            Some(idx) if self.nodes[idx].value.as_ref().unwrap().borrow() == key => Some(idx),
             _ => None,
         }
     }
 
-    pub fn contains<Q>(&self, key: &Q) -> bool 
-    where 
+    pub fn contains<Q>(&self, key: &Q) -> bool
+    where
         Q: Ord + ?Sized,
-        T: Borrow<Q>
+        T: Borrow<Q>,
     {
         self.locate(key).is_some()
     }
@@ -175,32 +173,32 @@ impl<T: Ord> SkipList<T> {
     {
         let height = self.random_height();
         let update = self.find_predecessors(&value);
-    
+
         // ... height adjustment logic ...
-    
+
         let new_index = self.nodes.len();
-        
+
         // 1. SET NEW NODE'S PREV
         // update[0] is the index of the node immediately before the new one at Level 0.
         let predecessor_idx = update[0];
-        
+
         // 2. GET NEW NODE'S NEXT (at Level 0)
         // This is the node that will now need to point back to us.
         let successor_idx = self.nodes[predecessor_idx].next[0];
-    
+
         self.nodes.push(SkipNode {
             value: Some(value),
             next: [None; MAX_HEIGHT],
             prev: Some(predecessor_idx), // Points back to A
         });
-    
+
         for (level, _) in update.iter().enumerate().take(height) {
-        //for level in 0..height {
+            //for level in 0..height {
             let prev_idx = update[level];
             self.nodes[new_index].next[level] = self.nodes[prev_idx].next[level];
             self.nodes[prev_idx].next[level] = Some(new_index);
         }
-    
+
         // 3. UPDATE SUCCESSOR'S PREV
         // If there is a node after us, it must now point back to the new node.
         if let Some(next_idx) = successor_idx {
@@ -215,58 +213,56 @@ impl<T: Ord> SkipList<T> {
         T: Borrow<Q>,
     {
         let mut update_target = self.find_predecessors(key);
-    
+
         // 1. Identify the target index
         let target = match self.nodes[update_target[0]].next[0] {
             //Some(idx) if self.nodes[idx].value.as_ref().map_or(false, |v| v.borrow() == key) => idx,
-            Some(idx) if self.nodes[idx].value.as_ref().is_some_and(|v| v.borrow() == key) => idx,
+            Some(idx)
+                if self.nodes[idx]
+                    .value
+                    .as_ref()
+                    .is_some_and(|v| v.borrow() == key) =>
+            {
+                idx
+            }
             _ => return None,
         };
-    
+
         // 2. PRE-FETCH predecessors for the node that WILL move
         // We do this BEFORE swap_remove so the indices in the skip list are still valid
         let last_idx = self.nodes.len() - 1;
-        let mut update_moved = [0usize; MAX_HEIGHT];
-        if target != last_idx {
-            let moved_val = self.nodes[last_idx].value.as_ref().unwrap().borrow();
-            update_moved = self.find_predecessors(moved_val);
-        }
-    
+
         // 3. Logical Rewiring (Remove target from the chain)
         if let Some(next_idx) = self.nodes[target].next[0] {
             self.nodes[next_idx].prev = self.nodes[target].prev;
         }
         for (level, val) in update_target.iter_mut().enumerate().take(self.list_height) {
-        //for level in 0..self.list_height {
+            //for level in 0..self.list_height {
             if self.nodes[*val].next[level] == Some(target) {
                 self.nodes[*val].next[level] = self.nodes[target].next[level];
             }
         }
-    
+
         // 4. Physical Swap-Remove
         let removed_node = self.nodes.swap_remove(target);
-    
+
         // 5. Fix references for the node that just moved into 'target'
         if target < self.nodes.len() {
-            // Any node in 'update_moved' that pointed to 'last_idx' must now point to 'target'
-            for level in 0..self.list_height {
-                if update_moved[level] == last_idx {
-                    // Rare case: the moved node's predecessor was itself the target
-                    // We handle this by using the updated pointers from the target's removal
-                    update_moved[level] = update_target[level];
-                }
-                
-                if self.nodes[update_moved[level]].next[level] == Some(last_idx) {
-                    self.nodes[update_moved[level]].next[level] = Some(target);
+            for node in &mut self.nodes {
+                for next in node.next.iter_mut().take(self.list_height) {
+                    if *next == Some(last_idx) {
+                        *next = Some(target);
+                    }
                 }
             }
-            // Update the successor of the moved node to point back to the new index
+
+            // Fix prev pointer
             if let Some(next_idx) = self.nodes[target].next[0] {
                 self.nodes[next_idx].prev = Some(target);
             }
         }
-    
-        // ... clean up height ...
+
+        // clean up height
         removed_node.value
     }
 
@@ -274,20 +270,20 @@ impl<T: Ord> SkipList<T> {
     pub fn get_kth(&self, k: usize) -> Option<&T> {
         let mut idx = self.nodes[0].next[0];
         let mut i = 0;
-    
+
         while let Some(current) = idx {
             if i == k {
                 return self.nodes[current].value.as_ref();
             }
-    
+
             idx = self.nodes[current].next[0];
             i += 1;
         }
-    
+
         None
     }
 
-    /// Returns an inclusive iterator over a range of values 
+    /// Returns an inclusive iterator over a range of values
     /// in the list from `start` to `end`.
     pub fn range<Q, R>(&self, range: R) -> RangeIter<'_, T, Q, R>
     where
@@ -303,16 +299,20 @@ impl<T: Ord> SkipList<T> {
                 if let Some(i) = idx {
                     if self.nodes[i].value.as_ref().unwrap().borrow() == start {
                         self.nodes[i].next[0]
-                    } else { Some(i) }
-                } else { None }
+                    } else {
+                        Some(i)
+                    }
+                } else {
+                    None
+                }
             }
             Bound::Unbounded => self.nodes[0].next[0],
         };
-    
+
         // --- FIND BACK ---
         let back = match range.end_bound() {
             Bound::Included(end) => {
-                // Find predecessors of 'end'. 
+                // Find predecessors of 'end'.
                 // If the element at the end of the search IS 'end', that's our back.
                 // If not, the predecessor itself is our back.
                 let update = self.find_predecessors(end);
@@ -322,13 +322,25 @@ impl<T: Ord> SkipList<T> {
                         Some(idx)
                     } else {
                         // Predicate check: Ensure we aren't returning the sentinel (idx 0)
-                        if update[0] == 0 { None } else { Some(update[0]) }
+                        if update[0] == 0 {
+                            None
+                        } else {
+                            Some(update[0])
+                        }
                     }
-                } else if update[0] == 0 { None } else { Some(update[0]) }
+                } else if update[0] == 0 {
+                    None
+                } else {
+                    Some(update[0])
+                }
             }
             Bound::Excluded(end) => {
                 let update = self.find_predecessors(end);
-                if update[0] == 0 { None } else { Some(update[0]) }
+                if update[0] == 0 {
+                    None
+                } else {
+                    Some(update[0])
+                }
             }
             Bound::Unbounded => {
                 // To find the absolute end, we find predecessors for a "theoretically infinite" value
@@ -339,10 +351,14 @@ impl<T: Ord> SkipList<T> {
                         curr = next_idx;
                     }
                 }
-                if curr == 0 { None } else { Some(curr) }
+                if curr == 0 {
+                    None
+                } else {
+                    Some(curr)
+                }
             }
         };
-    
+
         RangeIter {
             list: self,
             front,
@@ -360,7 +376,7 @@ impl<T: Ord> SkipList<T> {
                 tail = next_idx;
             }
         }
-    
+
         Iter {
             list: self,
             next: self.nodes[0].next[0], // First node after sentinel
@@ -387,7 +403,7 @@ impl<T: Ord> SkipList<T> {
     {
         let mut update = [0usize; MAX_HEIGHT];
         let mut idx = 0;
-    
+
         for level in (0..self.list_height).rev() {
             loop {
                 match self.nodes[idx].next[level] {
@@ -403,7 +419,7 @@ impl<T: Ord> SkipList<T> {
             }
             update[level] = idx;
         }
-    
+
         update
     }
 
@@ -418,7 +434,7 @@ impl<T: Ord> SkipList<T> {
     //        if self.nodes[update[level]].next[level] == Some(old_idx) {
     //            self.nodes[update[level]].next[level] = Some(new_idx);
     //        } else {
-    //            // Since towers are vertical, if we don't find a match at this level, 
+    //            // Since towers are vertical, if we don't find a match at this level,
     //            // we might not find them higher up, but check all to be safe.
     //        }
     //    }
@@ -433,7 +449,7 @@ impl<T: Ord> SkipList<T> {
 pub struct Iter<'a, T> {
     list: &'a SkipList<T>,
     next: Option<usize>,
-    prev: Option<usize>
+    prev: Option<usize>,
 }
 impl<'a, T> Iterator for Iter<'a, T> {
     type Item = &'a T;
@@ -468,8 +484,8 @@ impl<'a, T> DoubleEndedIterator for Iter<'a, T> {
     }
 }
 
-pub struct RangeIter<'a, T, Q, R> 
-where 
+pub struct RangeIter<'a, T, Q, R>
+where
     Q: ?Sized,
     R: RangeBounds<Q>,
 {
@@ -489,7 +505,7 @@ where
 
     fn next(&mut self) -> Option<Self::Item> {
         let idx = self.front?;
-        
+
         // Boundary Check
         let value = self.list.nodes[idx].value.as_ref().unwrap();
         if !self.range.contains(value.borrow()) {
@@ -585,11 +601,12 @@ fn one() {
         };
     }
     // Or if you wanna be fancy about it
-    // zip() stops as soon as one iterator ends, 
+    // zip() stops as soon as one iterator ends,
     // eliminating the need for an overflow check
     for (e, i) in list.iter().rev().zip((0..=8).rev()) {
         assert_eq!(e, &sorted[i]);
     }
+
     // Iterator inferance using the IntoIter impl
     let mut i = 0;
     #[allow(clippy::explicit_counter_loop)]
@@ -602,7 +619,7 @@ fn one() {
     assert_eq!(list.get_kth(6).unwrap(), &'g');
 
     // Tests the range function
-    // NOTE: char is Copy so you dont strictly need to borrow 
+    // NOTE: char is Copy so you dont strictly need to borrow
     // when setting range bounds, these tests illustrate both
     // borrowing and not; Note that each bounds must match
     // so no (&'a'..'f'), only ('a'..'f') or (&'a'..&'f')
@@ -635,6 +652,7 @@ fn one() {
     list.remove(&'a');
     assert!(!list.contains(&'e'));
     assert!(!list.contains(&'a'));
+
     let l2 = ['b', 'c', 'd', 'f', 'g', 'h', 'i'];
     for (val, i) in list.iter().zip(0..=6) {
         assert_eq!(val, &l2[i]);
@@ -670,5 +688,4 @@ fn one() {
     println!();
 
     //panic!();
-
 }

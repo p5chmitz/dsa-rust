@@ -1,10 +1,10 @@
 pub mod array_list;
 pub mod doubly_linked_list;
-pub mod dynamic_array_list;
 pub mod dyn_array;
+pub mod dynamic_array_list;
 //pub mod generic_dynamic_array_list;
+pub mod indexed_skip_list;
 pub mod queues;
 pub mod singly_linked_list;
 pub mod stacks;
 pub mod vector_list;
-pub mod indexed_skip_list;

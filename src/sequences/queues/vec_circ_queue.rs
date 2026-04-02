@@ -170,24 +170,24 @@ impl<T> CircularQueue<T> {
         self.size += 1;
     }
 
-    /// Adds an element to the back of the queue. If the size is equal to
-    /// the queue's capacity, this function performs an _O(n)_ grow operation.
-    pub fn enqueue_dyn(&mut self, item: T) {
-        // Check size + 1 < capacity
+    // /// Adds an element to the back of the queue. If the size is equal to
+    // /// the queue's capacity, this function performs an _O(n)_ grow operation.
+    // pub fn enqueue_dyn(&mut self, item: T) {
+    //     // Check size + 1 < capacity
 
-        // Grow the underlying Vec if necessary
+    //     // Grow the underlying Vec if necessary
 
-        // Reset:
-        // - capacity
-        // - head index
-        // - tail index
+    //     // Reset:
+    //     // - capacity
+    //     // - head index
+    //     // - tail index
 
-        // Re-linearization operation
-        //for i in 0..self.size {
-        //    let idx = (self.front + i) % old_cap;
-        //    new_data.push(self.data[idx].take());
-        //}
-    }
+    //     // Re-linearization operation
+    //     //for i in 0..self.size {
+    //     //    let idx = (self.front + i) % old_cap;
+    //     //    new_data.push(self.data[idx].take());
+    //     //}
+    // }
 
     /// Adds an element to the back of the queue. This operation checks that
     /// there is sufficient queue capacity to add an element and errors if you

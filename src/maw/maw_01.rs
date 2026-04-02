@@ -2,6 +2,8 @@
 This is a sandbox crate for chapter 1 of Data Structures and Algorithm Analysis in Java by Mark Allen Weiss
 */
 
+#![allow(dead_code)]
+
 pub fn recursion(n: i32) {
     // Defines base case
     if n >= 10 {

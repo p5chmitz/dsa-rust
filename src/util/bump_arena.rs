@@ -42,6 +42,7 @@ impl<T> BumpArena<T> {
         }
     }
 
+    #[allow(dead_code)]
     /// This
     fn alloc(&mut self, value: T) -> *mut T {
         assert!(self.len < self.capacity, "arena exhausted");

@@ -25,6 +25,7 @@ where
     }
 }
 
+#[allow(dead_code)]
 pub struct Link<M> {
     //destination: &'a Node<'a, T, X>,
     destination: usize,

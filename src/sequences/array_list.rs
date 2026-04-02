@@ -234,7 +234,7 @@ pub fn example() {
     //TODO
 }
 
-
+#[allow(dead_code)]
 fn balance(s: &str) -> bool {
     let mut stack = Vec::new();
 
@@ -287,6 +287,7 @@ fn balance(s: &str) -> bool {
     true
 }
 
+#[allow(dead_code)]
 fn balance2(s: &str) -> bool {
     let mut stack = Vec::new();
 

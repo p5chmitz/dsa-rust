@@ -71,17 +71,17 @@ pub mod sequences {
         pub mod vec_circ_queue;
     }
     pub mod concurrent_skip_list;
-    pub mod indexed_skip_list;
     pub mod dyn_array;
+    pub mod indexed_skip_list;
 }
 pub mod hierarchies {
+    pub mod arena_bst;
     pub mod avl_tree;
     pub mod linked_bst;
-    pub mod arena_bst;
     pub mod safe_linked_gentree;
     pub mod safe_linked_gentree_builder;
     pub mod traits; // Necessary for gen tree
-    //pub mod unsafe_linked_general_tree;
+                    //pub mod unsafe_linked_general_tree;
     pub mod arena_gentree;
     pub mod arena_gentree_builder;
     pub mod bin_heap;
@@ -109,6 +109,6 @@ pub mod util {
 pub mod maw;
 pub mod tgg;
 
-pub mod algorithms{
+pub mod algorithms {
     pub mod list_processing;
 }
