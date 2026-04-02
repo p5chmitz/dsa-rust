@@ -80,8 +80,7 @@ pub mod hierarchies {
     pub mod safe_linked_gentree;
     pub mod safe_linked_gentree_builder;
     pub mod traits; // Necessary for gen tree
-                    //pub mod unsafe_linked_general_tree;
-    pub mod arena_bst;
+    //pub mod unsafe_linked_general_tree;
     pub mod arena_gentree;
     pub mod arena_gentree_builder;
     pub mod bin_heap;
