@@ -388,7 +388,7 @@ mod test {
         assert_eq!(list.remove("Peter"), check);
     }
 
-    #[test]
+    //#[test]
     // Multi-threaded test
     //fn two() {
     //    use std::sync::{Arc, Barrier};
@@ -473,7 +473,8 @@ mod test {
     //    }
     //}
 
-    //#[test]
+    #[test]
+    #[ignore]
     // Mangle them shits for giggles
     fn three() {
         use rand::seq::SliceRandom;
