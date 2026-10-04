@@ -24,6 +24,10 @@ harness = false
 name = "sequences"
 harness = false 
 
+[[bench]]
+name = "sorted"
+harness = false 
+
 #[[bin]]
 #name = "list"
 #path = "src/bin/test.rs"
