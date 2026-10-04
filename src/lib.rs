@@ -20,20 +20,6 @@ These structures/modules represent a basic exploration of foundational, sequence
 
 - [Safe Indexed Skip List](crate::sequences::indexed_skip_list): A single-threaded skip list boasting _O(log(n))_ (expected) insert, lookup, and remove operations. This structure also contains functions for retrieving the Kth element and range queries with Rust's `RangeBounds` semantics.
 
-# Hierarchies
-Building off the lessons learned with Sequences, this section contains examples of hierarchical data structures.
-
-#### General Trees
-- [Linked n-ary tree](crate::hierarchies::safe_linked_gentree): A safe, undirected, unweighted, acyclic graph... err, tree. This implementation takes a traditional link-based approach to hierarchical structures. To avoid dangling pointers and reference cycles this implementation relies on [shared ownership with interior mutability](https://doc.rust-lang.org/book/ch15-05-interior-mutability.html?highlight=interior%20mutability#allowing-multiple-owners-of-mutable-data-with-rct-and-refcellt) via [Rc](std::rc) and [RefCell](std::cell), and utilizes [Weak](std::rc::Weak) parent pointers for proper drop semantics.
-
-- [Indexed n-ary tree](crate::hierarchies::arena_gentree): A safe, `Vec`-backed (indexed) general tree. This experiment is meant to be easier than using `Rc`/`RefCell`, which comes with its own cost. This implementation uses a "free list" to track node removal to ensure "leaked" arena nodes are kept to an absolute minimum.
-
-#### Heaps
-- [Indexed binary heap](crate::hierarchies::bin_heap): A simple Vec-backed (min) binary heap. All sifting happens in _O(log(n))_ time. The structure also contains a generalized heap sort operation that takes any (coercable) slice over orderable elements.
-
-#### Search Trees
-- [AVL tree](crate::hierarchies::avl_tree): A self-balancing, Vec-backed binary search tree with an [in-order](https://www.headyimage.com/cs/dsa/trees#depth-first-traversal) snapshot iterator. This structure guarantees _O(log(n))_ search, insert, and delete operations, and is used to implement this library's (sorted) [AVL tree map](crate::associative::avl_tree_map).
-
 # Associative Structures
 One of the most useful structures in the real world. Associative structures are essentially just lists of key-value pairs with potentially better expected asymptotics.
 
@@ -49,21 +35,36 @@ One of the most useful structures in the real world. Associative structures are 
 
 - [Sorted tree set](): Coming soon!
 
+# Hierarchies
+Building off the lessons learned with Sequences, this section contains examples of hierarchical data structures.
+
+#### Heaps
+- [Indexed binary heap](crate::hierarchies::bin_heap): A simple Vec-backed (min) binary heap. All sifting happens in _O(log(n))_ time. The structure also contains a generalized heap sort operation that takes any (coercable) slice over orderable elements.
+
+#### Search Trees
+- [AVL tree](crate::hierarchies::avl_tree): A self-balancing, Vec-backed binary search tree with an [in-order](https://www.headyimage.com/cs/dsa/trees#depth-first-traversal) snapshot iterator. This structure guarantees _O(log(n))_ search, insert, and delete operations, and is used to implement this library's (sorted) [AVL tree map](crate::associative::avl_tree_map).
+
+#### General Trees
+- [Linked n-ary tree](crate::hierarchies::safe_linked_gentree): A safe, undirected, unweighted, acyclic graph... err, tree. This implementation takes a traditional link-based approach to hierarchical structures. To avoid dangling pointers and reference cycles this implementation relies on [shared ownership with interior mutability](https://doc.rust-lang.org/book/ch15-05-interior-mutability.html?highlight=interior%20mutability#allowing-multiple-owners-of-mutable-data-with-rct-and-refcellt) via [Rc](std::rc) and [RefCell](std::cell), and utilizes [Weak](std::rc::Weak) parent pointers for proper drop semantics.
+
+- [Indexed n-ary tree](crate::hierarchies::arena_gentree): A safe, `Vec`-backed (indexed) general tree. This experiment is meant to be easier than using `Rc`/`RefCell`, which comes with its own cost. This implementation uses a "free list" to track node removal to ensure "leaked" arena nodes are kept to an absolute minimum.
+
 # Composite Structures
 This category contains "miscelaneous" data structures that do not neatly fall into any of the other categories.
 
 - [Adaptable priority queue](crate::composite::priority_queue): The notoriously hard-to-categorize adaptable priority queue combines two implementations from in this library; the [binary heap](crate::hierarchies::bin_heap) and the [hash map](crate::associative::probing_hash_table). This structure provides the best of both worlds with fast _O(1)_ key-based lookups and _O(log(n))_ additions, removals, and key/value mutations.
 
-# Algorithms
-An exploration on some searching, sorting, and graph algorithms.
+# Miscelaneous
+A collection of odds and ends related to the joys of DSA pedantry.
 
-- Heap sort
-- Binary search
+- [Ordering Impls](crate::util::cmp): An exploration of equivalence and order relations through type implementation. This module implements a partial order, a total preorder, and a total order on an example `Student` type. Each ordering scheme implementation contains a robust suite of properties testing.
+
+- [Bump Arena](crate::util::bump_arena): Dip your toes into allocation strategy with this simplified bump arena.
 
 */
 
-// Centralized module declaration
-// Declaring only what we want to surface
+// Centralized module declarations
+// Declare only what is intended to surface in docs
 pub mod sequences {
     pub mod doubly_linked_list;
     pub mod singly_linked_list;
@@ -78,10 +79,13 @@ pub mod hierarchies {
     pub mod arena_bst;
     pub mod avl_tree;
     pub mod linked_bst;
+    pub mod recursive_avl_tree;
     pub mod safe_linked_gentree;
     pub mod safe_linked_gentree_builder;
-    pub mod traits; // Necessary for gen tree
-                    //pub mod unsafe_linked_general_tree;
+    pub mod traits;
+    //pub mod unsafe_avl_tree;
+    pub mod unsafe_linked_general_tree; // Necessary for gen tree
+                                        //pub mod unsafe_linked_general_tree;
     pub mod arena_gentree;
     pub mod arena_gentree_builder;
     pub mod bin_heap;
@@ -105,10 +109,14 @@ pub mod graphs {
 }
 pub mod util {
     pub mod bump_arena;
+    pub mod cmp;
+    pub mod cycle_counter;
+    pub mod memory_management;
 }
 pub mod maw;
 pub mod tgg;
 
 pub mod algorithms {
     pub mod list_processing;
+    pub mod md_tree_print;
 }
