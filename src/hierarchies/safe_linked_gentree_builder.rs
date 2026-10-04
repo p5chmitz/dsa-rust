@@ -203,6 +203,10 @@ pub fn navigator(level: usize, path: &Path) {
 
 #[cfg(test)]
 mod tests {
+    #![allow(unused_imports)]
+    use crate::algorithms::md_tree_print;
+    use crate::util::cycle_counter::CycleCount;
+
     #[test]
     /**
     Creates this tree to test properties
@@ -282,10 +286,37 @@ mod tests {
             },
         ];
 
-        let mut tree: GenTree<Heading> = construct(0, tree_vec);
-        let mut cur = tree.cursor_mut();
+        //let mut first = 0;
+        //let mut second = 0;
+        //for _ in 0..10000 {
 
+        let start = CycleCount::now();
+        let mut tree: GenTree<Heading> = construct(0, tree_vec.clone());
+        let mut cur = tree.cursor_mut();
         pretty_print("LINKED TEST TITLE", &mut cur);
+        let end = CycleCount::now();
+        let x = end.cycles_since(start);
+        //first = (first + x) / 2;
+        println!("Operation cost: {x} CPU cycles\n");
+
+        let start = CycleCount::now();
+        println!("STACK-BASED TEST TITLE");
+        md_tree_print::print_tree_diagram(&tree_vec);
+        let end = CycleCount::now();
+        let y = end.cycles_since(start);
+        //second = (second + y) / 2;
+        println!("Operation cost: {y} CPU cycles\n");
+
+        //}
+
+        // x100
+        //Stack avg: 15351
+        //Graph avg: 28551
+        //
+        // x10_000
+        //Stack avg: 15360
+        //Graph avg: 27813
+        //println!("Stack avg: {second}\nGraph avg: {first}");
 
         //panic!("MANUAL TEST FAILURE");
     }
@@ -327,20 +358,28 @@ mod tests {
             },
         ];
 
+        let start = CycleCount::now();
+        println!("STACK-BASED TEST TITLE");
+        md_tree_print::print_tree_diagram(&tree_vec);
+        let end = CycleCount::now();
+        println!("Operation cost: {} CPU cycles\n", end.cycles_since(start));
+
+        let start = CycleCount::now();
         let mut tree: GenTree<Heading> = construct(0, tree_vec);
         let mut cur = tree.cursor_mut();
-
         pretty_print("LINKED TEST TITLE", &mut cur);
+        let end = CycleCount::now();
+        println!("Operation cost: {} CPU cycles\n", end.cycles_since(start));
 
         //panic!("MANUAL TEST FAILURE");
     }
 
-    #[test]
-    fn print_pwd() {
-        use std::path::Path;
-        let pwd = Path::new("~/MyPrograms/tech-docs/src/content/docs");
-        crate::hierarchies::arena_gentree_builder::navigator(4, pwd);
+    //#[test]
+    //fn print_pwd() {
+    //    use std::path::Path;
+    //    let pwd = Path::new("~/MyPrograms/tech-docs/src/content/docs");
+    //    crate::hierarchies::arena_gentree_builder::navigator(4, pwd);
 
-        //panic!("MANUAL TEST FAILURE");
-    }
+    //    //panic!("MANUAL TEST FAILURE");
+    //}
 }

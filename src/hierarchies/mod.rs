@@ -4,6 +4,7 @@ pub mod avl_tree;
 pub mod bin_heap;
 pub mod file_tree;
 pub mod linked_bst;
+pub mod recursive_avl_tree;
 pub mod safe_linked_gentree;
 pub mod safe_linked_gentree_builder;
 pub mod traits;

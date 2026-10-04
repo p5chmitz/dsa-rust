@@ -1,19 +1,19 @@
 pub mod recursion {
-    pub fn recursion(n: i32) {
+    pub fn _recursion(n: i32) {
         // Defines base case
         if n >= 10 {
             // Recursive call to self
-            recursion(n / 10);
+            _recursion(n / 10);
         }
         // Prints the digit
-        println!("{}", n % 10)
+        println!("{}", n % 10);
     }
 }
 
 pub mod binary_search {
     /** My (iterative) version of a binary search implementation;
      * Takes a sorted array and a key and returns either Some(index) or None */
-    pub fn binary_search(a: &[i32], key: i32) -> Option<i32> {
+    pub fn _binary_search(a: &[i32], key: i32) -> Option<i32> {
         use std::cmp::Ordering;
 
         // Sets initial position of the search boundaries
@@ -54,13 +54,22 @@ pub mod binary_search {
             1, 4, 5, 6, 10, 12, 16, 21, 23, 24, 25, 27, 31, 32, 33, 35, 37, 39, 40, 41, 42, 43, 45,
             47, 49, 50, 51, 52, 54, 56, 57, 60, 61, 67, 70, 71, 72, 73, 74,
         ];
-        let result = binary_search(&array, target).unwrap_or_default();
+        let result = _binary_search(&array, target).unwrap_or_default();
         assert_eq!(result, 37)
     }
 }
 
 #[allow(dead_code)]
 pub mod substring_search {
+
+    struct Temp<T> {
+        elem: T,
+    }
+    impl<T> Temp<T> {
+        fn own(self) -> Self {
+            self
+        }
+    }
     use std::collections::HashMap;
 
     fn longest_unique_substring(s: &str) -> usize {

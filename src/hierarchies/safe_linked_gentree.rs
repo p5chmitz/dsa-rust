@@ -173,7 +173,7 @@ impl<T> std::fmt::Debug for Position<T> {
 /// for proper drop semantics to avoid reference cycles.
 struct Node<T> {
     parent: Option<Weak<RefCell<Node<T>>>>,
-    children: Vec<Position<T>>, // Always exists for a Node, even if empty
+    children: Vec<Position<T>>,
     data: Option<T>,
 }
 impl<T> Node<T> {
@@ -426,48 +426,119 @@ impl<'a, T> CursorMut<'a, T> {
     /// (if `Some`), and returns the deleted `Node`; If the cursor is at the tree's
     /// root, this just deletes the `Node`'s data, leaving `None`; Moves the cursor
     /// to the parent, if `Some` */
+    /// TODO: Unsound; need to remove reference from parent too
+    //pub fn delete(&mut self) -> Option<T> {
+    //    let self_pos = self.node.clone();
+    //    let self_rc = self_pos.ptr.clone()?;
+    //
+    //    // Check and get parent
+    //    let parent_pos = self_rc.borrow().parent.as_ref()?.upgrade()?;
+    //    let parent_pos = Position {
+    //        ptr: Some(parent_pos),
+    //    };
+    //    let parent_rc = parent_pos.ptr.clone().unwrap();
+    //
+    //    // 1. Remove self from parent.children
+    //    {
+    //        let mut parent_node = parent_rc.borrow_mut();
+    //        if let Some(index) = parent_node.children.iter().position(|c| *c == self.node) {
+    //            parent_node.children.remove(index);
+    //        }
+    //    }
+    //
+    //    // 2. Take self's children (detach them)
+    //    let mut self_children = {
+    //        let mut self_node = self_rc.borrow_mut();
+    //        std::mem::take(&mut self_node.children)
+    //    };
+    //
+    //    // 3. Reparent each child and move them to parent's children
+    //    {
+    //        let mut parent_node = parent_rc.borrow_mut();
+    //        for child in &mut self_children {
+    //            if let Some(child_rc) = child.ptr.clone() {
+    //                child_rc.borrow_mut().parent = Some(Rc::downgrade(&parent_rc));
+    //            }
+    //            parent_node.children.push(child.clone());
+    //        }
+    //    }
+    //
+    //    // 4. Move cursor to parent
+    //    self.jump(&parent_pos);
+    //
+    //    // 5. Take and return data from the deleted node
+    //    let mut self_node = self_rc.borrow_mut();
+    //    self_node.data.take()
+    //}
     pub fn delete(&mut self) -> Option<T> {
         let self_pos = self.node.clone();
         let self_rc = self_pos.ptr.clone()?;
 
-        // Check and get parent
-        let parent_pos = self_rc.borrow().parent.as_ref()?.upgrade()?;
-        let parent_pos = Position {
-            ptr: Some(parent_pos),
-        };
-        let parent_rc = parent_pos.ptr.clone().unwrap();
+        // Check if we have a parent. If not, we are deleting the root!
+        let parent_maybe = self_rc
+            .borrow()
+            .parent
+            .as_ref()
+            .and_then(|weak| weak.upgrade());
 
-        // 1. Remove self from parent.children
-        {
-            let mut parent_node = parent_rc.borrow_mut();
-            if let Some(index) = parent_node.children.iter().position(|c| *c == self.node) {
-                parent_node.children.remove(index);
-            }
-        }
-
-        // 2. Take self's children (detach them)
-        let mut self_children = {
+        let old_data = {
             let mut self_node = self_rc.borrow_mut();
-            std::mem::take(&mut self_node.children)
+            self_node.data.take()
         };
 
-        // 3. Reparent each child and move them to parent's children
-        {
-            let mut parent_node = parent_rc.borrow_mut();
-            for child in &mut self_children {
-                if let Some(child_rc) = child.ptr.clone() {
-                    child_rc.borrow_mut().parent = Some(Rc::downgrade(&parent_rc));
+        if let Some(parent_rc) = parent_maybe {
+            let parent_pos = Position {
+                ptr: Some(parent_rc.clone()),
+            };
+
+            // 1. Remove self from parent.children by checking pointer address identity
+            {
+                let mut parent_node = parent_rc.borrow_mut();
+
+                // Extract our underlying Rc pointer to compare against
+                if let Some(self_inner_rc) = &self.node.ptr {
+                    if let Some(index) = parent_node.children.iter().position(|c| {
+                        if let Some(child_inner_rc) = &c.ptr {
+                            // Check if they point to the exact same memory allocation
+                            Rc::ptr_eq(child_inner_rc, self_inner_rc)
+                        } else {
+                            false
+                        }
+                    }) {
+                        parent_node.children.remove(index);
+                    }
                 }
-                parent_node.children.push(child.clone());
             }
+
+            // 2. Take self's children (detach them)
+            let mut self_children = {
+                let mut self_node = self_rc.borrow_mut();
+                std::mem::take(&mut self_node.children)
+            };
+
+            // 3. Reparent each child and move them to parent's children
+            {
+                let mut parent_node = parent_rc.borrow_mut();
+                for child in &mut self_children {
+                    if let Some(child_rc) = child.ptr.clone() {
+                        child_rc.borrow_mut().parent = Some(Rc::downgrade(&parent_rc));
+                    }
+                    parent_node.children.push(child.clone());
+                }
+            }
+
+            // 4. Move cursor to parent
+            self.jump(&parent_pos);
+        } else {
+            // Root deletion handling: If you delete the root, you decide where the cursor goes.
+            // For example, making the tree entirely None, or making a child the new root.
+            self.node = Position { ptr: None };
         }
 
-        // 4. Move cursor to parent
-        self.jump(&parent_pos);
+        // 5. Explicitly decrement the size track!
+        self.tree.size -= 1;
 
-        // 5. Take and return data from the deleted node
-        let mut self_node = self_rc.borrow_mut();
-        self_node.data.take()
+        old_data
     }
 
     // NAVIGATION
@@ -754,5 +825,100 @@ mod tests {
         // No more UB!!
         cursor.get_data();
         _pos.get_data();
+    }
+
+    use super::*;
+    use std::cell::RefCell;
+    use std::rc::Rc;
+
+    fn create_initialized_tree<T>() -> GenTree<T> {
+        // Instantiate the inner Node layout directly
+        let root_node = Rc::new(RefCell::new(Node {
+            parent: None,
+            children: Vec::new(),
+            data: None, // Initialized with None, ready to populate
+        }));
+
+        // Build the actual GenTree struct using its true fields
+        GenTree {
+            root: Position {
+                ptr: Some(root_node),
+            },
+            size: 1,
+        }
+    }
+
+    #[test]
+    fn test_rc_isolation_and_no_overlapping_data() {
+        let mut tree = GenTree::new();
+        let mut cursor = tree.cursor_mut();
+
+        // 1. Add a child node (auto-descends into Child A)
+        cursor.add_child("Child A".to_string());
+
+        // Capture the handle to Child A
+        let child_pos = cursor.current().clone();
+
+        // 2. Delete Child A.
+        // This moves the cursor to Root and returns Child A's data as an Option!
+        let deleted_data = cursor.delete();
+        assert_eq!(deleted_data, Some("Child A".to_string()));
+
+        // VERIFICATION: Verify cursor successfully jumped back to the root node
+        assert!(cursor.is_root());
+
+        // 3. THE LIFECYCLE CHECK:
+        // Jump back to the isolated handle. Its internal data should now be None.
+        cursor.jump(&child_pos);
+        assert!(cursor.get_data().is_none());
+    }
+
+    #[test]
+    fn test_parent_child_severance_on_delete() {
+        let mut tree = create_initialized_tree();
+        let mut cursor = tree.cursor_mut();
+
+        // Create: Root -> Parent Node (cursor enters Parent Node)
+        cursor.add_child("Parent Node".to_string());
+        let parent_pos = cursor.current().clone();
+
+        // Create child: Parent Node -> Leaf Node (cursor enters Leaf Node)
+        cursor.add_child("Leaf Node".to_string());
+
+        // Jump back to Parent Node and delete it
+        cursor.jump(&parent_pos);
+        cursor.delete();
+
+        // VERIFICATION: Because the delete method hoists children up,
+        // the Root node should now have exactly 1 child (the promoted Leaf Node!)
+        assert!(cursor.is_root());
+        assert_eq!(cursor.num_children(), 1);
+    }
+
+    #[test]
+    fn test_rc_tree_churn_and_metrics() {
+        let mut tree = create_initialized_tree();
+        let mut cursor = tree.cursor_mut();
+
+        // 1. Build a deep linear spine: Root -> N1 -> N2 -> N3
+        cursor.add_child("N1".to_string());
+        let n1_pos = cursor.current().clone();
+
+        cursor.add_child("N2".to_string());
+        let n2_pos = cursor.current().clone();
+
+        cursor.add_child("N3".to_string());
+
+        // VERIFICATION: Confirming the depth logic measures a full 3 edges from the root!
+        assert_eq!(cursor.depth(), 3);
+
+        // 2. Erase the middle node (N2)
+        cursor.jump(&n2_pos);
+        cursor.delete();
+
+        // 3. Verify metrics adjust automatically based on hoisting logic
+        // N3 should now be a direct child of N1
+        cursor.jump(&n1_pos);
+        assert_eq!(cursor.num_children(), 1);
     }
 }

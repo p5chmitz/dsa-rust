@@ -152,17 +152,11 @@ You can also see that all indexes of the form `2i + 1` are left children. E.g. i
 ///
 /// See the [module-level documentation](crate::hierarchies::bin_heap) for more information.
 #[derive(Debug)]
-pub struct BinHeap<T>
-where
-    T: Ord,
-{
+pub struct BinHeap<T> {
     arena: Vec<T>,
     size: usize,
 }
-impl<T> Default for BinHeap<T>
-where
-    T: Ord,
-{
+impl<T: Ord> Default for BinHeap<T> {
     fn default() -> Self {
         Self::new()
     }
