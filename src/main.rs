@@ -2,6 +2,7 @@
 //#![allow(dead_code)]
 
 // Adding pub suppresses dead code warnings
+pub mod algorithms;
 pub mod associative;
 pub mod hierarchies;
 pub mod maw;
@@ -9,6 +10,7 @@ pub mod sequences;
 pub mod tgg;
 
 use crate::tgg::{tgg_04, tgg_05};
+use dsa_rust::util;
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
@@ -182,6 +184,13 @@ fn main() {
             println!("\x1b[1;34mArena N-ary tree example:\x1b[0m");
             crate::hierarchies::arena_gentree_builder::navigator(0, path);
             println!();
+
+            // Basic cycle counter example
+            let start = util::cycle_counter::CycleCount::now();
+            // .. Some process
+            let end = util::cycle_counter::CycleCount::now();
+
+            println!("Operation cost: {} CPU cycles", end.cycles_since(start));
         }
 
         // MAPS
