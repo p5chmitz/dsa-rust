@@ -88,6 +88,7 @@ use std::fmt::Debug;
 ///
 /// See the [module-level documentation]() for more details.
 #[derive(Debug)]
+//#[derive(Debug, Eq, PartialEq, PartialOrd)]
 pub struct Entry<K, V> {
     key: K,
     value: V,
