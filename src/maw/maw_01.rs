@@ -121,3 +121,179 @@ fn longest_unique_substring_test() {
     longest_unique_substring_print(s);
     //panic!()
 }
+
+fn insertion_sort<T: Ord>(list: &mut [T]) {
+    // operates on 2nd element through n - 1 because .. is
+    // upper bounds exclusive
+    for i in 1..list.len() {
+        let mut j = i; // Required because i is not mutable
+        while j > 0 && list[j] < list[j - 1] {
+            list.swap(j, j - 1);
+            j -= 1;
+        }
+    }
+}
+fn insertion_sort2<T: Ord>(list: &mut [T]) {
+    for mut i in 1..list.len() {
+        while i > 0 && list[i] < list[i - 1] {
+            list.swap(i, i - 1);
+            i -= 1;
+        }
+    }
+}
+#[test]
+fn insertion_sort_test() {
+    let mut a = [2, 5, 8, 3, 5, 9];
+    insertion_sort(&mut a);
+    assert_eq!(a, [2, 3, 5, 5, 8, 9]);
+
+    let mut a = [2, 5, 8, 3, 5, 9];
+    insertion_sort2(&mut a);
+    assert_eq!(a, [2, 3, 5, 5, 8, 9]);
+}
+
+use std::ptr;
+fn unsafe_insertion_sort<T: Ord>(list: &mut [T]) {
+    for i in 1..list.len() {
+        unsafe {
+            // Move the element out without dropping it
+            let tmp = ptr::read(&list[i]);
+            let mut j = i;
+
+            // Shift elements right until correct spot is found
+            while j > 0 && tmp < list[j - 1] {
+                let dst = list.as_mut_ptr().add(j);
+                let src = list.as_ptr().add(j - 1);
+                ptr::copy_nonoverlapping(src, dst, 1);
+                j -= 1;
+            }
+
+            // Place the element into its final position
+            ptr::write(list.as_mut_ptr().add(j), tmp);
+        }
+    }
+}
+
+fn selection_sort<T: Ord>(list: &mut [T]) {
+    let len = list.len();
+
+    for i in 0..len {
+        let mut min_idx = i;
+
+        for j in (i + 1)..len {
+            if list[j] < list[min_idx] {
+                min_idx = j;
+            }
+        }
+
+        if min_idx != i {
+            list.swap(i, min_idx);
+        }
+    }
+}
+
+fn unsafe_selection_sort<T: Ord>(list: &mut [T]) {
+    let len = list.len();
+    let ptr = list.as_mut_ptr();
+
+    for i in 0..len {
+        unsafe {
+            let mut min_idx = i;
+
+            for j in (i + 1)..len {
+                if (*ptr.add(j)) < (*ptr.add(min_idx)) {
+                    min_idx = j;
+                }
+            }
+
+            if min_idx != i {
+                ptr::swap(ptr.add(i), ptr.add(min_idx));
+            }
+        }
+    }
+}
+
+fn merge_sort<T: Ord>(list: &mut [T]) {
+    let len = list.len();
+    if len <= 1 {
+        return;
+    }
+
+    let mid = len / 2;
+    let (left, right) = list.split_at_mut(mid);
+
+    merge_sort(left);
+    merge_sort(right);
+
+    // Allocate temporary buffer
+    let mut buf: Vec<T> = Vec::with_capacity(len);
+    let _: &mut [std::mem::MaybeUninit<T>] = buf.spare_capacity_mut();
+
+    unsafe {
+        // Set length without initializing
+        buf.set_len(len);
+
+        merge_into(left, right, &mut buf);
+
+        // Move merged result back into original slice
+        ptr::copy_nonoverlapping(buf.as_ptr(), list.as_mut_ptr(), len);
+    }
+}
+
+unsafe fn merge_into<T: Ord>(left: &mut [T], right: &mut [T], buf: &mut [T]) {
+    let mut i = 0;
+    let mut j = 0;
+    let mut k = 0;
+
+    while i < left.len() && j < right.len() {
+        if left[i] <= right[j] {
+            ptr::write(&mut buf[k], ptr::read(&left[i]));
+            i += 1;
+        } else {
+            ptr::write(&mut buf[k], ptr::read(&right[j]));
+            j += 1;
+        }
+        k += 1;
+    }
+
+    while i < left.len() {
+        ptr::write(&mut buf[k], ptr::read(&left[i]));
+        i += 1;
+        k += 1;
+    }
+
+    while j < right.len() {
+        ptr::write(&mut buf[k], ptr::read(&right[j]));
+        j += 1;
+        k += 1;
+    }
+}
+
+fn quick_sort<T: Ord>(list: &mut [T]) {
+    if list.len() <= 1 {
+        return;
+    }
+
+    let pivot_index = partition(list);
+
+    let (left, right) = list.split_at_mut(pivot_index);
+    quick_sort(left);
+    quick_sort(&mut right[1..]); // skip pivot
+}
+
+fn partition<T: Ord>(list: &mut [T]) -> usize {
+    let len = list.len();
+    let pivot_index = len - 1;
+
+    let mut store = 0;
+
+    for i in 0..pivot_index {
+        if list[i] < list[pivot_index] {
+            list.swap(i, store);
+            store += 1;
+        }
+    }
+
+    list.swap(store, pivot_index);
+    store
+}

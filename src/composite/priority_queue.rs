@@ -489,7 +489,7 @@ mod tests {
         assert!(queue.contains("Flank"));
 
         // DEBUG PRINT: initial state
-        eprintln!("Pre-mutations: {:#?}\n{:#?}", queue.heap, queue.map.data);
+        //eprintln!("Pre-mutations: {:#?}\n{:#?}", queue.heap, queue.map.data);
 
         // Attempt to place duplicate key:value pair
         assert!(queue.try_put("Dichael", 2).is_err());
@@ -518,7 +518,7 @@ mod tests {
 
         // Attempt to mutate key
         assert!(queue.mutate_key("Peter", "The Peter").is_ok());
-        eprintln!("Mutate key: {:#?}\n{:#?}", queue.heap, queue.map.data);
+        //eprintln!("Mutate key: {:#?}\n{:#?}", queue.heap, queue.map.data);
 
         // Testing updated membership
         assert!(queue.contains("The Peter"));
@@ -532,7 +532,7 @@ mod tests {
         // Remove passengers
         assert_eq!(queue.remove("Sleve"), Some(("Sleve", 2)));
         assert_eq!(queue.remove("Flank"), Some(("Flank", 3)));
-        eprintln!("Removals: {:#?}\n{:#?}", queue.heap, queue.map.data);
+        //eprintln!("Removals: {:#?}\n{:#?}", queue.heap, queue.map.data);
 
         // Testing updated membership
         assert!(queue.contains("The Peter"));

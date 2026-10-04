@@ -188,7 +188,7 @@ impl<T> LinkedList<T> {
             data: element,
             prev: None,
             next: None,
-        })); // Unsafe
+        }));
 
         // If there are already elements in the list...
         if let Some(node) = self.head {
@@ -201,12 +201,12 @@ impl<T> LinkedList<T> {
         }
         // Inserts into empty list
         else {
-            //println!("Inserts at head");
-            // Sets the list's head and tail pointers to the new node
+            // If the list is empty then both the head and tail
+            // point to the new node (head updated later)
             self.tail = Some(new_node_wrapper);
         }
 
-        // Resets the list's head and increments the list size
+        // (Re)sets the list's head and increments the list size
         self.head = Some(new_node_wrapper);
         self.len += 1;
     }

@@ -323,10 +323,11 @@ where
 
 #[derive(Debug)]
 pub struct HashMap<K, V> {
-    pub data: Vec<Option<Entry<K, V>>>, // The primary memory backing
-    pub ctrl: Vec<u8>,                  // A byte mask to identify available positions
-    size: usize,                        // The total number of entries in the map (live + deleted)
-    live: usize,                        // The number of "live" entries in the map
+    data: Vec<Option<Entry<K, V>>>, // The primary memory backing
+    // pub data: Vec<MaybeUninit<Entry<K, V>>>, // Gets rid of Option alignment bloat
+    ctrl: Vec<u8>, // A byte mask to identify available positions
+    size: usize,   // The total number of entries in the map (live + deleted)
+    live: usize,   // The number of "live" entries in the map
 
     // NOTE: Prime, scale, and shift are used by the MAD compression algorithm.
     // These randomly-generated values must remain static for the
