@@ -346,7 +346,7 @@ fn iter_test() {
 
     // Indicates that the map is indeed sorted
     eprintln!("\nSorted map:");
-    for e in map.tree.iter() {
+    for e in map.iter() {
         eprintln!("{e:?}")
     }
 
