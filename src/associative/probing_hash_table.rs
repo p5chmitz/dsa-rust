@@ -589,8 +589,8 @@ where
         new
     }
 
-    /// Returns an iterator over borrowed values. The resulting values
-    /// appear in random order.
+    /// Returns an iterator over borrowed key-value pairs. The yielded 
+    /// entries (as tuples) appear in random order.
     ///
     /// Example use:
     /// ```rust
@@ -945,19 +945,16 @@ fn iter_test() {
         map.mut_val_or(char, |x| *x += 1, 1);
     }
 
-    eprintln!("\nInitial map state:");
-    map.contents();
-
     // Iterates through the map, pushing entries
     // to a Vec as tuples returned from the iterator
-    eprintln!("\nCompact map: ");
+    eprintln!("\nRaw map iter (entries formatted as tuples): ");
     let mut vec = Vec::new();
     for e in map.iter() {
         vec.push(*e.0);
         eprintln!("{e:?}")
     }
 
-    eprintln!("\nFinal map state:");
+    eprintln!("\nFinal map state (using API debug operation):");
     map.contents();
 
     eprintln!("\nFinal vec state:");
@@ -1006,7 +1003,7 @@ fn iter_test() {
     assert!(new_map.contains(&'o'));
 
     // Uncomment to trigger debug print
-    //assert!(map.is_empty());
+    //panic!("MANUAL TEST FAILURE");
 }
 
 #[test]
