@@ -45,10 +45,10 @@ impl Position {
 impl Clone for Position {
     fn clone(&self) -> Self {
         *self // Because the type derives Copy
-        //Position {
-        //    ptr: self.ptr,
-        //    generation: self.generation,
-        //}
+              //Position {
+              //    ptr: self.ptr,
+              //    generation: self.generation,
+              //}
     }
 }
 

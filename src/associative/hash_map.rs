@@ -21,7 +21,6 @@ enum Val<'a> {
 
 struct Person {
     name: String,
-
 }
 
 fn test() {
@@ -30,6 +29,6 @@ fn test() {
         (Key::Name("Bobson"), Val::Age(36)),
         (Key::Age(36), Val::Food("hamburgers")),
         (Key::Active, Val::Bool(true)),
-        (Key::Active, Val::Person)
+        (Key::Active, Val::Person),
     ]);
 }

@@ -15,8 +15,8 @@ struct AVLNode<T: Ord> {
 
 /// A set based on an AVL Tree.
 ///
-/// An AVL Tree is a self-balancing binary search tree. It tracks the 
-/// height of each node and performs internal rotations to maintain 
+/// An AVL Tree is a self-balancing binary search tree. It tracks the
+/// height of each node and performs internal rotations to maintain
 /// a height difference of at most 1 between each sibling pair.
 pub struct AVLTree<T: Ord> {
     root: Option<Box<AVLNode<T>>>,

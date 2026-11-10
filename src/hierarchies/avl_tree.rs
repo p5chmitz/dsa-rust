@@ -375,7 +375,8 @@ where
         //    .as_ref()
         //    .expect("Error: Invalid immutable node access")
         unsafe {
-            self.arena.get_unchecked(index)
+            self.arena
+                .get_unchecked(index)
                 .as_ref()
                 .expect("Error: Invalid immutable node access")
         }
@@ -386,8 +387,9 @@ where
         //self.arena[index]
         //    .as_mut()
         //    .expect("Error: Invalid mutable node access")
-        unsafe { 
-            self.arena.get_unchecked_mut(index)
+        unsafe {
+            self.arena
+                .get_unchecked_mut(index)
                 .as_mut()
                 .expect("Error: Invalid mutable node access")
         }
@@ -423,8 +425,7 @@ where
         // because fuck stack overflows (and recursion)
         loop {
             //if let Some(val) = &self.arena[current] {
-            if let Some(val) = 
-                unsafe { &self.arena.get_unchecked(current) } {
+            if let Some(val) = unsafe { &self.arena.get_unchecked(current) } {
                 // Converts &AVLNode<T> to &T
                 // Safety: Valueless nodes violate the AVL tree invariant
                 let value = val
@@ -513,9 +514,9 @@ where
         self.update_node_height(child_idx);
     }
 
-    /// Determines left-heavy (>0) or right-heavy (<0) balance factors 
-    /// for a given node index. The necessity for restructure 
-    /// operations can be determined agnostically by 
+    /// Determines left-heavy (>0) or right-heavy (<0) balance factors
+    /// for a given node index. The necessity for restructure
+    /// operations can be determined agnostically by
     /// `abs(balance_factor(index)) >= 2`
     fn balance_factor(&self, index: usize) -> isize {
         let node = &self.node(index);

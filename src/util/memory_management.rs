@@ -197,3 +197,19 @@ fn dangle() {
     // b is not allocated or initialized
     //let b = unsafe { *a }; // UB!!
 }
+
+#[test]
+#[allow(arithmetic_overflow)]
+fn overflow() {
+    //Panics on overflow with compiler checks enabled
+    //assert_eq!(u8::MAX + 1, 255);
+    //use std::ops::Add;
+    //assert_eq!(<u8 as Add>::add(255, 1), 3);
+
+    //Unchecked addition overflow causes UB!
+    //unsafe { assert_eq!(u8::MAX.unchecked_add(1), 255) };
+
+    //Explicitly defined overflow semantics
+    assert_eq!(u8::MAX.saturating_add(1), 255);
+    assert_eq!(u8::MAX.wrapping_add(1), 0);
+}
