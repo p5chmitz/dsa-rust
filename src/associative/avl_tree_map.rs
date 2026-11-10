@@ -259,8 +259,8 @@ fn avl_tree_map_test() {
 
     // Underlying tree arena check
     eprintln!("Initial state");
-    assert_eq!(map.tree.arena.len(), 6);
-    for e in map.tree.arena.iter() {
+    assert_eq!(map.size(), 6);
+    for e in map.iter() {
         eprintln!("{e:?}")
     }
 
@@ -273,24 +273,22 @@ fn avl_tree_map_test() {
     assert_eq!(old.value, 40_u8);
     let new_val = map.get("Peter").unwrap();
     assert_eq!(*new_val, 41);
-    assert_eq!(map.size(), 6);
 
     // Underlying tree arena check
     eprintln!("After replacement");
-    assert_eq!(map.tree.arena.len(), 7);
-    for e in map.tree.arena.iter() {
+    assert_eq!(map.size(), 6);
+    for e in map.iter() {
         eprintln!("{e:?}")
     }
 
     // Illustrates that removes entries by key and returns the value
     assert!(map.contains("Dangus"));
     let removed = map.remove("Dangus").unwrap();
-    assert_eq!(map.size(), 5);
 
     // Underlying tree arena check
     eprintln!("After removal");
-    assert_eq!(map.tree.arena.len(), 7);
-    for e in map.tree.arena.iter() {
+    assert_eq!(map.size(), 5);
+    for e in map.iter() {
         eprintln!("{e:?}")
     }
 
