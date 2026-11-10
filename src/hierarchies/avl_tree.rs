@@ -161,7 +161,7 @@ impl<T> AVLNode<T> {
 pub struct AVLTree<T> {
     // Option wrapper for efficient take() operations during removal
     // without incurring the wrath of O(n) resize ops
-    pub arena: Vec<Option<AVLNode<T>>>,
+    arena: Vec<Option<AVLNode<T>>>,
     // Wont always be 0, and wont always be Some!
     root: Option<usize>,
 }
