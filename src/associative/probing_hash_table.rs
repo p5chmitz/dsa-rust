@@ -589,7 +589,7 @@ where
         new
     }
 
-    /// Returns an iterator over borrowed key-value pairs. The yielded 
+    /// Returns an iterator over borrowed key-value pairs. The yielded
     /// entries (as tuples) appear in random order.
     ///
     /// Example use:

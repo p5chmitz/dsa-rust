@@ -45,6 +45,11 @@ use dsa_rust::associative::hash_set::HashSet;
     assert!(union.contains(&4));
     assert!(union.contains(&5));
 
+    // Converts the union() observer operation to a producer operaiton
+    let mut new: Vec<_> = union.into_iter().collect();
+    new.sort(); // None of the sets guarantee comparative ordering
+    assert_eq!(new, vec!(0, 1, 2, 3, 4, 5));
+
     // Creates a list of elements only present in both sets
     let mut intersection: Vec<u8> = Vec::new();
     for e in set1.intersection(&set2) {
@@ -550,4 +555,105 @@ fn difference() {
     assert!(unique.contains(&"Flock"));
 
     //panic!("MANUAL TEST FAILURE");
+}
+
+#[test]
+// Tests converting an observer to a producer
+fn observer_to_producer() {
+    // Tests with u8
+    ////////////////
+
+    //Creates a couple new hash sets
+    let mut set1 = HashSet::<u8>::new();
+    // [0, 1, 2, 3]
+    for n in 0..=3 {
+        set1.put(n);
+    }
+
+    let mut set2 = HashSet::<u8>::new();
+    // [2, 3, 4, 5]
+    for n in 2..=5 {
+        set2.put(n);
+    }
+
+    // Creates a list of all elements in both self and other
+    let mut union: Vec<u8> = Vec::new();
+    for e in set1.union(&set2) {
+        union.push(*e);
+    }
+    assert_eq!(union.len(), 6);
+    assert!(union.contains(&0));
+    assert!(union.contains(&1));
+    assert!(union.contains(&2));
+    assert!(union.contains(&3));
+    assert!(union.contains(&4));
+    assert!(union.contains(&5));
+
+    let mut new: Vec<_> = set1.union(&set2).copied().collect();
+    new.sort();
+    assert_eq!(new, vec!(0, 1, 2, 3, 4, 5));
+
+    // Tests with char
+    //////////////////
+
+    //Creates a couple new hash sets
+    let mut set1 = HashSet::<char>::new();
+    // [0, 1, 2, 3]
+    for n in ['a', 'b', 'c', 'd'] {
+        set1.put(n);
+    }
+
+    let mut set2 = HashSet::<char>::new();
+    // [2, 3, 4, 5]
+    for n in ['c', 'd', 'e', 'f'] {
+        set2.put(n);
+    }
+
+    let mut new: Vec<_> = set1.union(&set2).copied().collect();
+    new.sort();
+    assert_eq!(new, vec!('a', 'b', 'c', 'd', 'e', 'f'));
+
+    // Tests with String
+    //////////////////
+
+    //Creates a couple new hash sets
+    let mut set1 = HashSet::<String>::new();
+    // [0, 1, 2, 3]
+    for n in [
+        "a".to_string(),
+        "b".to_string(),
+        "c".to_string(),
+        "d".to_string(),
+    ] {
+        set1.put(n);
+    }
+
+    let mut set2 = HashSet::<String>::new();
+    // [2, 3, 4, 5]
+    for n in [
+        "d".to_string(),
+        "d".to_string(),
+        "e".to_string(),
+        "f".to_string(),
+    ] {
+        set2.put(n);
+    }
+
+    // Uses cloned() because String is Clone, but not Copy
+    //let mut new: Vec<_> = set1.union(&set2).cloned().collect();
+    // Uses them references
+    let mut new: Vec<_> = set1.union(&set2).collect();
+    new.sort();
+    assert_eq!(
+        new,
+        vec!(
+            //"a".to_string(),
+            //"b".to_string(),
+            //"c".to_string(),
+            //"d".to_string(),
+            //"e".to_string(),
+            //"f".to_string(),
+            "a", "b", "c", "d", "e", "f",
+        )
+    );
 }
